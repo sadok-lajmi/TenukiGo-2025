@@ -1,42 +1,218 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+body {
+  margin: 10px;
+  padding: 10px;
+  height: 100vh;
+  background-color: rgba(81, 81, 79, 1);
+}
+
+.svg-icon {
+  width: 1.1cm;
+  height: 1.1cm;
+}
+
+.svg-icon path,
+.svg-icon polygon,
+.svg-icon rect {
+  fill: #ecce97;
+}
+
+.svg-icon circle {
+  stroke: #ecce97;
+  stroke-width: 2;
+}
+.container-image {
+  max-width: 45%;
+}
+
+.Tenuki {
+  width: 30%;
+}
+
+.GoStreamHome {
+  margin: 100px;
+  width: 50%;
+}
+
+.GoStream {
+  width: 85%;
+}
+
+.GoStreamFooter {
+  width: 30%;
+}
+.custom-button { background-color: rgb(202, 202, 202); }
+
+.btn-petit{
+  font-size: 15px;
+  /* padding: 10px 10px; */
+  background-color: #ecce97;
+  color: #000000;
+  margin: 10px;
+  text-decoration: none; /* Remove underlines from links */
+
+}
+
+.btn-annuler{
+  font-size: 15px;
+  /* padding: 10px 10px; */
+  background-color: #dd7266;
+  color: #000000;
+  margin: 10px;
+  text-decoration: none; /* Remove underlines from links */
+
+}
+
+    /* Style for the checkbox input */
+  .form-check-input {
+      background-color: #eee; /* Background color of the checkbox */
+      border: 1px solid #555; /* Border color of the checkbox */
+  }
+
+  /* Style the checked state of the checkbox */
+  .form-check-input:checked {
+      background-color: #ecce97; /* Change to your desired color for the checked state */
+      border-color: #eee; /* Change to your desired color for the border in the checked state */
+  }
+
+
+.custom-marging {
+  margin-right: 5px; 
+}
+
+.btn-nav{
+  font-size: 15px;
+  margin-top: 10px;
+  background-color: #ecce97;
+  color: #000000;
+  text-decoration: none; /* Remove underlines from links */
+}
+
+button{
+  border: none;
+  cursor: pointer;
+  appearance: none;
+  background-color: inherit;
+  transition: transform .7s ease-in-out;
+  margin-left:10px;
+}
+
+.containerCenter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.custom-color {
+  color: #ecce97; /* Change the color to your desired color */
+}
+.custom-container{
+  border: 0px;
+  margin: 0px;
+  padding: 0px;
+}
+
+.custom-form {
+  max-width: 100%;
+}
+.custom-size {
+  font-size: 25px; /* Change the font size to your desired size */
+}
+.btn-grand {
+  font-size: 30px;
+  padding: 10px 10px;
+  background-color: #ecce97;
+  color: #000000;
+  margin: 20px auto; /* Add margin for vertical spacing */
+  text-decoration: none; /* Remove underlines from links */
+  display: block; /* Make it a block element */
+  max-width:600px; /* Set a maximum width for the buttons */
+
+}
+
+.btn-grand a {
+  color: #000000; /* Set the color of the links */
+  text-decoration: none; /* Remove underlines from links */
+}
+
+
+.homeBoard{
+  width: 70%;
   text-align: center;
+  margin: 150px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.btn-sommaire{
+  font-size: 48px;
+  padding: 30px 60px;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+#plot-image, #camera-feed, #camera-feed-closed {
+  /*float: left;*/
+  position: relative;
+  width: 100%; 
+  box-sizing: border-box; /* Inclut la bordure et le padding dans la largeur */
+  margin-right: 0px; /* Ajustez la marge selon vos besoins */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+#video-container {
+  /*float: left;*/
+  position: relative;
+  width: 90%; /* Chaque div prend la moitié de la largeur */
+  box-sizing: border-box; /* Inclut la bordure et le padding dans la largeur */
+  margin-right: 10px; /* Ajustez la marge selon vos besoins */
 }
 
-.card {
-  padding: 2em;
+#video {
+  transform: rotateY(180deg);
+  -webkit-transform:rotateY(180deg); /* Safari and Chrome */
+  -moz-transform:rotateY(180deg); /* Firefox */
+
 }
 
-.read-the-docs {
-  color: #888;
+#message {
+  clear: both; /* Empêche les éléments suivants de flotter à gauche ou à droite des div flottantes */
+  margin-top: 10px; /* Ajoute de l'espace entre le message et les div précédentes */
+  font-size: 18px;
+}
+
+#go-board {
+  width: 100%;
+}
+
+.navs {
+  letter-spacing: 0;
+  cursor: pointer;
+  text-transform: uppercase;
+  &:hover { text-decoration: none; }
+  
+}
+
+.navs:hover,
+.navs:active {
+letter-spacing: 5px;
+}
+
+.navs:after,
+.navs:before {
+backface-visibility: hidden;
+border: 1px solid rgba(#ecce97, 0);
+bottom: 0px;
+content: " ";
+display: block;
+margin: 0 auto;
+position: relative;
+transition: all 280ms ease-in-out;
+width: 0;
+}
+
+.navs:hover:after,
+.navs:hover:before {
+backface-visibility: hidden;
+border-color: #ecce97;
+transition: width 350ms ease-in-out;
+width: 70%;
+}
+
+.navs:hover:before {
+bottom: auto;
+top: 0;
+width: 70%;
 }
