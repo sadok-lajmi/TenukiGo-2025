@@ -1,3 +1,7 @@
+# ----------------------------------------
+# 1. EXCLUSIONS GENERALES 
+# ----------------------------------------
+
 # Logs
 logs
 *.log
@@ -7,7 +11,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-./frontend/node_modules
+# Build, cache, and editor files
 dist
 dist-ssr
 *.local
@@ -22,3 +26,47 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+
+
+# ----------------------------------------
+# 2. EXCLUSIONS SPECIFIQUES AU PROJET REACT (frontend/)
+# ----------------------------------------
+
+# Dependencies
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.*
+frontend/.yarn/
+!frontend/.yarn/patches
+!frontend/.yarn/plugins
+!frontend/.yarn/releases
+!frontend/.yarn/versions
+
+# Testing
+frontend/coverage/
+
+# Next.js specific
+frontend/.next/
+frontend/out/
+
+# Production/Build (si le dossier de build est 'build')
+frontend/build/
+
+# Misc
+frontend/.DS_Store
+frontend/*.pem
+
+# Debug files
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-debug.log*
+
+# Environment files
+frontend/.env*
+
+# TypeScript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
