@@ -23,14 +23,18 @@ const Header = ({ subHeader, title, userImg } : SharedHeaderProps) => {
                     <Image src="/assets/icons/upload.svg" alt="Upload Icon" width={16} height={16} />
                     <span>Upload a Video</span>
                 </Link>
-                <div className="record">
-                    <button className="primary-btn">
-                        <Image src={ICONS.record} alt="Record Icon" width={16} height={16} />
-                        <span>Record a Video</span>
-                    </button>
-
-                </div>
                 
+                <Link href="/stream" className="bg-yellow-500 text-white">
+                    <Image src={ICONS.record} alt="Record Icon" width={16} height={16} />
+                    <span>Livestream a game</span>
+                </Link>
+
+                <Link href="/watch">
+                    <Image src="/assets/icons/watching.png" alt="Upload Icon" width={16} height={16} />
+                    <span>Watch a Game</span>
+                </Link>
+                
+                       
             </aside>
 
         </section>
