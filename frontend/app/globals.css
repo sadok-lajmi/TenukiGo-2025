@@ -109,7 +109,7 @@
   .sign-in {
     @apply w-full min-h-screen flex flex-col-reverse lg:flex-row justify-between overflow-hidden max-lg:gap-10;
 
-    .testimonial {
+    .design-sign-in {
       @apply bg-light-100 lg:w-1/2 flex flex-col justify-between lg:h-screen w-full py-10 px-6 lg:pl-10 gap-6;
 
       a {
