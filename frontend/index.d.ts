@@ -25,7 +25,7 @@ declare interface FormFieldProps {
   ) => void;
   placeholder?: string;
   as?: "input" | "textarea" | "select" | "search";
-  options?: Array<{ value: string; label: string }>;
+  options?: Array<{ value: any; label: string }>;
 }
 
 declare interface FileInputProps {
