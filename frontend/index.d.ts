@@ -24,7 +24,7 @@ declare interface FormFieldProps {
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => void;
   placeholder?: string;
-  as?: "input" | "textarea" | "select";
+  as?: "input" | "textarea" | "select" | "search";
   options?: Array<{ value: string; label: string }>;
 }
 
