@@ -17,7 +17,7 @@ const Page = () => {
 
     const [error, setError] = useState(null);
 
-    const handleInputChange = (e: ChangeEvent) => {
+    const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData((prevState) => ({
             ...prevState,
