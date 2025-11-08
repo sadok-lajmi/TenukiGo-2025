@@ -1,6 +1,8 @@
+'use client';
+
 import Header from '@/components/Header'
 import VideoCard from '@/components/VideoCard'
-import {useEffect, useState} from 'react'
+import {use, useEffect, useState} from 'react'
 
 
 const Page = () => {
