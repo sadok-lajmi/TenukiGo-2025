@@ -2,78 +2,70 @@ import React from 'react'
 import { useState } from 'react';
 
 const FormField = ({ id, label, type = 'text', value, onChange, placeholder, as = 'input', options = [] }: FormFieldProps) => {
-    const InputToRender = ({ type }: { type: string } ) => {
-        if (type === 'textarea') {
-            return <textarea 
-                id={id}
-                name={id}
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-            />
-        } else if (type === 'select') {
-            return <select 
-                id={id}
-                name={id}
-                value={value}
-                onChange={onChange}
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
-            >
-                {options.map(({ label, value }) => ( <option key={label} value={value}>{label}</option> ))}
-            </select>
-        } else if (type === 'search') {
+    const filteredOptions = options.filter(option =>
+        option.label.toLowerCase().includes(value.toLowerCase())
+    )
 
-            const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-            const [selected, setSelected] = useState<string|null>(null);
+    const handleSelect = (optionValue: string) => {
+        onChange({ target: { name: id, value: optionValue } } as any)
+        setIsDropdownOpen(false)
+    }
 
-            const filteredOptions = options.filter(option =>
-                option.label.toLowerCase().includes(value.toLowerCase())
-            );
+    return (
+        <div className='form-field'>
+            <label htmlFor={id}>{label}</label>
 
-            const handleSelect = (optionValue: string) => {
-                setSelected(optionValue);
-                setIsDropdownOpen(false);
-            };
-
-            return (
-            <div className="relative w-full">   
-                <input className="w-full"
-                    type='text'
+            {as === 'textarea' ? (
+                <textarea
                     id={id}
                     name={id}
-                    value={selected || value}
+                    value={value}
                     onChange={onChange}
                     placeholder={placeholder}
-                    onClick={() => setIsDropdownOpen(true)}
                 />
+            ) : as === 'select' ? (
+                <select id={id} name={id} value={value} onChange={onChange}>
+                    {options.map(({ label, value }) => (
+                        <option key={label} value={value}>{label}</option>
+                    ))}
+                </select>
+            ) : as === 'search' ? (
+                <div className="relative w-full">
+                    <input
+                        id={id}
+                        name={id}
+                        value={value}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        className="w-full"
+                    />
                     {isDropdownOpen && (
                         <ul className='dropdown'>
                             {filteredOptions.length > 0 ? (
                                 filteredOptions.map(({ label, value }) => (
-                                    <li className="list-item" key={label} onClick={() => handleSelect(value)}>{label}</li>
+                                    <li key={label} onClick={() => handleSelect(value)} className="list-item">
+                                        {label}
+                                    </li>
                                 ))
                             ) : (
                                 <li>No player found</li>
                             )}
                         </ul>
                     )}
-            </div> )
-
-        } else {
-            return <input 
-                type={type}
-                id={id}
-                name={id}
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-            />
-        }
-    }
-    return (
-        <div className='form-field'>
-            <label htmlFor={id}>{label}</label>
-            <InputToRender type={as} />
+                </div>
+            ) : (
+                <input
+                    type={type}
+                    id={id}
+                    name={id}
+                    value={value}
+                    onChange={onChange}
+                    placeholder={placeholder}
+                />
+            )}
         </div>
     )
 }

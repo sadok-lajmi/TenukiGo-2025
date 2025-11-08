@@ -36,10 +36,9 @@ const Page = () => {
           label='Player 1'
           as = 'search'
           options={[
-            { label: 'Select Player 1', value: '' },
-            { label: 'Player X', value: 'player_x' },
-            { label: 'Player Y', value: 'player_y' },
-            { label: 'Player Z', value: 'player_z' },
+            { label: 'Player A', value: 'player_a' },
+            { label: 'Player B', value: 'player_b' },
+            { label: 'Player C', value: 'player_c' },
           ]}
           value={formData.player_1}
           onChange={handleInputChange}
@@ -50,7 +49,6 @@ const Page = () => {
           label='Player 2'
           as ='search'
           options={[
-            { label: 'Select Player 2', value: '' },
             { label: 'Player A', value: 'player_a' },
             { label: 'Player B', value: 'player_b' },
             { label: 'Player C', value: 'player_c' },
