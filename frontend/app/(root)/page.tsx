@@ -18,9 +18,18 @@ const Page = () => {
     fetchVideos()
   }, [])
 
+  const [query, setQuery] = useState<string>('')
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value)
+  }
+
+  const filteredVideos = videos.filter(video =>
+    video['titre'].toLowerCase().includes(query.toLowerCase())
+  )
+
   return (
     <main className='wrapper page'>
-      <Header title='All Videos' subHeader='Public Library' />
+      <Header title='All Videos' subHeader='Public Library' query={query} onChange={handleSearchChange} />
       <section className='video-grid'>
         {videos.length === 0 ? (
           <p>No videos found.</p>

@@ -3,7 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import DropdownList from "./DropdownList"
 
-const Header = ({ subHeader, title, userImg } : SharedHeaderProps) => {
+const Header = ({ subHeader, title, userImg, query, onChange } : SharedHeaderProps) => {
   return (
     <header className="header">
         <section className="header-container">
@@ -41,7 +41,7 @@ const Header = ({ subHeader, title, userImg } : SharedHeaderProps) => {
 
         <section className="search-filter">
             <div className="search">
-                <input type="text" placeholder="Search for videos, tags, folders..." />
+                <input type="text" value={query} onChange={onChange} placeholder="Search for videos..." />
                 <Image src="/assets/icons/search.svg" alt="Search Icon" width={16} height={16} />
             </div>
 

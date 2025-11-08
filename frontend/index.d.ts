@@ -222,6 +222,8 @@ declare interface SharedHeaderProps {
   subHeader: string;
   title: string;
   userImg?: string;
+  query?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 declare interface Params {
