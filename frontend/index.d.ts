@@ -72,8 +72,8 @@ declare interface SearchResult {
 declare interface VideoCardProps {
   id: string;
   title: string;
-  thumbnail: string;
-  createdAt: Date;
+  thumbnail: string | null;
+  createdAt: Date | null;
   duration: number | null;
 }
 
