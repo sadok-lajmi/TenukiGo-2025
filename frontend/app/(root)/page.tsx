@@ -12,7 +12,7 @@ const Page = () => {
   useEffect(() => {
     // Fetch videos from API
     const fetchVideos = async () => {
-      const response = await fetch(`${process.env.API_URL}/get_videos`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_videos`)
       const data = await response.json()
       setVideos(data['videos']) }
     fetchVideos()

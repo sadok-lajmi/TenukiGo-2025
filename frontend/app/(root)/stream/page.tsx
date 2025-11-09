@@ -25,7 +25,7 @@ const Page = () => {
   useEffect(() => {
     // Fetch list of players from API
     const fetchPlayers = async () => {
-      const response = await fetch( `${process.env.API_URL}/joueur`);
+      const response = await fetch( `${process.env.NEXT_PUBLIC_API_URL}/joueur`);
       const data = await response.json();
       const playersData = data['joueurs'];
       const playersNames: PlayerOption[] = playersData.map((player: any) => ({ label: player[1]+' '+player[2], value: player[1]+' '+player[2] }));
