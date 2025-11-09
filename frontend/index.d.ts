@@ -81,6 +81,7 @@ declare interface PlayerCardProps {
   id: string;
   firstname: string;
   lastname: string;
+  level: string;
 }
 
 declare interface MatchCardProps {

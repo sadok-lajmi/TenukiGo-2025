@@ -36,7 +36,7 @@ const Page = () => {
           <p>No players found.</p>
         ) : (
           filteredPlayers.map((player) => (
-            <PlayerCard key={player['id_joueur']} id={player['id_joueur']} firstname={player['prénom']} lastname={player['nom']}/>
+            <PlayerCard key={player['id_joueur']} id={player['id_joueur']} firstname={player['prénom']} lastname={player['nom_de_famille']} level={player['niveau']}/>
           ))
         )}
       </section>

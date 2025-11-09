@@ -582,6 +582,17 @@
     }
   }
 
+  /* match-card */
+  .match-card {
+  @apply w-full flex justify-between items-center border border-gray-20 rounded-2xl shadow-10 p-4 bg-white transition-all duration-200 hover:shadow-20 hover:-translate-y-1 no-underline;
+  }
+
+  /* player-card */
+  .player-card {
+  @apply w-full flex justify-between items-center border border-gray-20 rounded-2xl shadow-10 p-4 bg-white transition-all duration-200 hover:shadow-20 hover:-translate-y-1 no-underline;
+  }
+
+
   /* video detail */
   .transcript {
     @apply flex flex-col gap-4;

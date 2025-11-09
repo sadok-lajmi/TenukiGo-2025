@@ -4,22 +4,28 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
-const MatchCard = ({ id, title, thumbnail="/assets/samples/thumbnail (1).png", createdAt, duration }: MatchCardProps) => {
+const MatchCard = ({ id, title, thumbnail, createdAt, duration }: MatchCardProps) => {
   return (
-    <Link href={`/match/${id}`} className='video-card'>
-        <Image src={thumbnail ?? "/assets/samples/thumbnail (1).png"} alt='thumbnail' width={290} height={160} className='thumbnail' />
-        <article>
-            <h2>{title} - {" "} {createdAt ? createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Unknown date'}</h2>
-        </article>
-        <button onClick={() => {}} className='copy-btn'>
-            <Image src='/assets/icons/link.svg' alt='copy' width={18} height={18} />
+    <Link href={`/match/${id}`} className='match-card'>
+        {/* Left Section (Text) */}
+      <div className="flex flex-col gap-2">
+        <h2 className="text-lg font-bold text-dark-100">{title}</h2>
+        <div className="flex items-center gap-6 text-sm text-gray-100 font-medium">
+          <p>Duration: {duration ? `${Math.ceil(duration / 60)} min` : 'Unknown duration'}</p>
+          <p>Date: {createdAt ? createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Unknown date'}</p>
+        </div>
+      </div>
 
-        </button>
-        {duration && (
-            <div className='duration'>
-                {Math.ceil(duration / 60)} min
-            </div>
-        )}
+      {/* Right Section (Thumbnail) */}
+      <div className="flex-shrink-0 ml-4">
+        <Image
+          src={thumbnail ? thumbnail : "/assets/samples/thumbnail (1).png"}
+          alt={`${title} thumbnail`}
+          width={100}
+          height={80}
+          className="rounded-lg object-cover"
+        />
+      </div>
     </Link>
   )
 }
