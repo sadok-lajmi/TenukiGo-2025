@@ -77,6 +77,20 @@ declare interface VideoCardProps {
   duration: number | null;
 }
 
+declare interface PlayerCardProps {
+  id: string;
+  firstname: string;
+  lastname: string;
+}
+
+declare interface MatchCardProps {
+  id: string;
+  title: string;
+  thumbnail: string | null;
+  createdAt: Date | null;
+  duration: number | null;
+}
+
 declare interface VideoDetailHeaderProps {
   title: string;
   createdAt: Date;

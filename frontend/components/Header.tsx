@@ -29,7 +29,7 @@ const Header = ({ subHeader, title, userImg, query, onChange } : SharedHeaderPro
                     <span>Livestream</span>
                 </Link>
 
-                <Link href="/watch">
+                <Link href="/watch" className="bg-gray-500 text-white">
                     <Image src="/assets/icons/watching.png" alt="Upload Icon" width={16} height={16} />
                     <span>Watch a Game</span>
                 </Link>
