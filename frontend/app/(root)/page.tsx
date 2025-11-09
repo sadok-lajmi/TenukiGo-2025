@@ -31,10 +31,10 @@ const Page = () => {
     <main className='wrapper page'>
       <Header title='All Videos' subHeader='Public Library' query={query} onChange={handleSearchChange} />
       <section className='video-grid'>
-        {videos.length === 0 ? (
+        {filteredVideos.length === 0 ? (
           <p>No videos found.</p>
         ) : (
-          videos.map((video) => (
+          filteredVideos.map((video) => (
             <VideoCard key={video['video_id']} id={video['video_id']} title={video['titre']} thumbnail={video['thumbnail']} createdAt={new Date(video['date_upload'])} duration={video['duration']} />
           ))
         )}
