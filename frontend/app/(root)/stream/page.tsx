@@ -25,7 +25,7 @@ const Page = () => {
   useEffect(() => {
     // Fetch list of players from API
     const fetchPlayers = async () => {
-      const response = await fetch( `${process.env.API_URL}/joueur`);
+      const response = await fetch( `${process.env.NEXT_PUBLIC_API_URL}/joueur`);
       const data = await response.json();
       const playersData = data['joueurs'];
       const playersNames: PlayerOption[] = playersData.map((player: any) => ({ label: player[1]+' '+player[2], value: player[1]+' '+player[2] }));
@@ -38,6 +38,7 @@ const Page = () => {
     <div className='wrapper-md stream-page'>
       <h1>Live Stream</h1>
       <form className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
+        <h1 className='text-2xl font-semibold'>Match info</h1>
         <FormField 
           id='title'
           label='Stream Title'

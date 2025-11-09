@@ -220,6 +220,23 @@
     }
   }
 
+  /* watch page */
+  .watch-page {
+    @apply flex flex-col gap-7.5 pt-12.5 pb-20;
+
+    h1 {
+      @apply text-3xl font-bold text-dark-100;
+    }
+
+    .error-field {
+      @apply border border-red-500 bg-red-100 text-red-700 p-4 rounded-md;
+    }
+
+    .submit-button {
+      @apply bg-pink-100 text-white px-4 py-3 rounded-4xl cursor-pointer text-base font-semibold hover:bg-pink-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+  }
+
   /* details page */
   .video-details {
     @apply flex flex-col lg:flex-row gap-7.5;

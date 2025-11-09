@@ -6,9 +6,17 @@ import os
 from datetime import datetime
 from pathlib import Path
 import shutil
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # ton front React
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 DB_URL = "postgresql://postgres:15370@localhost:5432/postgres"  # change le nom de la base si besoin
 
