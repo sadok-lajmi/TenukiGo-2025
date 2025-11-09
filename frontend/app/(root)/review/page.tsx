@@ -1,8 +1,9 @@
-
+import GoSgfViewer from '@/components/GoSgfViewer';
 const Page = () => {
   return (
     <div className='wrapper md watch-page'>
-        <h1>Watch a Game</h1> 
+        <h1>Review Game</h1> 
+        <GoSgfViewer />
     </div>
   )
 }

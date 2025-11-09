@@ -26,7 +26,7 @@ const Header = ({ subHeader, title, userImg, query, onChange } : SharedHeaderPro
                 
                 <Link href="/stream" className="bg-yellow-500 text-white">
                     <Image src={ICONS.record} alt="Record Icon" width={16} height={16} />
-                    <span>Livestream a game</span>
+                    <span>Livestream</span>
                 </Link>
 
                 <Link href="/watch">
@@ -34,6 +34,10 @@ const Header = ({ subHeader, title, userImg, query, onChange } : SharedHeaderPro
                     <span>Watch a Game</span>
                 </Link>
                 
+                <Link href="/review">
+                    <Image src="/assets/icons/rewind.png" alt="Review Icon" width={16} height={16} />
+                    <span>Review a Game</span>
+                </Link>
                        
             </aside>
 
