@@ -1,8 +1,8 @@
 const Page = () => {
   return (
-    <main className='wrapper page'>
-        <h2>Watch a Game</h2> 
-    </main>
+    <div className='wrapper-md watch-page'>
+        <h1>Watch a Game</h1> 
+    </div>
   )
 }
 
