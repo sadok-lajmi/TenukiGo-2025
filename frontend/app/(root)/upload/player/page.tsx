@@ -56,6 +56,9 @@ const Page = () => {
                     placeholder='what is their level'
                 />
                 
+                <button type='submit' className="bg-yellow-500 text-white px-4 py-2 rounded-lg">
+                    Submit
+                </button>
 
             </form>
             

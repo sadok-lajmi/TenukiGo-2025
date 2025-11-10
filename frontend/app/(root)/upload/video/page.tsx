@@ -3,7 +3,7 @@
 
 import FormField from '@/components/FormField'
 import FileInput from '@/components/FileInput'
-import { ChangeEvent, useState } from 'react'
+import { ChangeEvent, useState, useRef } from 'react'
 
 const Page = () => {
     const [formData, setFormData] = useState({
@@ -12,11 +12,20 @@ const Page = () => {
         visibility: 'public',
     });
 
-    const video = {};
-    const thumbnail = {};
+    const [video, setVideo] = useState({
+        file: null as File | null,
+        previewUrl: '',
+        inputRef: useRef<HTMLInputElement>(null),
+    });
+    const [thumbnail, setThumbnail] = useState({
+        file: null as File | null,
+        previewUrl: '',
+        inputRef: useRef<HTMLInputElement>(null),
+    });
 
     const [error, setError] = useState(null);
 
+    // Handle input changes for text fields
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData((prevState) => ({
@@ -24,6 +33,56 @@ const Page = () => {
             [name]: value,
         }));
     }
+
+    // Handle selecting a video file
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // No need to Check if it's a video file here because the accept attribute in <FileInput> already does that
+
+    const previewUrl = URL.createObjectURL(file);
+    setVideo((prev) => ({
+      ...prev,
+      file,
+      previewUrl,
+    }));
+  };
+
+  // Handle removing the selected video
+  const handleVideoReset = () => {
+    if (video.previewUrl) URL.revokeObjectURL(video.previewUrl);
+    setVideo((prev) => ({
+      ...prev,
+      file: null,
+      previewUrl: "",
+    }));
+    video.inputRef.current && (video.inputRef.current.value = "");
+  };
+
+  // Handle selecting a thumbnail
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const previewUrl = URL.createObjectURL(file);
+    setThumbnail((prev) => ({
+      ...prev,
+      file,
+      previewUrl,
+    }));
+  };
+
+  // Handle removing the selected thumbnail
+  const handleThumbnailReset = () => {
+    if (thumbnail.previewUrl) URL.revokeObjectURL(thumbnail.previewUrl);
+    setThumbnail((prev) => ({
+      ...prev,
+      file: null,
+      previewUrl: "",
+    }));
+    thumbnail.inputRef.current && (thumbnail.inputRef.current.value = "");
+  };
+        
 
     return (
         <div className='wrapper-md upload-page'>
@@ -57,8 +116,8 @@ const Page = () => {
                     file={video.file}
                     previewUrl={video.previewUrl}
                     inputRef={video.inputRef}
-                    onChange={video.handleFileChange}
-                    onReset={video.resetFile}
+                    onChange={handleVideoChange}
+                    onReset={handleVideoReset}
                     type='video'
                 />
 
@@ -69,25 +128,15 @@ const Page = () => {
                     file={thumbnail.file}
                     previewUrl={thumbnail.previewUrl}
                     inputRef={thumbnail.inputRef}
-                    onChange={thumbnail.handleFileChange}
-                    onReset={thumbnail.resetFile}
+                    onChange={handleThumbnailChange}
+                    onReset={handleThumbnailReset}
                     type='image'
                 />
-
-
-
-                <FormField 
-                    id='visibility'
-                    label='Visibility'
-                    value={formData.visibility}
-                    onChange={handleInputChange}
-                    as='select'
-                    options={[
-                        { value: 'public', label: 'Public' },
-                        { value: 'private', label: 'Private' },
-                    ]}
-                />
-
+                   
+                <button type='submit' className="bg-yellow-500 text-white px-4 py-2 rounded-lg">
+                    Upload
+                </button>
+    
             </form>
             
 
