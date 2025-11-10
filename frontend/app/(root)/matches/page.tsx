@@ -30,7 +30,7 @@ const Page = () => {
 
   return (
     <main className='wrapper page'>
-      <Header title='All Matches' subHeader='Public Library' query={query} onChange={handleSearchChange} />
+      <Header title='All Matches' subHeader='Public Library' query={query} onChange={handleSearchChange} type="matches"/>
       <DropdownList />
       <section className='video-grid'>
         {filteredMatches.length === 0 ? (

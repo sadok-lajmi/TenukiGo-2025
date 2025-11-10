@@ -1,5 +1,6 @@
 'use client';
-
+import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/Header'
 import VideoCard from '@/components/VideoCard'
 import DropdownList from '@/components/DropdownList'
@@ -30,7 +31,7 @@ const Page = () => {
 
   return (
     <main className='wrapper page'>
-      <Header title='All Videos' subHeader='Public Library' query={query} onChange={handleSearchChange} />
+      <Header title='All Videos' subHeader='Public Library' query={query} onChange={handleSearchChange} type="videos"/>
       <DropdownList />
       <section className='video-grid'>
         {filteredVideos.length === 0 ? (

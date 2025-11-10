@@ -3,7 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import DropdownList from "./DropdownList"
 
-const Header = ({ subHeader, title, userImg, query, onChange } : SharedHeaderProps) => {
+const Header = ({ subHeader, title, userImg, query, onChange, type } : SharedHeaderProps) => {
   return (
     <header className="header">
         <section className="header-container">
@@ -19,10 +19,23 @@ const Header = ({ subHeader, title, userImg, query, onChange } : SharedHeaderPro
             </div>
 
             <aside>
-                <Link href="/upload">
+                {type === 'videos' && (
+                <Link href="/upload/video">
                     <Image src="/assets/icons/upload.svg" alt="Upload Icon" width={16} height={16} />
                     <span>Upload a Video</span>
-                </Link>
+                </Link>)}
+
+                {type === 'matches' && (
+                <Link href="/upload/match">
+                    <Image src="/assets/icons/upload.svg" alt="Upload Icon" width={16} height={16} />
+                    <span>Upload a Match</span>
+                </Link>)}
+
+                {type === 'players' && (
+                <Link href="/upload/player">
+                    <Image src="/assets/icons/upload.svg" alt="Upload Icon" width={16} height={16} />
+                    <span>Add a Player</span>
+                </Link>)}
                 
                 <Link href="/stream" className="bg-yellow-500 text-white">
                     <Image src={ICONS.record} alt="Record Icon" width={16} height={16} />
