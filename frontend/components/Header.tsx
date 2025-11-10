@@ -31,12 +31,12 @@ const Header = ({ subHeader, title, userImg, query, onChange } : SharedHeaderPro
 
                 <Link href="/watch" className="bg-gray-500 text-white">
                     <Image src="/assets/icons/watching.png" alt="Upload Icon" width={16} height={16} />
-                    <span>Watch a Game</span>
+                    <span>Watch Live</span>
                 </Link>
                 
-                <Link href="/review">
+                <Link href="/replay">
                     <Image src="/assets/icons/rewind.png" alt="Review Icon" width={16} height={16} />
-                    <span>Review a Game</span>
+                    <span>Replay</span>
                 </Link>
                        
             </aside>
