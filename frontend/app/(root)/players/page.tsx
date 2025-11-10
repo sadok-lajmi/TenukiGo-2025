@@ -2,7 +2,7 @@
 
 import Header from '@/components/Header'
 import PlayerCard from '@/components/PlayerCard';
-import VideoCard from '@/components/VideoCard'
+import DropdownList from '@/components/DropdownList'
 import {use, useEffect, useState} from 'react'
 
 
@@ -31,6 +31,7 @@ const Page = () => {
   return (
     <main className='wrapper page'>
       <Header title='All Players' subHeader='Public List' query={query} onChange={handleSearchChange} />
+      <DropdownList />
       <section className='video-grid'>
         {filteredPlayers.length === 0 ? (
           <p>No players found.</p>

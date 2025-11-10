@@ -49,7 +49,6 @@ const Header = ({ subHeader, title, userImg, query, onChange } : SharedHeaderPro
                 <Image src="/assets/icons/search.svg" alt="Search Icon" width={16} height={16} />
             </div>
 
-            <DropdownList />
         </section>
 
     </header>
