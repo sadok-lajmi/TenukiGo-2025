@@ -1,6 +1,5 @@
 'use client';
-import Link from 'next/link';
-import Image from 'next/image';
+
 import Header from '@/components/Header'
 import VideoCard from '@/components/VideoCard'
 import DropdownList from '@/components/DropdownList'

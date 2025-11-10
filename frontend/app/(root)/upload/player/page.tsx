@@ -1,6 +1,5 @@
 'use client';
 
-
 import FormField from '@/components/FormField'
 import { ChangeEvent, useState } from 'react'
 
@@ -24,13 +23,34 @@ const Page = () => {
         }));
     }
 
+    // Pushing the new player data to server
+    const handleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        const dataToSend = new FormData();
+        dataToSend.append('prénom', formData.firstname);
+        dataToSend.append('nom', formData.lastname);
+        dataToSend.append('niveau', formData.level);
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create_joueur`, {
+            method: 'POST',
+            body: dataToSend,
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            setError(error.message || 'An error occurred during upload.');
+            return;
+        }
+    }
+
     return (
         <div className='wrapper-md upload-page'>
             <h1>Add a player</h1>
 
             {error && <div className='error-field'>{error}</div>}
 
-            <form className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
+            <form onSubmit={handleSubmit} className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
                 <FormField 
                     id='firstname'
                     label='First Name'

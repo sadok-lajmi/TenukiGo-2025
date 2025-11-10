@@ -37,7 +37,7 @@ declare interface FileInputProps {
   inputRef: React.RefObject<HTMLInputElement | null>;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onReset: () => void;
-  type: "video" | "image";
+  type: "video" | "image" | "sgf";
 }
 
 declare interface TranscriptEntry {

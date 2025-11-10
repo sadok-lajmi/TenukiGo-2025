@@ -3,13 +3,19 @@
 
 import FormField from '@/components/FormField'
 import FileInput from '@/components/FileInput'
-import { ChangeEvent, useState, useRef } from 'react'
+import { ChangeEvent, useState, useRef, useEffect } from 'react'
+import { number } from 'better-auth';
 
 const Page = () => {
     const [formData, setFormData] = useState({
         title: '',
+        style: '',
+        player_b: '',
+        player_w: '',
+        result: '',
+        date: '',
+        duration: '',
         description: '',
-        visibility: 'public',
     });
 
     const [video, setVideo] = useState({
@@ -22,8 +28,13 @@ const Page = () => {
         previewUrl: '',
         inputRef: useRef<HTMLInputElement>(null),
     });
+    const [sgf, setSgf] = useState({
+        file: null as File | null,
+        previewUrl: '',
+        inputRef: useRef<HTMLInputElement>(null),
+    });
 
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
 
     // Handle input changes for text fields
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -82,23 +93,163 @@ const Page = () => {
     }));
     thumbnail.inputRef.current && (thumbnail.inputRef.current.value = "");
   };
-        
+
+  // Handle selecting an SGF file
+  const handleSgfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const previewUrl = URL.createObjectURL(file);
+    setSgf((prev) => ({
+      ...prev,
+      file,
+      previewUrl,
+    }));
+  };
+  
+  // Handle removing the selected SGF file
+  const handleSgfReset = () => {
+    if (sgf.previewUrl) URL.revokeObjectURL(sgf.previewUrl);
+    setSgf((prev) => ({
+      ...prev,
+      file: null,
+      previewUrl: "",
+    }));
+    sgf.inputRef.current && (sgf.inputRef.current.value = "");
+  };   
+  
+  // fetch players for the search fields (optional)
+  type PlayerOption = { label: string; value: string | number };
+  const [players, setPlayers] = useState<PlayerOption[]>([]);
+  useEffect(() => {
+    // Fetch list of players from API
+    const fetchPlayers = async () => {
+      const response = await fetch( `${process.env.NEXT_PUBLIC_API_URL}/joueur`);
+      const data = await response.json();
+      const playersData = data['joueurs'];
+      const playersNames: PlayerOption[] = playersData.map((player: any) => ({ label: player[1]+' '+player[2], value: player[0].toString() }));
+      setPlayers(playersNames);
+    }
+    fetchPlayers();
+  }, []);
+
+  // handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Form submission logic here
+    // Validate required fields
+    if (!formData.title || !formData.player_b || !formData.player_w || !formData.result) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+    const dataToSend = new FormData();
+    dataToSend.append('titre', formData.title);
+    dataToSend.append('style', formData.style);
+    dataToSend.append('joueur_noire',formData.player_b);
+    dataToSend.append('joueur_blanc', formData.player_w);
+    dataToSend.append('résultat', formData.result);
+    dataToSend.append('date', formData.date);
+    dataToSend.append('durée', formData.duration);
+    dataToSend.append('description', formData.description);
+    if (video.file) dataToSend.append('vidéo', video.file);
+    if (thumbnail.file) dataToSend.append('miniature', thumbnail.file);
+    if (sgf.file) dataToSend.append('sgf', sgf.file);
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create_partie`, {
+      method: 'POST',
+      body: dataToSend,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      setError(error.message || 'An error occurred during upload.');
+      return;
+    }
+  };
+
 
     return (
         <div className='wrapper-md upload-page'>
-            <h1>Upload a video</h1>
+            <h1>Upload a match</h1>
 
             {error && <div className='error-field'>{error}</div>}
 
-            <form className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
+            <form onSubmit={handleSubmit} className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
+              <h2 className="text-sm text-gray-600 text-end">the fields with a * are required</h2>
                 <FormField 
                     id='title'
-                    label='Title'
+                    label='Title *'
                     value={formData.title}
                     onChange={handleInputChange}
                     placeholder='Enter a clear and concise video title'
                 />
                 
+                <FormField 
+                    id='style'
+                    label='Style'
+                    as="select"
+                    options={[
+                        { label: 'Select a style', value: '' },
+                        { label: 'Tournament', value: 'tournoi' },
+                        { label: 'Friendly', value: 'amical' },
+                        { label: 'Educational', value: 'pedagogique' },
+                    ]}
+                    value={formData.style}
+                    onChange={handleInputChange}
+                />
+
+                <FormField 
+                    id='player_b'
+                    label='Player for Black *'
+                    as="search"
+                    options={players}
+                    value={formData.player_b}
+                    onChange={handleInputChange}
+                    placeholder='fisrt and last name'
+                />
+
+                <FormField 
+                    id='player_w'
+                    label='Player for White *'
+                    as="search"
+                    options={players}
+                    value={formData.player_w}
+                    onChange={handleInputChange}
+                    placeholder='first and last name'
+                />
+
+                <FormField 
+                    id='result'
+                    label='Result *'
+                    as="select"
+                    options={[
+                        { label: 'Select a result', value: '' },
+                        { label: 'Black wins', value: 'noire' },
+                        { label: 'White wins', value: 'blanc' },
+                        { label: 'Draw', value: 'nulle' },
+                        { label: 'Educational', value: 'pedagogique' },
+                    ]}
+                    value={formData.result}
+                    onChange={handleInputChange}
+                />
+
+                <FormField 
+                    id='date'
+                    label='Date'
+                    type='date'
+                    value={formData.date}
+                    onChange={handleInputChange}
+                    placeholder='MM/DD/YYYY'
+                />
+
+                <FormField 
+                    id='duration'
+                    label='Duration (in minutes)'
+                    type='number'
+                    value={formData.duration}
+                    onChange={handleInputChange}
+                    placeholder='e.g., 30'
+                />
 
                 <FormField 
                     id='description'
@@ -106,7 +257,7 @@ const Page = () => {
                     value={formData.description}
                     onChange={handleInputChange}
                     as='textarea'
-                    placeholder='Describe what this video is about'
+                    placeholder='Describe the context of this match...'
                 />
 
                 <FileInput 
@@ -132,6 +283,18 @@ const Page = () => {
                     onReset={handleThumbnailReset}
                     type='image'
                 />
+
+                <FileInput 
+                    id='sgf'
+                    label='SGF File'
+                    accept='.sgf'
+                    file={sgf.file}
+                    previewUrl={sgf.previewUrl}
+                    inputRef={sgf.inputRef}
+                    onChange={handleSgfChange}
+                    onReset={handleSgfReset}
+                    type='sgf'
+                />
                    
                 <button type='submit' className="bg-yellow-500 text-white px-4 py-2 rounded-lg">
                     Upload
@@ -139,7 +302,6 @@ const Page = () => {
     
             </form>
             
-
         </div>
     )
 }

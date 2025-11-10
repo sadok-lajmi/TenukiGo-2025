@@ -11,12 +11,12 @@ const Page = () => {
   const [matches, setMatches] = useState<Array<any>>([])
 
   useEffect(() => {
-    // Fetch videos from API
-    const fetchVideos = async () => {
+    // Fetch matches from API
+    const fetchMatches = async () => {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_matches`)
       const data = await response.json()
       setMatches(data['parties']) }
-    fetchVideos()
+    fetchMatches()
   }, [])
 
   const [query, setQuery] = useState<string>('')

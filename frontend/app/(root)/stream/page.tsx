@@ -7,8 +7,8 @@ const Page = () => {
 
   const [formData, setFormData] = useState({
     title: '',
-    player_1: '',
-    player_2: '',
+    player_b: '',
+    player_w: '',
     description: '',
   });
 
@@ -47,22 +47,22 @@ const Page = () => {
           placeholder='Enter the title of your stream'
         />
         <FormField 
-          id='player_1'
-          label='Player 1'
+          id='player_b'
+          label='Player for Black'
           as = 'search'
           options={players}
-          value={formData.player_1}
+          value={formData.player_b}
           onChange={handleInputChange}
-          placeholder='Enter the name of Player 1'
+          placeholder='first and last name'
         />
         <FormField 
-          id='player_2'
-          label='Player 2'
+          id='player_w'
+          label='Player for White'
           as ='search'
           options={players}
-          value={formData.player_2}
+          value={formData.player_w}
           onChange={handleInputChange}
-          placeholder='Enter the name of Player 2'
+          placeholder='first and last name'
         />
         <FormField 
           id='description'
