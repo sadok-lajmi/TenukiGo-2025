@@ -25,7 +25,7 @@ const Page = () => {
   }
 
   const filteredPlayers = players.filter(player =>
-    player['nom'].toLowerCase().includes(query.toLowerCase()) || player['prenom'].toLowerCase().includes(query.toLowerCase())
+    player[1].toLowerCase().includes(query.toLowerCase()) || player[2].toLowerCase().includes(query.toLowerCase())
   )
 
   return (
@@ -37,7 +37,7 @@ const Page = () => {
           <p>No players found.</p>
         ) : (
           filteredPlayers.map((player) => (
-            <PlayerCard key={player['id_joueur']} id={player['id_joueur']} firstname={player['prénom']} lastname={player['nom_de_famille']} level={player['niveau']}/>
+            <PlayerCard key={player[0]} id={player[0]} firstname={player[1]} lastname={player[2]} level={player[3]}/>
           ))
         )}
       </section>

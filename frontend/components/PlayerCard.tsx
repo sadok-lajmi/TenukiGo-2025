@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
@@ -8,7 +7,7 @@ const PlayerCard = ({ id, firstname, lastname, level }: PlayerCardProps) => {
   return (
     <Link href={`/player/${id}`} className='player-card'>
       {/* Left: Player Name */}
-      <p className="text-lg font-bold text-dark-100">
+      <p className="text-lg text-dark-150">
         {firstname} {lastname}
       </p>
 
