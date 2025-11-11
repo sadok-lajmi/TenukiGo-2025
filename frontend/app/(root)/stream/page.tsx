@@ -7,6 +7,7 @@ const Page = () => {
 
   const [formData, setFormData] = useState({
     title: '',
+    style: '',
     player_b: '',
     player_w: '',
     description: '',
@@ -20,6 +21,7 @@ const Page = () => {
     }));
   };
 
+  // fetch the list of player names from the API
   type PlayerOption = { label: string; value: string | number };
   const [players, setPlayers] = useState<PlayerOption[]>([]);
   useEffect(() => {
@@ -34,6 +36,12 @@ const Page = () => {
     fetchPlayers();
   }, []);
 
+  // manage the preview video player
+  const [streamUrl, setStreamUrl] = useState("");
+  const handleStreamUrlChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setStreamUrl(e.target.value);
+  };
+
   return (
     <div className='wrapper-md stream-page'>
       <h1>Live Stream</h1>
@@ -45,6 +53,19 @@ const Page = () => {
           value={formData.title}
           onChange={handleInputChange}
           placeholder='Enter the title of your stream'
+        />
+        <FormField 
+          id='style'
+          label='Style'
+          as="select"
+          options={[
+              { label: 'Select a style', value: '' },
+              { label: 'Tournament', value: 'tournoi' },
+              { label: 'Friendly', value: 'amical' },
+              { label: 'Educational', value: 'pedagogique' },
+          ]}
+          value={formData.style}
+          onChange={handleInputChange}
         />
         <FormField 
           id='player_b'
@@ -75,9 +96,21 @@ const Page = () => {
       </form>
 
       <form className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
-        <h1 className='text-2xl font-semibold mb-5'>Video Player</h1>
-        <VideoPlayer url={`${process.env.NEXT_PUBLIC_STREAM_URL}/live/stream.m3u8`} />
+        <h1 className='text-2xl font-semibold'>Stream Preview</h1>
+        <FormField 
+          id='stream_url'
+          label='Stream URL'
+          value={streamUrl}
+          onChange={handleStreamUrlChange}
+          placeholder='Default stream URL : http://localhost:8080/live/streamkey/index.m3u8'
+        />
+        <VideoPlayer url={streamUrl ? streamUrl : "http://localhost:8080/live/streamkey/index.m3u8"} />
       </form>
+      <div className="flex justify-center">    
+      <button type='submit' className="bg-blue-400 text-white px-4 py-2 rounded-lg w-32">
+          Start
+      </button>
+      </div>
     </div>
   )
 }
