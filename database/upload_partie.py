@@ -32,7 +32,7 @@ def get_tables():
     except Exception as e:
         return {"error": str(e)}
     
-@app.get("/joueur")
+@app.get("/joueurs")
 def get_joueurs():
     try:
         conn = psycopg2.connect("postgresql://postgres:15370@localhost:5432/postgres")
@@ -81,7 +81,7 @@ def search_joueurs(q: str):
 # -----------------------------
 # 2) CRÉATION D'UN JOUEUR
 # -----------------------------
-@app.post("/create_joueur")
+@app.post("/joueurs")
 def create_joueur(
     prénom: str = Form(...),
     nom: str = Form(...),
@@ -115,7 +115,7 @@ def create_joueur(
 # -----------------------------
 # CRÉATION D'UNE PARTIE (CORRIGÉ)
 # -----------------------------
-@app.post("/create_partie")
+@app.post("/parties")
 def create_partie(
     blanc_id: int = Form(...),
     noir_id: int = Form(...),
@@ -190,7 +190,7 @@ def create_partie(
 # -----------------------------
 # RÉCUPÉRER TOUTES LES PARTIES
 # -----------------------------
-@app.get("/get_parties")
+@app.get("/parties")
 def get_parties():
     """
     Retourne toutes les parties avec les noms des joueurs
@@ -243,7 +243,7 @@ def get_parties():
 # -----------------------------
 # RÉCUPÉRER UNE PARTIE SPÉCIFIQUE
 # -----------------------------
-@app.get("/get_partie/{partie_id}")
+@app.get("/parties/{partie_id}")
 def get_partie(partie_id: int):
     """
     Retourne les détails complets d'une partie avec ses vidéos
@@ -329,7 +329,7 @@ def get_partie(partie_id: int):
 # -----------------------------
 # METTRE À JOUR UNE PARTIE
 # -----------------------------
-@app.put("/update_partie/{partie_id}")
+@app.put("/parties/{partie_id}")
 def update_partie(
     partie_id: int,
     victoire: str = Form(None),
@@ -487,7 +487,7 @@ async def upload_video(
 # -----------------------------
 # RÉCUPÉRER TOUTES LES VIDÉOS 
 # -----------------------------
-@app.get("/get_videos")
+@app.get("/videos")
 def get_videos():
     """
     Retourne toutes les vidéos avec leurs URLs complètes
