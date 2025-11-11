@@ -1,6 +1,6 @@
 'use client';
 import FormField from "@/components/FormField";
-import { title } from "process";
+import VideoPlayer from "@/components/VideoPlayer";
 import { ChangeEvent, useState, useEffect } from "react";
 
 const Page = () => {
@@ -72,6 +72,11 @@ const Page = () => {
           as='textarea'
           placeholder='Describe the streamed game'
         />
+      </form>
+
+      <form className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
+        <h1 className='text-2xl font-semibold mb-5'>Video Player</h1>
+        <VideoPlayer url={`${process.env.NEXT_PUBLIC_STREAM_URL}/live/stream.m3u8`} />
       </form>
     </div>
   )

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "better-auth": "^1.3.34",
+    "hls.js": "^1.6.14",
     "lucide-react": "^0.553.0",
     "next": "15.5.3",
     "react": "19.1.0",
