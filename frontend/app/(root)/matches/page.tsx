@@ -38,7 +38,7 @@ const Page = () => {
           <p>No matches found.</p>
         ) : (
           filteredMatches.map((match) => (
-            <MatchCard key={match['partie_id']} id={match['partie_id']} title={match['titre']} thumbnail={match['thumbnail']} createdAt={new Date(match['date'])} duration={match['durée']} />
+            <MatchCard key={match['partie_id']} id={match['partie_id']} title={match['titre']} thumbnail={match['thumbnail']} date={new Date(match['date'])} duration={match['durée']} />
           ))
         )}
       </section>

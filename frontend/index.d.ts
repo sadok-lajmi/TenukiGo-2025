@@ -88,7 +88,7 @@ declare interface MatchCardProps {
   id: string;
   title: string;
   thumbnail: string | null;
-  createdAt: Date | null;
+  date: Date | null;
   duration: number | null;
 }
 
