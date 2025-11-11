@@ -6,7 +6,7 @@ def get_or_create_joueur(cur, prenom, nom, niveau=None):
     cur.execute("""
         SELECT joueur_id
         FROM joueurs
-        WHERE prenom=%s AND nom_de_famille=%s
+        WHERE prenom=%s AND nom=%s
     """, (prenom, nom))
     
     row = cur.fetchone()
@@ -15,7 +15,7 @@ def get_or_create_joueur(cur, prenom, nom, niveau=None):
 
     # Sinon créer
     cur.execute("""
-        INSERT INTO joueurs (prenom, nom_de_famille, niveau)
+        INSERT INTO joueurs (prenom, nom, niveau)
         VALUES (%s, %s, %s)
         RETURNING joueur_id
     """, (prenom, nom, niveau))
