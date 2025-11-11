@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 import shutil
 from fastapi.middleware.cors import CORSMiddleware
+from services import get_or_create_joueur, normalize_name
 
 
 app = FastAPI()
@@ -20,10 +21,22 @@ app.add_middleware(
 
 DB_URL = "postgresql://postgres:15370@localhost:5432/postgres"  # change le nom de la base si besoin
 
+#dossier d'upload video 
+path=r"C:\Users\samue\Documents\Cours\cours IMT atlantique\A2\commande entreprise\videos"
+VIDEOS_DIR = Path(path)
+
+# Création des dossiers si absents
+VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Fonction pour créer une connexion PostgreSQL
+def db():
+    return psycopg2.connect(DB_URL)
+
+
 @app.get("/tables")
 def get_tables():
     try:
-        conn = psycopg2.connect("postgresql://postgres:15370@localhost:5432/postgres")
+        conn = db()
         cur = conn.cursor()
         cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='public';")
         tables = cur.fetchall()
@@ -35,10 +48,10 @@ def get_tables():
 @app.get("/joueurs")
 def get_joueurs():
     try:
-        conn = psycopg2.connect("postgresql://postgres:15370@localhost:5432/postgres")
+        conn = db()
         cur = conn.cursor()
         # Utiliser les guillemets doubles pour respecter la majuscule
-        cur.execute('SELECT * FROM "Joueur";')
+        cur.execute('SELECT * FROM "joueur";')
         rows = cur.fetchall()
         conn.close()
         return {"joueurs": rows}
@@ -47,7 +60,7 @@ def get_joueurs():
 
 # Normalisation simple pour éviter les doublons
 def normalize_name(name: str) -> str:
-    return name.strip().title()  # "lee sedol" → "Lee Sedol"
+    return name.strip().title() 
 
 
 # -----------------------------
@@ -55,21 +68,21 @@ def normalize_name(name: str) -> str:
 # -----------------------------
 @app.get("/search_joueurs")
 def search_joueurs(q: str):
-    conn = psycopg2.connect("postgresql://postgres:15370@localhost:5432/postgres")
+    conn = db()
     cur = conn.cursor()
 
     q_norm = q.strip().title()
 
     cur.execute("""
-        SELECT "Joueur_Id", "prénom", "Nom"
-        FROM "Joueur"
-        WHERE "prénom" ILIKE %s OR "Nom" ILIKE %s
-        ORDER BY "Nom" ASC
+        SELECT "joueur_id", "prenom", "nom"
+        FROM "joueurs"
+        WHERE "prenom" ILIKE %s OR "nom" ILIKE %s
+        ORDER BY "nom" ASC
         LIMIT 15
     """, (f"%{q_norm}%", f"%{q_norm}%"))
 
     joueurs = [
-        {"id": row[0], "prénom": row[1], "nom": row[2], "full": f"{row[1]} {row[2]}"}
+        {"id": row[0], "prenom": row[1], "nom": row[2], "full": f"{row[1]} {row[2]}"}
         for row in cur.fetchall()
     ]
 
@@ -79,67 +92,76 @@ def search_joueurs(q: str):
 
 
 # -----------------------------
-# 2) CRÉATION D'UN JOUEUR
+# 2) CRÉATION D'UN joueur
 # -----------------------------
 @app.post("/joueurs")
 def create_joueur(
-    prénom: str = Form(...),
+    prenom: str = Form(...),
     nom: str = Form(...),
     niveau: str = Form(None)
 ):
-    prénom_norm = normalize_name(prénom)
+    prenom_norm = normalize_name(prenom)
     nom_norm = normalize_name(nom)
-    conn = psycopg2.connect("postgresql://postgres:15370@localhost:5432/postgres")
+    conn = db()
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT "Joueur_Id"
-        FROM "Joueur"
-        WHERE "prénom" = %s AND "Nom" = %s
-    """, (prénom_norm, nom_norm))
+        SELECT "joueur_id"
+        FROM "joueur"
+        WHERE "prenom" = %s AND "nom" = %s
+    """, (prenom_norm, nom_norm))
 
     # Création du joueur
     cur.execute("""
-        INSERT INTO "Joueur" ("prénom", "Nom", "Niveau")
+        INSERT INTO "joueur" ("prenom", "nom", "niveau")
         VALUES (%s, %s, %s)
         RETURNING joueur_id
-    """, (prénom_norm, nom_norm, niveau))
+    """, (prenom_norm, nom_norm, niveau))
 
-    Joueur_Id = cur.fetchone()[0]
+    joueur_id = cur.fetchone()[0]
 
     conn.commit()
     cur.close()
     conn.close()
 
-    return {"id": Joueur_Id, "prénom": prénom_norm, "nom": nom_norm}
+    return {"id": joueur_id, "prenom": prenom_norm, "nom": nom_norm}
 # -----------------------------
 # CRÉATION D'UNE PARTIE (CORRIGÉ)
 # -----------------------------
 @app.post("/parties")
 def create_partie(
-    blanc_id: int = Form(...),
-    noir_id: int = Form(...),
-    date: str = Form(...),  # Format: "YYYY-MM-DD" ou "YYYY-MM-DD HH:MM:SS"
+    blanc_prenom: str = Form(...),
+    blanc_nom: str = Form(...),           
+    noir_prenom: str = Form(...),
+    noir_nom: str = Form(...),
+    niveau_blanc: str = Form(None),
+    niveau_noir: str = Form(None),
+    date: str = Form(None),  # Format: "YYYY-MM-DD" ou "YYYY-MM-DD HH:MM:SS"
     victoire: str = Form(None),  # Ex: "blanc", "noir", "nul"
-    durée: int = Form(None),  # Durée en minutes
+    duree: int = Form(None),  # Durée en minutes
     sgf: str = Form(None),  # Fichier SGF en texte
     description: str = Form(None)
 ):
+    
+
+     # Normalisation des noms
+    bp = normalize_name(blanc_prenom)
+    bn = normalize_name(blanc_nom)
+    np = normalize_name(noir_prenom)
+    nn = normalize_name(noir_nom)
+
     """
     Crée une nouvelle partie entre deux joueurs
     """
-    conn = psycopg2.connect("postgresql://postgres:15370@localhost:5432/postgres")
+    conn = db()
     cur = conn.cursor()
     
     try:
-        # Vérifier que les joueurs existent
-        cur.execute('SELECT "Joueur_Id" FROM "Joueur" WHERE "Joueur_Id" = %s', (blanc_id,))
-        if not cur.fetchone():
-            raise HTTPException(status_code=404, detail=f"Joueur blanc {blanc_id} non trouvé")
-        
-        cur.execute('SELECT "Joueur_Id" FROM "Joueur" WHERE "Joueur_Id" = %s', (noir_id,))
-        if not cur.fetchone():
-            raise HTTPException(status_code=404, detail=f"Joueur noir {noir_id} non trouvé")
+        #Créer ou trouver joueur blanc
+        blanc_id = get_or_create_joueur(cur, bp, bn, niveau_blanc)
+
+        # Créer ou trouver joueur noir
+        noir_id = get_or_create_joueur(cur, np, nn, niveau_noir)
         
         # Parser la date
         try:
@@ -156,10 +178,10 @@ def create_partie(
         # ⭐ CORRECTION : Ne pas spécifier partie_id, laisser PostgreSQL le générer
         # Utiliser DEFAULT pour les colonnes optionnelles
         cur.execute("""
-            INSERT INTO "partie" (blanc_id, noir_id, victoire, date, durée, sgf, description)
+            INSERT INTO "partie" (blanc_id, noir_id, victoire, date, duree, sgf, description)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING partie_id
-        """, (blanc_id, noir_id, victoire, date_obj, durée, sgf, description))
+        """, (blanc_id, noir_id, victoire, date_obj, duree, sgf, description))
         
         partie_id = cur.fetchone()[0]
         
@@ -171,7 +193,7 @@ def create_partie(
             "noir_id": noir_id,
             "date": date_obj.isoformat(),
             "victoire": victoire,
-            "durée": durée,
+            "duree": duree,
             "message": "Partie créée avec succès"
         }
     
@@ -195,24 +217,24 @@ def get_parties():
     """
     Retourne toutes les parties avec les noms des joueurs
     """
-    conn = psycopg2.connect("postgresql://postgres:15370@localhost:5432/postgres")
+    conn = db()
     cur = conn.cursor()
     
     try:
         cur.execute("""
             SELECT 
-                p."partie_Id", 
+                p."partie_id", 
                 p.date, 
                 p.victoire,
-                p.durée,
+                p.duree,
                 p.description,
-                jb."prénom" as blanc_prénom, 
-                jb."Nom" as blanc_nom,
-                jn."prénom" as noir_prénom,
-                jn."Nom" as noir_nom
+                jb."prenom" as blanc_prenom, 
+                jb."nom" as blanc_nom,
+                jn."prenom" as noir_prenom,
+                jn."nom" as noir_nom
             FROM "partie" p
-            LEFT JOIN "Joueur" jb ON p.blanc_id = jb."Joueur_Id"
-            LEFT JOIN "Joueur" jn ON p.noir_id = jn."Joueur_Id"
+            LEFT JOIN "joueur" jb ON p.blanc_id = jb."joueur_id"
+            LEFT JOIN "joueur" jn ON p.noir_id = jn."joueur_id"
             ORDER BY p.date DESC
         """)
         
@@ -224,7 +246,7 @@ def get_parties():
                 "partie_id": partie[0],
                 "date": partie[1].isoformat() if partie[1] else None,
                 "victoire": partie[2],
-                "durée": partie[3],
+                "duree": partie[3],
                 "description": partie[4],
                 "blanc": f"{partie[5]} {partie[6]}" if partie[5] else None,
                 "noir": f"{partie[7]} {partie[8]}" if partie[7] else None
@@ -248,7 +270,7 @@ def get_partie(partie_id: int):
     """
     Retourne les détails complets d'une partie avec ses vidéos
     """
-    conn = psycopg2.connect("postgresql://postgres:15370@localhost:5432/postgres")
+    conn = db()
     cur = conn.cursor()
     
     try:
@@ -258,18 +280,18 @@ def get_partie(partie_id: int):
                 p.partie_id, 
                 p.date, 
                 p.victoire,
-                p.durée,
+                p.duree,
                 p.sgf,
                 p.description,
                 p.blanc_id,
                 p.noir_id,
-                jb."prénom" as blanc_prénom, 
-                jb."Nom" as blanc_nom,
-                jn."prénom" as noir_prénom,
-                jn."Nom" as noir_nom
+                jb."prenom" as blanc_prenom, 
+                jb."nom" as blanc_nom,
+                jn."prenom" as noir_prenom,
+                jn."nom" as noir_nom
             FROM "partie" p
-            LEFT JOIN "Joueur" jb ON p.blanc_id = jb."Joueur_Id"
-            LEFT JOIN "Joueur" jn ON p.noir_id = jn."Joueur_Id"
+            LEFT JOIN "joueur" jb ON p.blanc_id = jb."joueur_id"
+            LEFT JOIN "joueur" jn ON p.noir_id = jn."joueur_id"
             WHERE p.partie_id = %s
         """, (partie_id,))
         
@@ -292,7 +314,7 @@ def get_partie(partie_id: int):
             "partie_id": partie[0],
             "date": partie[1].isoformat() if partie[1] else None,
             "victoire": partie[2],
-            "durée": partie[3],
+            "duree": partie[3],
             "sgf": partie[4],
             "description": partie[5],
             "blanc": {
@@ -333,14 +355,14 @@ def get_partie(partie_id: int):
 def update_partie(
     partie_id: int,
     victoire: str = Form(None),
-    durée: int = Form(None),
+    duree: int = Form(None),
     sgf: str = Form(None),
     description: str = Form(None)
 ):
     """
     Met à jour les informations d'une partie
     """
-    conn = psycopg2.connect("postgresql://postgres:15370@localhost:5432/postgres")
+    conn = db()
     cur = conn.cursor()
     
     try:
@@ -357,9 +379,9 @@ def update_partie(
             updates.append("victoire = %s")
             params.append(victoire)
         
-        if durée is not None:
-            updates.append("durée = %s")
-            params.append(durée)
+        if duree is not None:
+            updates.append("duree = %s")
+            params.append(duree)
         
         if sgf is not None:
             updates.append("sgf = %s")
@@ -373,13 +395,13 @@ def update_partie(
             return {"message": "Aucune modification à effectuer"}
         
         params.append(partie_id)
-        query = f'UPDATE "partie" SET {", ".join(updates)} WHERE "partie_Id" = %s'
+        query = f'UPDATE "partie" SET {", ".join(updates)} WHERE "partie_id" = %s'
         
         cur.execute(query, params)
         conn.commit()
         
         return {
-            "partie_Id": partie_id,
+            "partie_id": partie_id,
             "message": "Partie mise à jour avec succès",
             "updated_fields": len(updates)
         }
@@ -396,17 +418,15 @@ def update_partie(
 # -----------------------------
 # UPLOAD UNE VIDÉO
 # -----------------------------
-# Configuration
-UPLOAD_DIR = Path("uploads/videos")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # Monter le dossier pour servir les vidéos
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.mount("/videos", StaticFiles(directory=VIDEOS_DIR), name="videos")
+
 @app.post("/upload_video")
 async def upload_video(
     file: UploadFile = File(...),
     titre: str = Form(...),
-    partie_Id: int = Form(...)
+    partie_id: int = Form(...)
 ):
     """
     Upload une vidéo et l'enregistre dans la base de données
@@ -421,12 +441,12 @@ async def upload_video(
             detail=f"Format non supporté. Utilisez: {', '.join(allowed_extensions)}"
         )
     
-    conn = psycopg2.connect("postgresql://postgres:15370@localhost:5432/postgres")
+    conn = db()
     cur = conn.cursor()
     
     try:
         # Vérifier que la partie existe
-        cur.execute('SELECT "partie_Id" FROM "partie" WHERE "partie_Id" = %s', (partie_Id,))
+        cur.execute('SELECT "partie_id" FROM "partie" WHERE "partie_id" = %s', (partie_id,))
         if not cur.fetchone():
             raise HTTPException(status_code=404, detail="Partie non trouvée")
         
@@ -439,7 +459,7 @@ async def upload_video(
         
         # Organiser par date (optionnel mais recommandé)
         date_folder = datetime.now().strftime("%Y/%m")
-        full_dir = UPLOAD_DIR / date_folder
+        full_dir = VIDEOS_DIR / date_folder
         full_dir.mkdir(parents=True, exist_ok=True)
         
         file_path = full_dir / filename
@@ -449,13 +469,13 @@ async def upload_video(
             shutil.copyfileobj(file.file, buffer)
         
         # Chemin relatif pour la base de données
-        relative_path = f"videos/{date_folder}/{filename}"
+        relative_path = f"{date_folder}/{filename}"
         
         # Insérer dans la base de données
         cur.execute("""
-            INSERT INTO "Video" ("titre", "chemin", "partie_Id", "date_upload")
+            INSERT INTO "video" ("titre", "chemin", "partie_id", "date_upload")
             VALUES (%s, %s, %s, %s)
-            RETURNING "video_Id"
+            RETURNING "video_id"
         """, (titre, relative_path, partie_id, datetime.now()))
         
         video_id = cur.fetchone()[0]
@@ -466,7 +486,7 @@ async def upload_video(
             "video_id": video_id,
             "titre": titre,
             "chemin": relative_path,
-            "url": f"/uploads/{relative_path}",
+            "url": f"/videos/{relative_path}",
             "message": "Vidéo uploadée avec succès"
         }
     
@@ -492,15 +512,15 @@ def get_videos():
     """
     Retourne toutes les vidéos avec leurs URLs complètes
     """
-    conn = psycopg2.connect("postgresql://postgres:15370@localhost:5432/postgres")
+    conn = db()
     cur = conn.cursor()
     
     try:
         cur.execute("""
-            SELECT v."video_Id", v."titre", v."chemin", v."partie_Id", v."date_upload",
+            SELECT v."video_id", v."titre", v."chemin", v."partie_id", v."date_upload",
                    p.date as partie_date
             FROM "Video" v
-            LEFT JOIN "partie" p ON v."partie_Id" = p.partie_id
+            LEFT JOIN "partie" p ON v."partie_id" = p.partie_id
             ORDER BY v."date_upload" DESC
         """)
         
@@ -512,7 +532,7 @@ def get_videos():
                 "video_id": video[0],
                 "titre": video[1],
                 "chemin": video[2],
-                "url": f"/uploads/{video[2]}",
+                "url": f"/videos/{video[2]}",
                 "partie_id": video[3],
                 "date_upload": video[4].isoformat() if video[4] else None,
                 "partie_date": video[5].isoformat() if video[5] else None
