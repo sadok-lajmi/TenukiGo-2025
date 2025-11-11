@@ -37,7 +37,7 @@ declare interface FileInputProps {
   inputRef: React.RefObject<HTMLInputElement | null>;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onReset: () => void;
-  type: "video" | "image";
+  type: "video" | "image" | "sgf";
 }
 
 declare interface TranscriptEntry {
@@ -70,6 +70,21 @@ declare interface SearchResult {
 }
 
 declare interface VideoCardProps {
+  id: string;
+  title: string;
+  thumbnail: string | null;
+  createdAt: Date | null;
+  duration: number | null;
+}
+
+declare interface PlayerCardProps {
+  id: string;
+  firstname: string;
+  lastname: string;
+  level: string;
+}
+
+declare interface MatchCardProps {
   id: string;
   title: string;
   thumbnail: string | null;
@@ -216,6 +231,9 @@ declare interface SharedHeaderProps {
   subHeader: string;
   title: string;
   userImg?: string;
+  query?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
 }
 
 declare interface SharedHeaderProps {

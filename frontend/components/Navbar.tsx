@@ -16,6 +16,18 @@ const Navbar = () => {
                 <h1>GoStream</h1>
             </Link>
 
+            <Link href="/">
+                <button>Videos</button>
+            </Link>
+
+            <Link href="/matches">
+                <button>Matches</button>
+            </Link>
+
+            <Link href="/players">
+                <button>Players</button>
+            </Link>
+
             {user && (
                 <figure>
                     <button onClick={() => router.push('/profile/123456')} >

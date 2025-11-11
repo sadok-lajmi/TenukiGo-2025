@@ -2,6 +2,7 @@
 
 import Header from '@/components/Header'
 import VideoCard from '@/components/VideoCard'
+import DropdownList from '@/components/DropdownList'
 import {use, useEffect, useState} from 'react'
 
 
@@ -29,7 +30,8 @@ const Page = () => {
 
   return (
     <main className='wrapper page'>
-      <Header title='All Videos' subHeader='Public Library' query={query} onChange={handleSearchChange} />
+      <Header title='All Videos' subHeader='Public Library' query={query} onChange={handleSearchChange} type="videos"/>
+      <DropdownList />
       <section className='video-grid'>
         {filteredVideos.length === 0 ? (
           <p>No videos found.</p>

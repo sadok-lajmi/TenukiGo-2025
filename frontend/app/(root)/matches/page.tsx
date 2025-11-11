@@ -1,0 +1,48 @@
+'use client';
+
+import Header from '@/components/Header'
+import MatchCard from '@/components/MatchCard';
+import DropdownList from '@/components/DropdownList'
+import {use, useEffect, useState} from 'react'
+
+
+const Page = () => {
+
+  const [matches, setMatches] = useState<Array<any>>([])
+
+  useEffect(() => {
+    // Fetch matches from API
+    const fetchMatches = async () => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_matches`)
+      const data = await response.json()
+      setMatches(data['parties']) }
+    fetchMatches()
+  }, [])
+
+  const [query, setQuery] = useState<string>('')
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value)
+  }
+
+  const filteredMatches = matches.filter(match =>
+    match['titre'].toLowerCase().includes(query.toLowerCase())
+  )
+
+  return (
+    <main className='wrapper page'>
+      <Header title='All Matches' subHeader='Public Library' query={query} onChange={handleSearchChange} type="matches"/>
+      <DropdownList />
+      <section className='video-grid'>
+        {filteredMatches.length === 0 ? (
+          <p>No matches found.</p>
+        ) : (
+          filteredMatches.map((match) => (
+            <MatchCard key={match['id_partie']} id={match['id_partie']} title={match['titre']} thumbnail={match['thumbnail']} createdAt={new Date(match['date_creation'])} duration={match['duree']} />
+          ))
+        )}
+      </section>
+    </main>
+  )
+}
+
+export default Page

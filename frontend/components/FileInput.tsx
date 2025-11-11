@@ -30,14 +30,16 @@ const FileInput = ({
           width={24}
           height={24}
         />
-        <p>Click to upload your {id}</p>
+        <p>Click to select your {id}</p>
       </figure>
     ) : (
       <div>
         {type === "video" ? (
           <video src={previewUrl} controls />
-        ) : (
+        ) : type === "image" ? (
           <Image src={previewUrl} alt={`Selected ${id}`} fill />
+        ) : (
+          <Image src="/assets/icons/check.svg" alt="check icon" fill/>
         )}
         <button type="button" onClick={onReset}>
           <Image
