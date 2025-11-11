@@ -19,14 +19,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DB_URL = "postgresql://postgres:15370@localhost:5432/postgres"  # change le nom de la base si besoin
+#DB_URL = "postgresql://postgres:15370@localhost:5432/postgres"  # change le nom de la base si besoin
+DB_URL = "postgresql://go_user:secret@localhost:5432/go_db"
 
 #dossier d'upload video 
 path=r"C:\Users\samue\Documents\Cours\cours IMT atlantique\A2\commande entreprise\videos"
-VIDEOS_DIR = Path(path)
+videoS_DIR = Path(path)
 
 # Création des dossiers si absents
-VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
+videoS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Fonction pour créer une connexion PostgreSQL
 def db():
@@ -51,17 +52,12 @@ def get_joueurs():
         conn = db()
         cur = conn.cursor()
         # Utiliser les guillemets doubles pour respecter la majuscule
-        cur.execute('SELECT * FROM "joueur";')
+        cur.execute('SELECT * FROM "joueurs";')
         rows = cur.fetchall()
         conn.close()
         return {"joueurs": rows}
     except Exception as e:
         return {"error": str(e)}
-
-# Normalisation simple pour éviter les doublons
-def normalize_name(name: str) -> str:
-    return name.strip().title() 
-
 
 # -----------------------------
 # 1) AUTOCOMPLÉTION DES JOUEURS
@@ -107,13 +103,13 @@ def create_joueur(
 
     cur.execute("""
         SELECT "joueur_id"
-        FROM "joueur"
+        FROM "joueurs"
         WHERE "prenom" = %s AND "nom" = %s
     """, (prenom_norm, nom_norm))
 
     # Création du joueur
     cur.execute("""
-        INSERT INTO "joueur" ("prenom", "nom", "niveau")
+        INSERT INTO "joueurs" ("prenom", "nom", "niveau")
         VALUES (%s, %s, %s)
         RETURNING joueur_id
     """, (prenom_norm, nom_norm, niveau))
@@ -163,22 +159,26 @@ def create_partie(
         # Créer ou trouver joueur noir
         noir_id = get_or_create_joueur(cur, np, nn, niveau_noir)
         
-        # Parser la date
-        try:
-            date_obj = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
-        except ValueError:
+        # Si aucune date fournie → on met maintenant()
+        if not date or date.strip() == "":
+            date_obj = datetime.now()
+        else:
+            # Parser la date
             try:
-                date_obj = datetime.strptime(date, "%Y-%m-%d")
+                date_obj = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
             except ValueError:
-                raise HTTPException(
-                    status_code=400, 
-                    detail="Format de date invalide. Utilisez YYYY-MM-DD ou YYYY-MM-DD HH:MM:SS"
-                )
+                try:
+                    date_obj = datetime.strptime(date, "%Y-%m-%d")
+                except ValueError:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail="Format de date invalide. Utilisez YYYY-MM-DD ou YYYY-MM-DD HH:MM:SS"
+                    )
         
         # ⭐ CORRECTION : Ne pas spécifier partie_id, laisser PostgreSQL le générer
         # Utiliser DEFAULT pour les colonnes optionnelles
         cur.execute("""
-            INSERT INTO "partie" (blanc_id, noir_id, victoire, date, duree, sgf, description)
+            INSERT INTO "parties" (blanc_id, noir_id, victoire, date, duree, sgf, description)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING partie_id
         """, (blanc_id, noir_id, victoire, date_obj, duree, sgf, description))
@@ -232,9 +232,9 @@ def get_parties():
                 jb."nom" as blanc_nom,
                 jn."prenom" as noir_prenom,
                 jn."nom" as noir_nom
-            FROM "partie" p
-            LEFT JOIN "joueur" jb ON p.blanc_id = jb."joueur_id"
-            LEFT JOIN "joueur" jn ON p.noir_id = jn."joueur_id"
+            FROM "parties" p
+            LEFT JOIN "joueurs" jb ON p.blanc_id = jb."joueur_id"
+            LEFT JOIN "joueurs" jn ON p.noir_id = jn."joueur_id"
             ORDER BY p.date DESC
         """)
         
@@ -289,9 +289,9 @@ def get_partie(partie_id: int):
                 jb."nom" as blanc_nom,
                 jn."prenom" as noir_prenom,
                 jn."nom" as noir_nom
-            FROM "partie" p
-            LEFT JOIN "joueur" jb ON p.blanc_id = jb."joueur_id"
-            LEFT JOIN "joueur" jn ON p.noir_id = jn."joueur_id"
+            FROM "parties" p
+            LEFT JOIN "joueurs" jb ON p.blanc_id = jb."joueur_id"
+            LEFT JOIN "joueurs" jn ON p.noir_id = jn."joueur_id"
             WHERE p.partie_id = %s
         """, (partie_id,))
         
@@ -303,7 +303,7 @@ def get_partie(partie_id: int):
         # Récupérer les vidéos associées
         cur.execute("""
             SELECT video_id, titre, chemin, date_upload
-            FROM "Video"
+            FROM "video"
             WHERE partie_id = %s
             ORDER BY date_upload DESC
         """, (partie_id,))
@@ -367,7 +367,7 @@ def update_partie(
     
     try:
         # Vérifier que la partie existe
-        cur.execute('SELECT partie_id FROM "partie" WHERE partie_id = %s', (partie_id,))
+        cur.execute('SELECT partie_id FROM "parties" WHERE partie_id = %s', (partie_id,))
         if not cur.fetchone():
             raise HTTPException(status_code=404, detail="Partie non trouvée")
         
@@ -395,7 +395,7 @@ def update_partie(
             return {"message": "Aucune modification à effectuer"}
         
         params.append(partie_id)
-        query = f'UPDATE "partie" SET {", ".join(updates)} WHERE "partie_id" = %s'
+        query = f'UPDATE "parties" SET {", ".join(updates)} WHERE "partie_id" = %s'
         
         cur.execute(query, params)
         conn.commit()
@@ -420,7 +420,7 @@ def update_partie(
 # -----------------------------
 
 # Monter le dossier pour servir les vidéos
-app.mount("/videos", StaticFiles(directory=VIDEOS_DIR), name="videos")
+app.mount("/videos", StaticFiles(directory=videoS_DIR), name="videos")
 
 @app.post("/upload_video")
 async def upload_video(
@@ -446,7 +446,7 @@ async def upload_video(
     
     try:
         # Vérifier que la partie existe
-        cur.execute('SELECT "partie_id" FROM "partie" WHERE "partie_id" = %s', (partie_id,))
+        cur.execute('SELECT "partie_id" FROM "parties" WHERE "partie_id" = %s', (partie_id,))
         if not cur.fetchone():
             raise HTTPException(status_code=404, detail="Partie non trouvée")
         
@@ -459,7 +459,7 @@ async def upload_video(
         
         # Organiser par date (optionnel mais recommandé)
         date_folder = datetime.now().strftime("%Y/%m")
-        full_dir = VIDEOS_DIR / date_folder
+        full_dir = videoS_DIR / date_folder
         full_dir.mkdir(parents=True, exist_ok=True)
         
         file_path = full_dir / filename
@@ -519,8 +519,8 @@ def get_videos():
         cur.execute("""
             SELECT v."video_id", v."titre", v."chemin", v."partie_id", v."date_upload",
                    p.date as partie_date
-            FROM "Video" v
-            LEFT JOIN "partie" p ON v."partie_id" = p.partie_id
+            FROM "video" v
+            LEFT JOIN "parties" p ON v."partie_id" = p.partie_id
             ORDER BY v."date_upload" DESC
         """)
         
