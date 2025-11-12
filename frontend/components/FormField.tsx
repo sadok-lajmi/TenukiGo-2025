@@ -5,7 +5,11 @@ const FormField = ({ id, label, type = 'text', value, onChange, placeholder, as 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
     const filteredOptions = options.filter(option =>
+        typeof value === "string"
+        ? options.filter(option =>
         option.label.toLowerCase().includes(value.toLowerCase())
+        )
+        : options
     )
 
     const handleSelect = (optionValue: string) => {
