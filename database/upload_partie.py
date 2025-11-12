@@ -124,7 +124,7 @@ def create_joueur(
 # -----------------------------
 # CRÉATION D'UNE PARTIE (CORRIGÉ)
 # -----------------------------
-@app.post("/parties")
+@app.post("/create_partie")
 def create_partie(
     blanc_prenom: str = Form(...),
     blanc_nom: str = Form(...),           
