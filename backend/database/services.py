@@ -1,9 +1,6 @@
 import psycopg2
 from datetime import datetime, timezone
-
-# --- Configuration ---
-DB_URL = "postgresql://go_user:secret@localhost:5432/go_db"
-
+from config.settings import DB_URL
 
 def db():
     return psycopg2.connect(DB_URL)

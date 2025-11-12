@@ -1,15 +1,17 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+# Dependances externes
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Form, UploadFile, File
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from datetime import datetime
 import json
+import os
+import shutil
+
+# Dependances internes
 from ConnectionManager import ConnectionManager
 from database.services import process_and_save_game, db, get_or_create_joueur, normalize_name
-from pathlib import Path
-from fastapi import HTTPException, Form, UploadFile, File
-from fastapi.staticfiles import StaticFiles
-import os
-from datetime import datetime
-import shutil
+from config.settings import CLUB_PASSWORD, VIDEOS_DIR
 
 
 app = FastAPI()
@@ -21,11 +23,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 manager = ConnectionManager()
-
-# --- Configuration ---
-CLUB_PASSWORD = "clubgo2025"
-VIDEOS_DIR = Path("../../data/storage/videos")
-SGF_FILES_DIR = Path("../../data/storage/sgf_files")
 
 
 # ------------------------------
