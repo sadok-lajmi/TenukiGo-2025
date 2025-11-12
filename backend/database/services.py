@@ -50,7 +50,7 @@ def process_and_save_game(data: dict) -> dict:
 
         # --- Gérer Joueur Blanc ---
         cur.execute(
-            "SELECT joueur_id FROM joueurs WHERE prénom = %s AND nom_de_famille = %s",
+            "SELECT joueur_id FROM joueurs WHERE prenom = %s AND nom = %s",
             (blanc_prenom, blanc_nom)
         )
         blanc_row = cur.fetchone()
@@ -58,14 +58,14 @@ def process_and_save_game(data: dict) -> dict:
             blanc_id = blanc_row[0]
         else:
             cur.execute(
-                "INSERT INTO joueurs (prénom, nom_de_famille) VALUES (%s, %s) RETURNING joueur_id",
+                "INSERT INTO joueurs (prenom, nom) VALUES (%s, %s) RETURNING joueur_id",
                 (blanc_prenom, blanc_nom)
             )
             blanc_id = cur.fetchone()[0]
 
         # --- Gérer Joueur Noir ---
         cur.execute(
-            "SELECT joueur_id FROM joueurs WHERE prénom = %s AND nom_de_famille = %s",
+            "SELECT joueur_id FROM joueurs WHERE prenom = %s AND nom = %s",
             (noir_prenom, noir_nom)
         )
         noir_row = cur.fetchone()
@@ -73,7 +73,7 @@ def process_and_save_game(data: dict) -> dict:
             noir_id = noir_row[0]
         else:
             cur.execute(
-                "INSERT INTO joueurs (prénom, nom_de_famille) VALUES (%s, %s) RETURNING joueur_id",
+                "INSERT INTO joueurs (prenom, nom) VALUES (%s, %s) RETURNING joueur_id",
                 (noir_prenom, noir_nom)
             )
             noir_id = cur.fetchone()[0]
