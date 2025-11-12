@@ -5,8 +5,8 @@
 -- Table joueurs
 CREATE TABLE joueurs (
     joueur_id SERIAL PRIMARY KEY,
-    prénom VARCHAR(100),
-    nom_de_famille VARCHAR(100),
+    prenom VARCHAR(100),
+    nom VARCHAR(100),
     niveau VARCHAR(20)
 );
 
