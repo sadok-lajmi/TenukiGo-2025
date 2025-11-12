@@ -486,6 +486,27 @@ def update_partie(
         conn.close()
 
 
+
+@app.get("/get_sgf/{partie_id}")
+def get_sgf(partie_id: int):
+    conn = db()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+            SELECT sgf FROM partie WHERE partie_id = %s
+        """, (partie_id,))
+        row = cur.fetchone()
+
+        if not row:
+            raise HTTPException(404, "Partie non trouvée")
+
+        return {"partie_id": partie_id, "sgf": row[0]}
+
+    finally:
+        cur.close()
+        conn.close()
+        
 # -----------------------------
 # UPLOAD UNE VIDÉO
 # -----------------------------
