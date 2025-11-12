@@ -16,8 +16,8 @@ const Navbar = () => {
                 <h1>GoStream</h1>
             </Link>
 
-            <Link href="/">
-                <button>Videos</button>
+            <Link href="/watchlist">
+                <button>Lives</button>
             </Link>
 
             <Link href="/matches">

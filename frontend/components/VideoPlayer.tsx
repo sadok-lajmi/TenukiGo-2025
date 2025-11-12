@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Hls, { HlsConfig, FragLoadedData, ErrorData } from "hls.js";
+// J'importe des icônes pour une meilleure UI
+import { Loader2, AlertTriangle, RadioTower } from "lucide-react";
 
 interface VideoPlayerProps {
   url: string;
@@ -10,9 +12,12 @@ interface VideoPlayerProps {
 export default function VideoPlayer({ url }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
-  const [latency, setLatency] = useState<number>(0);
+  
+  // États de l'interface
+  const [latency, setLatency] = useState<number | null>(null);
   const [streamAvailable, setStreamAvailable] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [showGoLive, setShowGoLive] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -20,8 +25,11 @@ export default function VideoPlayer({ url }: VideoPlayerProps) {
 
     setStreamAvailable(true);
     setIsLoading(true);
+    setLatency(null);
+    setShowGoLive(false);
 
     if (Hls.isSupported()) {
+      // Utilisation de la même configuration HLS
       const config: Partial<HlsConfig> = {
         lowLatencyMode: true,
         maxBufferLength: 4,
@@ -39,13 +47,20 @@ export default function VideoPlayer({ url }: VideoPlayerProps) {
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         setIsLoading(false);
-        video.play().catch(() => {});
+        video.play().catch(() => {
+          // La lecture automatique peut échouer, c'est normal
+        });
       });
 
       hls.on(Hls.Events.FRAG_LOADED, (_event, data: FragLoadedData) => {
-        if (video.currentTime > 0) {
-          const currentLatency = hls.latency || 0;
-          setLatency(parseFloat(currentLatency.toFixed(2)));
+        // hls.latency est une mesure plus directe de la latence
+        if (hls.latency) {
+          const currentLatency = parseFloat(hls.latency.toFixed(2));
+          setLatency(currentLatency);
+          // Si on est à plus de 5s de retard, on propose de revenir au direct
+          if (currentLatency > 5) {
+            setShowGoLive(true);
+          }
         }
       });
 
@@ -56,23 +71,27 @@ export default function VideoPlayer({ url }: VideoPlayerProps) {
         }
       });
 
+      // Votre logique de correction de dérive (drift)
+      // C'est utile si la synchro auto de HLS n'est pas assez agressive
       const syncInterval = setInterval(() => {
         if (video.buffered.length > 0) {
           const bufferEnd = video.buffered.end(video.buffered.length - 1);
           const currentTime = video.currentTime;
           const bufferDiff = bufferEnd - currentTime;
-          if (bufferDiff > 6) {
-            video.currentTime = bufferEnd - 2;
+          
+          if (bufferDiff > 6) { // Si on dérive de 6s par rapport au buffer
+            video.currentTime = bufferEnd - 2; // On resynchronise
+            setShowGoLive(false); // On vient de sauter, donc on cache le bouton
           }
-          setLatency(bufferDiff);
         }
-      }, 1000);
+      }, 2000); // Vérification toutes les 2 secondes
 
       return () => {
         clearInterval(syncInterval);
         hls.destroy();
       };
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      // Fallback pour Safari (iOS)
       video.src = url;
       video.addEventListener("loadedmetadata", () => {
         setIsLoading(false);
@@ -81,34 +100,31 @@ export default function VideoPlayer({ url }: VideoPlayerProps) {
     }
   }, [url]);
 
+  // Logique pour le bouton "Passer au direct"
   const jumpToLive = () => {
     const video = videoRef.current;
-    if (video && video.buffered.length > 0) {
+    if (!video) return;
+
+    // hls.js a une meilleure façon de resynchroniser
+    if (hlsRef.current?.liveSyncPosition) {
+        video.currentTime = hlsRef.current.liveSyncPosition;
+    } else if (video.buffered.length > 0) {
+      // Fallback avec votre logique
       const bufferEnd = video.buffered.end(video.buffered.length - 1);
       video.currentTime = bufferEnd - 1;
     }
+    
+    setShowGoLive(false);
+    setLatency(0); // On suppose qu'on est revenu au direct
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "2rem", gap: "1rem" }}>
-      {isLoading && <div style={{ color: "#666" }}>Chargement du stream...</div>}
-
-      <div
-        style={{
-          width: "80%",
-          maxWidth: "800px",
-          height: "450px",
-          borderRadius: "10px",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
-          backgroundColor: "#000",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "#fff",
-          fontSize: "1.2rem",
-          textAlign: "center",
-        }}
-      >
+    // Conteneur principal - centré et avec un gap
+    <div className="flex flex-col items-center w-full gap-2">
+      
+      {/* Conteneur du lecteur vidéo */}
+      <div className="w-full max-w-4xl aspect-video rounded-xl shadow-xl bg-black relative flex justify-center items-center overflow-hidden">
+        
         {streamAvailable ? (
           <video
             ref={videoRef}
@@ -116,17 +132,53 @@ export default function VideoPlayer({ url }: VideoPlayerProps) {
             autoPlay
             muted
             playsInline
-            style={{
-              width: "100%",
-              height: "100%",
-              borderRadius: "10px",
-            }}
+            className="w-full h-full rounded-xl"
           />
         ) : (
-          "Pas de stream disponible en ce moment"
+          // État si le stream n'est pas dispo
+          <div className="flex flex-col items-center gap-2 text-neutral-400 p-4 text-center">
+            <AlertTriangle size={48} />
+            <span className="text-lg font-medium">Stream indisponible</span>
+            <span className="text-sm">Le flux n'est pas en ligne pour le moment.</span>
+          </div>
+        )}
+        
+        {/* Superposition de chargement */}
+        {isLoading && streamAvailable && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black bg-opacity-70 text-white">
+            <Loader2 size={48} className="animate-spin" />
+            <span className="text-lg">Chargement du stream...</span>
+          </div>
         )}
       </div>
 
+      {/* Barre de contrôles/infos sous le lecteur */}
+      <div className="w-full max-w-4xl flex justify-between items-center h-10 px-2">
+        <div>
+          {/* Affichage de la latence */}
+          {latency !== null && streamAvailable && (
+            <span 
+              className={`text-xs sm:text-sm px-3 py-1 rounded-full font-medium ${
+                latency > 3.0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+              }`}
+            >
+              Latence: {latency}s
+            </span>
+          )}
+        </div>
+        <div>
+          {/* Bouton "Passer au direct" */}
+          {showGoLive && streamAvailable && (
+            <button
+              onClick={jumpToLive}
+              className="flex items-center gap-1.5 px-3 py-2 bg-red-600 text-white rounded-full text-xs sm:text-sm font-medium hover:bg-red-700 transition-all"
+            >
+              <RadioTower size={16} />
+              <span>Passer au direct</span>
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

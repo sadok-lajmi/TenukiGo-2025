@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Upload, RotateCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Upload, RotateCcw, Loader2 } from 'lucide-react';
 
 // --- TYPES & CONSTANTES ---
 type Player = 'B' | 'W';
@@ -17,27 +17,6 @@ interface Move {
 }
 
 const BOARD_SIZE = 19;
-
-// SGF célèbre par défaut (Shusaku vs Gennan Inseki - "Ear-reddening game")
-const DEFAULT_SGF = `(;GM[1]FF[4]CA[UTF-8]AP[CGoban:3]ST[2]
-RU[Japanese]SZ[19]KM[0.00]
-PW[Gennan Inseki]PB[Kuwahara Shusaku]DT[1846-07-25]
-;B[qd];W[dc];B[pq];W[oc];B[cp];W[qo];B[pe];W[np];B[po];W[pp]
-;B[op];W[qp];B[oq];W[qq];B[pn];W[qn];B[no];W[pm];B[on];W[qi]
-;B[mc];W[qj];B[qk];W[pk];B[ql];W[pl];B[rm];W[rn];B[qm];W[rj]
-;B[om];W[rk];B[ol];W[oj];B[qr];W[rr];B[ps];W[ce];B[jc];W[eq]
-;B[dq];W[ep];B[do];W[cr];B[br];W[dr];B[bq];W[iq];B[hc];W[nc]
-;B[nd];W[mb];B[lc];W[nb];B[od];W[qb];B[rb];W[pa];B[qc];W[lb]
-;B[kb];W[ra];B[sb];W[gc];B[gb];W[fb];B[hb];W[ec];B[dj];W[cl]
-;B[dm];W[bm];B[dl];W[bk];B[ck];W[bn];B[bj];W[bo];B[fo];W[gp]
-;B[go];W[ho];B[fl];W[lq];B[mr];W[lr];B[mq];W[lp];B[mp];W[hn]
-;B[gm];W[hl];B[gk];W[hm];B[hk];W[ik];B[ij];W[jj];B[ii];W[ji]
-;B[ih];W[jh];B[ig];W[jg];B[if];W[jf];B[ie];W[je];B[id];W[mk]
-;B[ll];W[lk];B[kl];W[jl];B[jk];W[il];B[kk];W[kj];B[lj];W[mj]
-;B[li];W[mi];B[lh];W[mh];B[lg];W[mg];B[lf];W[me];B[md];W[mf]
-;B[ke];W[kh];B[kg];W[ki];B[jg];W[le];B[kd];W[of];B[pf];W[og]
-;B[pg];W[oh];B[ph];W[pi];B[lo];W[kn];B[ln];W[ko];B[km];W[jm]
-;B[kp];W[jp];B[kq];W[jq];B[kr];W[jr];B[ls];W[js];B[ks])`;
 
 // --- MOTEUR DE JEU (LOGIQUE DE GO) ---
 
@@ -150,8 +129,33 @@ const parseSGF = (sgfContent: string): Move[] => {
 // --- COMPOSANT PRINCIPAL ---
 
 export default function GoSgfViewer() {
-  const [sgfFile, setSgfFile] = useState<string>(DEFAULT_SGF);
+  const [sgfFile, setSgfFile] = useState<string>('');
+  const [defaultSgf, setDefaultSgf] = useState<string>(''); // Pour stocker la version originale chargée
   const [currentMoveIndex, setCurrentMoveIndex] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Charger le SGF par défaut depuis le dossier public au montage
+  useEffect(() => {
+    setIsLoading(true);
+    fetch('/sgf/example.sgf')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Impossible de charger le SGF (Status: ${response.status})`);
+        }
+        return response.text();
+      })
+      .then(text => {
+        setSgfFile(text);
+        setDefaultSgf(text);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error("Erreur de chargement SGF:", err);
+        setError(err.message);
+        setIsLoading(false);
+      });
+  }, []);
 
   // Parser les coups seulement quand le fichier SGF change
   const moves = useMemo(() => parseSGF(sgfFile), [sgfFile]);
@@ -296,6 +300,25 @@ export default function GoSgfViewer() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] w-full bg-neutral-100 rounded-xl p-8">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-4" />
+        <p className="text-neutral-600">Chargement de la partie...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] w-full bg-neutral-100 rounded-xl p-8 text-red-600">
+        <p className="font-bold mb-2">Erreur</p>
+        <p>{error}</p>
+        <p className="text-sm text-neutral-500 mt-4">Vérifiez que le fichier <code>public/sgf/example.sgf</code> existe.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center w-full bg-neutral-100 p-4 md:p-8 font-sans text-neutral-800 rounded-xl">
       <header className="mb-6 text-center">
@@ -361,8 +384,9 @@ export default function GoSgfViewer() {
               </span>
             </label>
             <button
-                onClick={() => { setSgfFile(DEFAULT_SGF); setCurrentMoveIndex(0); }}
+                onClick={() => { setSgfFile(defaultSgf); setCurrentMoveIndex(0); }}
                 className="mt-4 w-full flex items-center justify-center gap-2 py-2 px-4 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-lg transition-colors text-sm font-medium"
+                disabled={!defaultSgf}
             >
                 <RotateCcw size={16} />
                 Réinitialiser (Partie exemple)
