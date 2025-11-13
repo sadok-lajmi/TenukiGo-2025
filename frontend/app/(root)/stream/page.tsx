@@ -27,10 +27,10 @@ const Page = () => {
   useEffect(() => {
     // Fetch list of players from API
     const fetchPlayers = async () => {
-      const response = await fetch( `${process.env.NEXT_PUBLIC_API_URL}/joueur`);
+      const response = await fetch( `${process.env.NEXT_PUBLIC_API_URL}/players`);
       const data = await response.json();
-      const playersData = data['joueurs'];
-      const playersNames: PlayerOption[] = playersData.map((player: any) => ({ label: player[1]+' '+player[2], value: player[0].toString() }));
+      const playersData = data['players'];
+      const playersNames: PlayerOption[] = playersData.map((player: any) => ({ label: player['firstname']+' '+player['lastname'], value: player['id'] }));
       setPlayers(playersNames);
     }
     fetchPlayers();

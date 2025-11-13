@@ -118,8 +118,8 @@ const Page = () => {
         const fetchMatches = async () => {
             const response = await fetch( `${process.env.NEXT_PUBLIC_API_URL}/get_parties`);
             const data = await response.json();
-            const matchesData = data['parties'];
-            const matchestitles: MatchOption[] = matchesData.map((match: any) => ({ label: match[1], value: match[0] }));
+            const matchesData = data['matches'];
+            const matchestitles: MatchOption[] = matchesData?.map((match: any) => ({ label: match["title"], value: match["id"] }));
             setMatches(matchestitles);}
         fetchMatches()
         }, []);
@@ -142,7 +142,7 @@ const Page = () => {
 
                 <FormField
                     id='matchId'
-                    label='Match'
+                    label='match'
                     as='search'
                     options={matches}
                     value={formData.matchId}

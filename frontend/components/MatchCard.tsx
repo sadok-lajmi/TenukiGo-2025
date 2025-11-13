@@ -19,7 +19,7 @@ const MatchCard = ({ id, title, thumbnail, date, duration }: MatchCardProps) => 
       {/* Right Section (Thumbnail) */}
       <div className="flex-shrink-0 ml-4">
         <Image
-          src={thumbnail ? thumbnail : "/assets/samples/thumbnail (1).png"}
+          src={thumbnail ? `${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${thumbnail}` : "/assets/samples/thumbnail (1).png"}
           alt={`${title} thumbnail`}
           width={100}
           height={80}

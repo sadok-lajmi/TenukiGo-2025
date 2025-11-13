@@ -1,10 +1,8 @@
 'use client';
 
-
 import FormField from '@/components/FormField'
 import FileInput from '@/components/FileInput'
 import { ChangeEvent, useState, useRef, useEffect } from 'react'
-import { number } from 'better-auth';
 
 const Page = () => {
     const [formData, setFormData] = useState({
@@ -13,7 +11,7 @@ const Page = () => {
         player_b: '',
         player_w: '',
         result: '',
-        date: '',
+        date: Date.now().toString().slice(0,10),
         duration: '',
         description: '',
     });
@@ -38,10 +36,10 @@ const Page = () => {
 
     // Handle input changes for text fields
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
+        const { id, value } = e.target;
         setFormData((prevState) => ({
             ...prevState,
-            [name]: value,
+            [id]: value,
         }));
     }
 
@@ -124,10 +122,10 @@ const Page = () => {
   useEffect(() => {
     // Fetch list of players from API
     const fetchPlayers = async () => {
-      const response = await fetch( `${process.env.NEXT_PUBLIC_API_URL}/joueur`);
+      const response = await fetch( `${process.env.NEXT_PUBLIC_API_URL}/players`);
       const data = await response.json();
-      const playersData = data['joueurs'];
-      const playersNames: PlayerOption[] = playersData.map((player: any) => ({ label: player[1]+' '+player[2], value: player[0].toString() }));
+      const playersData = data['players'];
+      const playersNames: PlayerOption[] = playersData.map((player: any) => ({ label: player['firstname']+' '+player['lastname'], value: player['player_id'] }));
       setPlayers(playersNames);
     }
     fetchPlayers();
@@ -135,37 +133,68 @@ const Page = () => {
 
   // handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Form submission logic here
-    // Validate required fields
-    if (!formData.title || !formData.player_b || !formData.player_w || !formData.result) {
-      setError('Please fill in all required fields.');
-      return;
-    }
-    const dataToSend = new FormData();
-    dataToSend.append('title', formData.title);
-    dataToSend.append('style', formData.style);
-    dataToSend.append('black',formData.player_b);
-    dataToSend.append('white', formData.player_w);
-    dataToSend.append('result', formData.result);
-    dataToSend.append('date', formData.date);
-    dataToSend.append('duration', formData.duration);
-    dataToSend.append('description', formData.description);
-    if (video.file) dataToSend.append('video', video.file);
-    if (thumbnail.file) dataToSend.append('thumbnail', thumbnail.file);
-    if (sgf.file) dataToSend.append('sgf', sgf.file);
+  e.preventDefault();
 
+  setError(null);
+
+  // Validate required fields
+  if (!formData.title || !formData.player_b || !formData.player_w || !formData.result) {
+    setError('Please fill in all required fields.');
+    return;
+  }
+
+  const dataToSend = new FormData();
+
+  // Required string fields
+  dataToSend.append('title', formData.title);
+  dataToSend.append('result', formData.result);
+
+  // Optional string fields
+  if (formData.style) dataToSend.append('style', formData.style);
+  if (formData.description) dataToSend.append('description', formData.description);
+
+  // Required integer fields (as strings)
+  dataToSend.append('white', formData.player_w.toString());
+  dataToSend.append('black', formData.player_b.toString());
+
+  // Optional integer field
+  if (formData.duration) {
+    // Only append if not empty and a valid number
+    const durationNum = Number(formData.duration);
+    if (!isNaN(durationNum)) dataToSend.append('duration', durationNum.toString());
+  }
+
+  // Optional date field
+  if (formData.date) {
+    const dateObj = new Date(formData.date);
+    if (!isNaN(dateObj.getTime())) dataToSend.append('date', dateObj.toISOString());
+  }
+
+  // Files
+  if (video.file) dataToSend.append('video', video.file);
+  if (thumbnail.file) dataToSend.append('thumbnail', thumbnail.file);
+  if (sgf.file) dataToSend.append('sgf', sgf.file);
+
+  try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create_match`, {
       method: 'POST',
       body: dataToSend,
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      setError(error.message || 'An error occurred during upload.');
+      const err = await response.json();
+      setError(err.message || 'An error occurred during upload.');
       return;
     }
-  };
+
+    // Success: optionally reset form or redirect
+    console.log('Match uploaded successfully!');
+  } catch (err) {
+    setError('Network or server error.');
+    console.error(err);
+  }
+};
+
 
 
     return (
@@ -181,7 +210,7 @@ const Page = () => {
                     label='Title *'
                     value={formData.title}
                     onChange={handleInputChange}
-                    placeholder='Enter a clear and concise video title'
+                    placeholder='Enter a clear and concise match title'
                 />
                 
                 <FormField 
@@ -224,10 +253,10 @@ const Page = () => {
                     as="select"
                     options={[
                         { label: 'Select a result', value: '' },
-                        { label: 'Black wins', value: 'noire' },
-                        { label: 'White wins', value: 'blanc' },
-                        { label: 'Draw', value: 'nulle' },
-                        { label: 'Educational', value: 'pedagogique' },
+                        { label: 'Black wins', value: 'black' },
+                        { label: 'White wins', value: 'white' },
+                        { label: 'Draw', value: 'draw' },
+                        { label: 'Educational', value: 'educational' },
                     ]}
                     value={formData.result}
                     onChange={handleInputChange}

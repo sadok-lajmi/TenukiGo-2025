@@ -37,7 +37,7 @@ const Page = () => {
           <p>No videos found.</p>
         ) : (
           filteredVideos.map((video) => (
-            <VideoCard key={video['video_id']} id={video['video_id']} title={video['title']} thumbnail={video['thumbnail']} createdAt={new Date(video['date_upload'])} duration={video['duration']} />
+            <VideoCard key={video['video_id']} id={video['video_id']} title={video['title']} thumbnail={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${video['thumbnail']}`} createdAt={new Date(video['date_upload'])} duration={video['duration']} />
           ))
         )}
       </section>

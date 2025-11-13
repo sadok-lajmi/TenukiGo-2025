@@ -18,62 +18,47 @@ interface MatchDetails {
 }
 
 export default function MatchDetailsPage() {
-  // ⚠️ Normally you'd fetch this by ID (e.g. from API or params)
-  // For now, this is mock data for layout demonstration
-  const matchex: MatchDetails = {
-    title: "Alpha vs Beta",
-    style: "Blitz",
-    playerWhite: "John Alpha",
-    playerBlack: "Emma Beta",
-    result: "Black",
-    date: "Nov 8, 2025",
-    duration: "45m",
-    sgfFile: "/matches/alpha-vs-beta.sgf",
-    videoUrl: "/assets/samples/video (5).mp4",
-    thumbnail: "/assets/images/samples/thumbnail (5).png",
-  }
 
-  const [match, setMatch] = useState<MatchDetails | null>(matchex);
+  const [match, setMatch] = useState<MatchDetails | null>(null);
 
   // fetching matchdata by id 
   const params = useParams();
   const matchId = params.matchid;
+  // fetch match data
   useEffect(() => {
-    const fetchMatchData = async () => {
-      if (matchId) {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/match/${matchId}`);
-        const data = await response.json();
-        // Process and set the match data here
-        setMatch({title: data["title"],
-          style: data["style"],
-          playerWhite: data["white"],
-          playerBlack: data["black"],
-          result: data["result"],
-          date: data["date"],
-          duration: data["duration"],
-          sgfFile: data["sgf"],
-          videoUrl: data["videoUrl"],
-          thumbnail: data["thumbnail"],});
-      }
-    };
-    fetchMatchData();
-  }, [matchId]);
+  const fetchMatchAndPlayers = async () => {
+    if (!matchId) return;
 
-  const white: string = "";
-  const black: string = "";
-  useEffect(() => {
-    const fetchPlayerNames = async () => {
-      if (match) {
-        const responseWhite = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/player/${match.playerWhite}`);
-        const dataWhite = await responseWhite.json();
-        const responseBlack = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/player/${match.playerBlack}`);
-        const dataBlack = await responseBlack.json();
-        white.concat(dataWhite["firstname"]+" "+dataWhite["lastname"]);
-        black.concat(dataBlack["firstname"]+" "+dataBlack["lastname"]);
-      } 
-    };
-    fetchPlayerNames();
-  }, [match]);
+    // Fetch match data
+    const matchResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/match/${matchId}`);
+    const matchData = await matchResponse.json();
+
+    // Fetch player names in parallel
+    const [whiteResponse, blackResponse] = await Promise.all([
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/player/${matchData.white}`),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/player/${matchData.black}`)
+    ]);
+
+    const whiteData = await whiteResponse.json();
+    const blackData = await blackResponse.json();
+
+    // Set the full match state
+    setMatch({
+      title: matchData['title'],
+      style: matchData['style'],
+      playerWhite: `${whiteData.firstname} ${whiteData.lastname}`,
+      playerBlack: `${blackData.firstname} ${blackData.lastname}`,
+      result: matchData['result'],
+      date: matchData['date'],
+      duration: matchData['duration'],
+      sgfFile: matchData['sgf'] === "None" ? undefined : matchData['sgf'],
+      videoUrl: matchData['video'],
+      thumbnail: matchData['thumbnail'],
+    });
+  };
+
+  fetchMatchAndPlayers();
+}, [matchId]);
 
   return (
     <main className="wrapper page flex flex-col gap-6 py-8">
@@ -91,11 +76,11 @@ export default function MatchDetailsPage() {
       <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">White:</p>
-          <p>{white}</p>
+          <p>{match?.playerWhite}</p>
         </div>
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">Black:</p>
-          <p>{black}</p>
+          <p>{match?.playerBlack}</p>
         </div>
         <div className="flex justify-between items-center border-t border-gray-20 pt-3 mt-2">
           <p className="font-semibold text-dark-100">Result/Winner:</p>
@@ -106,7 +91,7 @@ export default function MatchDetailsPage() {
       {/* SGF File (if exists) */}
       {match?.sgfFile && (
         <Link
-          href={match.sgfFile}
+          href={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgfFile}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
           Download SGF File
@@ -122,10 +107,10 @@ export default function MatchDetailsPage() {
               width="640"
               height="360"
               controls
-              poster={match.thumbnail}
+              poster={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.thumbnail}`}
               className="w-full rounded-xl shadow-md"
             >
-              <source src={match.videoUrl} type="video/mp4" />
+              <source src={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.videoUrl}`} type="video/mp4" />
             </video>
           </div>
         </section>

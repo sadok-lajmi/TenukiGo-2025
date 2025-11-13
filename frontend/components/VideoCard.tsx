@@ -2,12 +2,14 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import React from 'react'
+import React, { useState } from 'react'
 
-const VideoCard = ({ id, title, thumbnail="/assets/samples/thumbnail (1).png", createdAt, duration }: VideoCardProps) => {
+const VideoCard = ({ id, title, thumbnail, createdAt, duration }: VideoCardProps) => {
+  const fallback = "/assets/samples/thumbnail (1).png"; // must be in /public/assets/
+  const [imgSrc, setImgSrc] = useState(thumbnail || fallback);
   return (
     <Link href={`/video/${id}`} className='video-card'>
-        <Image src={thumbnail ?? "/assets/samples/thumbnail (1).png"} alt='thumbnail' width={290} height={160} className='thumbnail' />
+        <Image src={imgSrc} alt='thumbnail' onError={()=>{if (imgSrc !== fallback) setImgSrc(fallback)}} width={290} height={160} className='thumbnail' />
         <article>
             <h2>{title} - {" "} {createdAt ? createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Unknown date'}</h2>
         </article>

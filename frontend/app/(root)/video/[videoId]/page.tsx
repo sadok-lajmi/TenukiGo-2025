@@ -83,7 +83,13 @@ return (
     {/* Video Section */}
     <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
       <div className="w-full rounded-xl overflow-hidden bg-black">
-        <video src={video.videoUrl} controls width="100%" height="100%" />
+        <video
+          src={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${video.videoUrl}`}
+          controls
+          poster={video.thumbnail ? `${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${video.thumbnail}` : undefined}
+          width="100%"
+          height="100%"
+        />
       </div>
 
       {/* Title + Date */}
@@ -143,7 +149,7 @@ return (
         {/* SGF File (if exists) */}
         {match?.sgf && (
           <Link
-            href={match.sgf}
+            href={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgf}`}
             className="block text-blue-500 underline hover:text-blue-600 font-medium"
           >
             Download SGF File

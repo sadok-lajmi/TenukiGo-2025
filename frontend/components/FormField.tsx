@@ -13,7 +13,7 @@ const FormField = ({ id, label, type = 'text', value, onChange, placeholder, as 
     )
 
     const handleSelect = (optionValue: string) => {
-        onChange({ target: { name: id, value: optionValue } } as any)
+        onChange({ target: { id: id, value: optionValue } } as any)
         setIsDropdownOpen(false)
     }
 
@@ -55,7 +55,7 @@ const FormField = ({ id, label, type = 'text', value, onChange, placeholder, as 
                                     </li>
                                 ))
                             ) : (
-                                <li>No player found</li>
+                                <li>No {label} found</li>
                             )}
                         </ul>
                     )}

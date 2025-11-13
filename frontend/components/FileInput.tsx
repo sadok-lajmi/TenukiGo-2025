@@ -30,7 +30,7 @@ const FileInput = ({
           width={24}
           height={24}
         />
-        <p>Click to select your {id}</p>
+        <p>Click to import your {id}</p>
       </figure>
     ) : (
       <div>
