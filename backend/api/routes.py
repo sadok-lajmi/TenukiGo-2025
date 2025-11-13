@@ -1,5 +1,6 @@
 # Dependances externes
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Form, UploadFile, File
+import sys
+from fastapi import FastAPI, Path, WebSocket, WebSocketDisconnect, HTTPException, Form, UploadFile, File
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -9,9 +10,11 @@ import os
 import shutil
 
 # Dependances internes
-from ConnectionManager import ConnectionManager
+
+from api.WebSocket import ConnectionManager  
 from database.services import process_and_save_game, db, get_or_create_joueur, normalize_name
 from config.settings import CLUB_PASSWORD, VIDEOS_DIR
+
 
 
 app = FastAPI()

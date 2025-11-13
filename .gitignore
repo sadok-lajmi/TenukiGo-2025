@@ -72,3 +72,8 @@ frontend/.env*
 # TypeScript
 frontend/*.tsbuildinfo
 frontend/next-env.d.ts
+
+#pycache files
+__pycache__/
+*.py[cod]
+
