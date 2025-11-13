@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
-const MatchCard = ({ id, title, thumbnail, createdAt, duration }: MatchCardProps) => {
+const MatchCard = ({ id, title, thumbnail, date, duration }: MatchCardProps) => {
   return (
     <Link href={`/match/${id}`} className='match-card'>
         {/* Left Section (Text) */}
@@ -12,7 +12,7 @@ const MatchCard = ({ id, title, thumbnail, createdAt, duration }: MatchCardProps
         <h2 className="text-lg font-bold text-dark-100">{title}</h2>
         <div className="flex items-center gap-6 text-sm text-gray-100 font-medium">
           <p>Duration: {duration ? duration : 'Unknown duration'} min</p>
-          <p>Date: {createdAt ? createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Unknown date'}</p>
+          <p>Date: {date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Unknown date'}</p>
         </div>
       </div>
 

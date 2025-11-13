@@ -85,7 +85,7 @@ declare interface PlayerCardProps {
 }
 
 declare interface MatchCardProps {
-  id: string;
+  id: string | number;
   title: string;
   thumbnail: string | null;
   date: Date | null;

@@ -1,44 +1,82 @@
 "use client"
-
+import { useState, useEffect, use } from "react"
+import { useParams } from "next/navigation"
+import Link from "next/dist/client/link"
 
 interface VideoDetails {
 id: string
 title: string
+duration: string
 uploadDate: string
 videoUrl: string
 thumbnail?: string
 match?: {
+  id: string | number
   title: string
   style?: string
-  duration: string
-  playerWhite: { firstName: string; lastName: string }
-  playerBlack: { firstName: string; lastName: string }
+  playerWhite: string 
+  playerBlack: string
   result: string
   description?: string
+  sgf?: string
 }
 }
 
 export default function VideoDetailsPage() {
 // Mock data (replace with API fetch later)
-const video: VideoDetails = {
+const videoex: VideoDetails = {
   id: "video-1",
   title: "Alpha vs Beta Championship Final",
+  duration: "45",
   uploadDate: "Nov 8, 2025",
   videoUrl: "/videos/alpha-vs-beta.mp4",
   thumbnail: "/images/match-thumb.jpg",
   match: {
+    id: "1",
     title: "Alpha vs Beta",
     style: "Blitz",
-    duration: "45m",
-    playerWhite: { firstName: "John", lastName: "Alpha" },
-    playerBlack: { firstName: "Emma", lastName: "Beta" },
+    playerWhite: "John Alpha",
+    playerBlack: "Emma Beta",
     result: "1 - 0",
+    sgf: "/sgf/example.sgf",
     description:
       "An intense blitz match between two top-tier players with aggressive openings and tactical midgame transitions.",
   },
 }
 
+// Fetch video details from API here and update state
+const [video, setVideo] = useState<VideoDetails>(videoex)
 const { match } = video
+const params = useParams()
+const videoId = params.videoId
+useEffect(() => {
+  const fetchVideoData = async () => {
+    if (videoId) {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/video/${videoId}`);
+      const data = await response.json();
+      // Process and set the video data here
+      setVideo({id: data["id"],
+        title: data["title"],
+        duration: data["duration"],
+        uploadDate: data["date_upload"],
+        videoUrl: data["url"],
+        thumbnail: data["thumbnail"],
+        match: data["match_id"] ? {
+          id: data["match_id"],
+          title: data["match_title"],
+          style: data["style"] ? data["style"] : undefined,
+          playerWhite: data["white"],
+          playerBlack: data["black"],
+          result: data["result"],
+          description: data["description"] ? data["description"] : undefined,
+          sgf: data["sgf"] ? data["sgf"] : undefined,
+        } : undefined,
+      });
+    }
+  };
+  fetchVideoData();
+}, [videoId])
+
 
 return (
   <main className="wrapper page flex flex-col gap-6 py-8">
@@ -72,20 +110,20 @@ return (
 
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">Duration:</p>
-          <p>{match.duration}</p>
+          <p>{video.duration}</p>
         </div>
 
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">Player (White):</p>
           <p>
-            {match.playerWhite.firstName} {match.playerWhite.lastName}
+            {match.playerWhite}
           </p>
         </div>
 
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">Player (Black):</p>
           <p>
-            {match.playerBlack.firstName} {match.playerBlack.lastName}
+            {match.playerBlack}
           </p>
         </div>
 
@@ -100,6 +138,16 @@ return (
             <p className="font-semibold text-dark-100 mb-1">Description:</p>
             <p className="text-sm text-gray-100 leading-relaxed">{match.description}</p>
           </div>
+        )}
+
+        {/* SGF File (if exists) */}
+        {match?.sgf && (
+          <Link
+            href={match.sgf}
+            className="block text-blue-500 underline hover:text-blue-600 font-medium"
+          >
+            Download SGF File
+          </Link>
         )}
       </section>
     ) : (

@@ -1,17 +1,18 @@
 "use client"
-import { useRouter } from "next/router"
+import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 
 interface MatchDetails {
   title: string
   style?: string
-  playerWhite: string
-  playerBlack: string
+  playerWhite: string | number
+  playerBlack: string | number
   result: string
   date: string
-  duration: string
+  duration: string | number
   sgfFile?: string
+  videoId?: string | number
   videoUrl?: string
   thumbnail?: string
 }
@@ -32,54 +33,80 @@ export default function MatchDetailsPage() {
     thumbnail: "/assets/images/samples/thumbnail (5).png",
   }
 
-  const [match, setMatch] = useState<MatchDetails | null>(null);
+  const [match, setMatch] = useState<MatchDetails | null>(matchex);
 
   // fetching matchdata by id 
-  const router = useRouter();
-  const matchId = router.query.matchid;
+  const params = useParams();
+  const matchId = params.matchid;
   useEffect(() => {
     const fetchMatchData = async () => {
       if (matchId) {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/match/${matchId}`);
         const data = await response.json();
         // Process and set the match data here
+        setMatch({title: data["title"],
+          style: data["style"],
+          playerWhite: data["white"],
+          playerBlack: data["black"],
+          result: data["result"],
+          date: data["date"],
+          duration: data["duration"],
+          sgfFile: data["sgf"],
+          videoUrl: data["videoUrl"],
+          thumbnail: data["thumbnail"],});
       }
     };
     fetchMatchData();
   }, [matchId]);
 
+  const white: string = "";
+  const black: string = "";
+  useEffect(() => {
+    const fetchPlayerNames = async () => {
+      if (match) {
+        const responseWhite = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/player/${match.playerWhite}`);
+        const dataWhite = await responseWhite.json();
+        const responseBlack = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/player/${match.playerBlack}`);
+        const dataBlack = await responseBlack.json();
+        white.concat(dataWhite["firstname"]+" "+dataWhite["lastname"]);
+        black.concat(dataBlack["firstname"]+" "+dataBlack["lastname"]);
+      } 
+    };
+    fetchPlayerNames();
+  }, [match]);
+
   return (
     <main className="wrapper page flex flex-col gap-6 py-8">
       {/* Title */}
-      <h1 className="text-2xl font-bold text-dark-100">{matchex.title}</h1>
+      <h1 className="text-2xl font-bold text-dark-100">{match?.title}</h1>
 
       {/* Style + Date + Duration */}
       <div className="flex flex-wrap items-center gap-4 text-gray-100 font-medium">
-        {matchex.style && <p>Style : {matchex.style}</p>}
-        <p>Date : {matchex.date}</p>
-        <p>Duration : {matchex.duration}</p>
+        {match?.style && <p>Style : {match.style}</p>}
+        <p>Date : {match?.date}</p>
+        <p>Duration : {match?.duration}</p>
       </div>
 
       {/* Players Section */}
       <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">White:</p>
-          <p>{matchex.playerWhite}</p>
+          <p>{white}</p>
         </div>
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">Black:</p>
-          <p>{matchex.playerBlack}</p>
+          <p>{black}</p>
         </div>
         <div className="flex justify-between items-center border-t border-gray-20 pt-3 mt-2">
           <p className="font-semibold text-dark-100">Result/Winner:</p>
-          <p className="font-bold text-dark-100">{matchex.result}</p>
+          <p className="font-bold text-dark-100">{match?.result}</p>
         </div>
       </section>
 
       {/* SGF File (if exists) */}
-      {matchex.sgfFile && (
+      {match?.sgfFile && (
         <Link
-          href={matchex.sgfFile}
+          href={match.sgfFile}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
           Download SGF File
@@ -87,7 +114,7 @@ export default function MatchDetailsPage() {
       )}
 
       {/* Video Section (if exists) */}
-      {matchex.videoUrl && (
+      {match?.videoUrl && (
         <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
           <h2 className="text-lg font-semibold text-dark-100">Match Video</h2>
           <div className="w-full rounded-xl overflow-hidden">
@@ -95,10 +122,10 @@ export default function MatchDetailsPage() {
               width="640"
               height="360"
               controls
-              poster={matchex.thumbnail}
+              poster={match.thumbnail}
               className="w-full rounded-xl shadow-md"
             >
-              <source src={matchex.videoUrl} type="video/mp4" />
+              <source src={match.videoUrl} type="video/mp4" />
             </video>
           </div>
         </section>

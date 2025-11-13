@@ -2,6 +2,8 @@
 
 import Link from "next/link"
 import MatchCard from "@/components/MatchCard"
+import { use, useEffect, useState } from "react"
+import { useParams } from "next/dist/client/components/navigation"
 
 interface PlayerDetails {
   firstName: string
@@ -9,34 +11,65 @@ interface PlayerDetails {
   level: string
   matchesPlayed: number
   wins: number
-  matches: MatchCardProps[]
+  matches: string[] | number[]
 }
 
 export default function PlayerDetailsPage() {
-  // 🔹 Mock data for demonstration — replace with fetched data later
-  const player: PlayerDetails = {
+  // Mock data for demonstration — replace with fetched data later
+  const playerex: PlayerDetails = {
     firstName: "Emma",
     lastName: "Smith",
     level: "Pro",
     matchesPlayed: 12,
     wins: 8,
-    matches: [
-      {
-        id: "match-1",
-        title: "Emma Smith vs John Doe",
-        duration: 40,
-        date: new Date("Oct 22, 2025"),
-        thumbnail: "/images/match1-thumb.jpg",
-      },
-      {
-        id: "match-2",
-        title: "Emma Smith vs Jane Alpha",
-        duration: 55,
-        date: new Date("Nov 1, 2025"),
-        thumbnail: "/images/match2-thumb.jpg",
-      },
-    ],
+    matches: []
   }
+
+  const [player, setPlayer] = useState<PlayerDetails>(playerex);
+  const params = useParams();
+  const playerId = params.playerid;
+  // Fetch player data by ID
+  useEffect(() => {
+    const fetchPlayerData = async () => {
+      if (playerId) {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/player/${playerId}`);
+        const data = await response.json();
+        // Process and set the player data here
+        setPlayer({
+          firstName: data["firstname"],
+          lastName: data["lastname"],
+          level: data["level"],
+          matchesPlayed: data["count_matches"],
+          wins: data["wins"],
+          matches: data["matches"],
+        });
+      }
+    };
+    fetchPlayerData();
+  }, [playerId]);
+
+  // fetching match info for each match id in player.matches
+  const fetchMatchInfo = async (matchId: string | number) => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/match/${matchId}`);
+    const data = await response.json();
+    return {
+      id: matchId,
+      title: data["title"],
+      duration: data["duration"],
+      date: data["date"],
+      thumbnail: data["thumbnail"],
+    };
+  };
+  const [matchInfos, setMatchInfos] = useState<MatchCardProps[]>([]);
+  useEffect(() => {
+    const loadMatches = async () => {
+      const infos = await Promise.all(
+        player.matches.map((matchId) => fetchMatchInfo(matchId))
+      );
+      setMatchInfos(infos);
+    };
+    loadMatches();
+  }, [player.matches]);
 
   return (
     <main className="wrapper page flex flex-col gap-6 py-8">
@@ -67,15 +100,15 @@ export default function PlayerDetailsPage() {
       <section className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold text-dark-100 mb-2">Matches played :</h2>
 
-        {player.matches.length > 0 ? (
-          player.matches.map((match) => (
+        {matchInfos.length > 0 ? (
+          matchInfos.map((matchinfo) => (
             <MatchCard
-              key={match.id}
-              id={match.id}
-              title={match.title}
-              duration={match.duration}
-              date={match.date}
-              thumbnail={match.thumbnail}
+              key={matchinfo.id}
+              id={matchinfo.id}
+              title={matchinfo.title}
+              duration={matchinfo.duration}
+              date={matchinfo.date}
+              thumbnail={matchinfo.thumbnail}
             />
           ))
         ) : (
