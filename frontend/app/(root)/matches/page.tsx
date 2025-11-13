@@ -13,9 +13,9 @@ const Page = () => {
   useEffect(() => {
     // Fetch matches from API
     const fetchMatches = async () => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_parties`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/matches`)
       const data = await response.json()
-      setMatches(data['parties']) }
+      setMatches(data['matches']) }
     fetchMatches()
   }, [])
 
@@ -25,7 +25,7 @@ const Page = () => {
   }
 
   const filteredMatches = matches.filter(match =>
-    match['titre'].toLowerCase().includes(query.toLowerCase()) ||
+    match['title'].toLowerCase().includes(query.toLowerCase()) ||
     match['description'].toLowerCase().includes(query.toLowerCase())
   )
 
@@ -38,7 +38,7 @@ const Page = () => {
           <p>No matches found.</p>
         ) : (
           filteredMatches.map((match) => (
-            <MatchCard key={match['partie_id']} id={match['partie_id']} title={match['titre']} thumbnail={match['thumbnail']} date={new Date(match['date'])} duration={match['durée']} />
+            <MatchCard key={match['match_id']} id={match['match_id']} title={match['title']} thumbnail={match['thumbnail']} date={new Date(match['date'])} duration={match['duration']} />
           ))
         )}
       </section>

@@ -13,9 +13,9 @@ const Page = () => {
   useEffect(() => {
     // Fetch players from API
     const fetchPlayers = async () => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/joueur`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/players`)
       const data = await response.json()
-      setPlayers(data['joueurs']) }
+      setPlayers(data['players']) }
     fetchPlayers()
   }, [])
 
@@ -25,7 +25,7 @@ const Page = () => {
   }
 
   const filteredPlayers = players.filter(player =>
-    player[1].toLowerCase().includes(query.toLowerCase()) || player[2].toLowerCase().includes(query.toLowerCase())
+    player['firstname'].toLowerCase().includes(query.toLowerCase()) || player['lastname'].toLowerCase().includes(query.toLowerCase())
   )
 
   return (
@@ -37,7 +37,7 @@ const Page = () => {
           <p>No players found.</p>
         ) : (
           filteredPlayers.map((player) => (
-            <PlayerCard key={player[0]} id={player[0]} firstname={player[1]} lastname={player[2]} level={player[3]}/>
+            <PlayerCard key={player['player_id']} id={player['player_id']} firstname={player['firstname']} lastname={player['lastname']} level={player['level']}/>
           ))
         )}
       </section>

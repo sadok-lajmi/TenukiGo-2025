@@ -13,7 +13,7 @@ const Page = () => {
   useEffect(() => {
     // Fetch videos from API
     const fetchVideos = async () => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_videos`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`)
       const data = await response.json()
       setVideos(data['videos']) }
     fetchVideos()
@@ -25,7 +25,7 @@ const Page = () => {
   }
 
   const filteredVideos = videos.filter(video =>
-    video['titre'].toLowerCase().includes(query.toLowerCase())
+    video['title'].toLowerCase().includes(query.toLowerCase())
   )
 
   return (
@@ -37,7 +37,7 @@ const Page = () => {
           <p>No videos found.</p>
         ) : (
           filteredVideos.map((video) => (
-            <VideoCard key={video['video_id']} id={video['video_id']} title={video['titre']} thumbnail={video['thumbnail']} createdAt={new Date(video['date_upload'])} duration={video['duration']} />
+            <VideoCard key={video['video_id']} id={video['video_id']} title={video['title']} thumbnail={video['thumbnail']} createdAt={new Date(video['date_upload'])} duration={video['duration']} />
           ))
         )}
       </section>
