@@ -28,11 +28,11 @@ const Page = () => {
         e.preventDefault();
 
         const dataToSend = new FormData();
-        dataToSend.append('prénom', formData.firstname);
-        dataToSend.append('nom', formData.lastname);
-        dataToSend.append('niveau', formData.level);
+        dataToSend.append('firstname', formData.firstname);
+        dataToSend.append('lastname', formData.lastname);
+        dataToSend.append('level', formData.level);
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create_joueur`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create_player`, {
             method: 'POST',
             body: dataToSend,
         });
@@ -76,8 +76,8 @@ const Page = () => {
                     placeholder='what is their level'
                 />
                 
-                <button type='submit' className="bg-yellow-500 text-white px-4 py-2 rounded-lg">
-                    Submit
+                <button type='submit' className="bg-yellow-500 text-white px-4 py-2 rounded-lg w-30 self-center">
+                    Add
                 </button>
 
             </form>

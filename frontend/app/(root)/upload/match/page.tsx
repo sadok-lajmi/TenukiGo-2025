@@ -143,19 +143,19 @@ const Page = () => {
       return;
     }
     const dataToSend = new FormData();
-    dataToSend.append('titre', formData.title);
+    dataToSend.append('title', formData.title);
     dataToSend.append('style', formData.style);
-    dataToSend.append('joueur_noire',formData.player_b);
-    dataToSend.append('joueur_blanc', formData.player_w);
-    dataToSend.append('résultat', formData.result);
+    dataToSend.append('black',formData.player_b);
+    dataToSend.append('white', formData.player_w);
+    dataToSend.append('result', formData.result);
     dataToSend.append('date', formData.date);
-    dataToSend.append('durée', formData.duration);
+    dataToSend.append('duration', formData.duration);
     dataToSend.append('description', formData.description);
-    if (video.file) dataToSend.append('vidéo', video.file);
-    if (thumbnail.file) dataToSend.append('miniature', thumbnail.file);
+    if (video.file) dataToSend.append('video', video.file);
+    if (thumbnail.file) dataToSend.append('thumbnail', thumbnail.file);
     if (sgf.file) dataToSend.append('sgf', sgf.file);
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create_partie`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create_match`, {
       method: 'POST',
       body: dataToSend,
     });
@@ -296,7 +296,7 @@ const Page = () => {
                     type='sgf'
                 />
                    
-                <button type='submit' className="bg-yellow-500 text-white px-4 py-2 rounded-lg">
+                <button type='submit' className="bg-yellow-500 text-white px-4 py-2 rounded-lg w-30 self-center">
                     Upload
                 </button>
     

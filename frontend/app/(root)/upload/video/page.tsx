@@ -9,7 +9,6 @@ import { ChangeEvent, useState, useRef, useEffect } from 'react'
 const Page = () => {
     const [formData, setFormData] = useState({
         title: '',
-        description: '',
         matchId: '' as string,
     });
 
@@ -89,17 +88,16 @@ const Page = () => {
         e.preventDefault();
         
         const dataToSend = new FormData();
-        dataToSend.append('titre', formData.title);
-        dataToSend.append('description', formData.description);
-        if (formData.matchId) dataToSend.append('partie_Id', formData.matchId);
+        dataToSend.append('title', formData.title);
+        if (formData.matchId) dataToSend.append('match_id', formData.matchId);
         if (!video.file) {
             setError('Please select a video file to upload.');
             return;
         }
-        dataToSend.append('video', video.file);
+        dataToSend.append('file', video.file);
         if (thumbnail.file) dataToSend.append('thumbnail', thumbnail.file);
 
-        const response = await fetch('/api/videos/upload', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload_video`, {
             method: 'POST',
             body: dataToSend,
         });
@@ -141,16 +139,6 @@ const Page = () => {
                     onChange={handleInputChange}
                     placeholder='Enter a clear and concise video title'
                 />
-                
-
-                <FormField 
-                    id='description'
-                    label='Description'
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    as='textarea'
-                    placeholder='Describe what this video is about'
-                />
 
                 <FormField
                     id='matchId'
@@ -186,7 +174,7 @@ const Page = () => {
                     type='image'
                 />
                    
-                <button type='submit' className="bg-yellow-500 text-white px-4 py-2 rounded-lg">
+                <button type='submit' className="bg-yellow-500 text-white px-4 py-2 rounded-lg w-30 self-center">
                     Upload
                 </button>
     
