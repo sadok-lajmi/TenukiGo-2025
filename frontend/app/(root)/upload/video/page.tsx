@@ -3,7 +3,7 @@
 
 import FormField from '@/components/FormField'
 import FileInput from '@/components/FileInput'
-import { ChangeEvent, useState, useRef, useEffect } from 'react'
+import { ChangeEvent, useState, useRef, useEffect, use } from 'react'
 
 
 const Page = () => {
@@ -27,10 +27,10 @@ const Page = () => {
 
     // Handle input changes for text fields
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
+        const { id, value } = e.target;
         setFormData((prevState) => ({
             ...prevState,
-            [name]: value,
+            [id]: value,
         }));
     }
 
@@ -82,6 +82,20 @@ const Page = () => {
         }));
         thumbnail.inputRef.current && (thumbnail.inputRef.current.value = "");
     };
+
+    // fetch matches with no videos
+    const [matchOptions, setMatchOptions] = useState<MatchOption[]>([]);
+    useEffect(() => {
+        const fetchMatchesWithoutVideos = async () => {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/matches`);
+            const data = await response.json();
+            // process data as needed
+            const matchesWithoutVideos = data['matches'].filter((match: any) => (match['video_id'] === null));
+            const matchoptions = matchesWithoutVideos.map((match: any) => ({ label: match['title'], value: match['match_id'] }) );
+            setMatchOptions(matchoptions);
+        };
+        fetchMatchesWithoutVideos();
+    }, []);
 
     // handle pushing the new data to the server
     const handleSubmit = async (e: React.FormEvent) => {
@@ -144,7 +158,7 @@ const Page = () => {
                     id='matchId'
                     label='match'
                     as='search'
-                    options={matches}
+                    options={matchOptions}
                     value={formData.matchId}
                     onChange={handleInputChange}
                     placeholder='Enter the associated match (if any)'
