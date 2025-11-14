@@ -47,6 +47,7 @@ const videoex: VideoDetails = {
 // Fetch video details from API here and update state
 const [video, setVideo] = useState<VideoDetails>(videoex)
 const { match } = video
+const [moreMatchInfo, setMoreMatchInfo] = useState<{date: string, black: string, white: string}>({date: Date.now().toString().slice(0,10), black: "", white: ""});
 const params = useParams()
 const videoId = params.videoId
 useEffect(() => {
@@ -75,8 +76,16 @@ useEffect(() => {
     }
   };
   fetchVideoData();
-}, [videoId])
-
+  // fetch more data
+  const fetchMoreData = async () => {
+    if (match) {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/match/${match.id}`);
+      const data = await response.json();
+      setMoreMatchInfo({date: data["date"], black: data["black"], white: data["white"]});
+    }
+  };
+  fetchMoreData();
+}, [videoId]);
 
 return (
   <main className="wrapper page flex flex-col gap-6 py-8">
@@ -104,7 +113,7 @@ return (
       <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
 
         <div className="flex justify-center">
-          <p className="font-semibold text-lg text-dark-100 text-yellow-700">{match.title}</p>
+          <Link href={`/match/${match.id}`}><p className="font-semibold text-lg text-dark-100 text-yellow-700">{match.title}</p></Link>
         </div>
 
         {match.style && (
@@ -115,22 +124,22 @@ return (
         )}
 
         <div className="flex justify-between items-center">
-          <p className="font-semibold text-dark-100">Duration:</p>
-          <p>{video.duration}</p>
+          <p className="font-semibold text-dark-100">Date:</p>
+          <p>{moreMatchInfo.date ? moreMatchInfo.date : "Inconnue"}</p>
         </div>
 
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">Player (White):</p>
-          <p>
+          <Link href={`/player/${moreMatchInfo.white}`}><p>
             {match.playerWhite}
-          </p>
+          </p></Link>
         </div>
 
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">Player (Black):</p>
-          <p>
+          <Link href={`/player/${moreMatchInfo.black}`}><p>
             {match.playerBlack}
-          </p>
+          </p></Link>
         </div>
 
         {/* Added Result */}

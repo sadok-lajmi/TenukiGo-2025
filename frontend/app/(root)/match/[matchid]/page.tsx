@@ -20,7 +20,8 @@ interface MatchDetails {
 export default function MatchDetailsPage() {
 
   const [match, setMatch] = useState<MatchDetails | null>(null);
-
+  const [blackId, setBlackId] = useState<number | null>(null);
+  const [whiteId, setWhiteId] = useState<number | null>(null);
   // fetching matchdata by id 
   const params = useParams();
   const matchId = params.matchid;
@@ -32,6 +33,8 @@ export default function MatchDetailsPage() {
     // Fetch match data
     const matchResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/match/${matchId}`);
     const matchData = await matchResponse.json();
+    setBlackId(matchData['black']);
+    setWhiteId(matchData['white']);
 
     // Fetch player names in parallel
     const [whiteResponse, blackResponse] = await Promise.all([
@@ -76,11 +79,11 @@ export default function MatchDetailsPage() {
       <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">White:</p>
-          <p>{match?.playerWhite}</p>
+          <Link href={`/player/${whiteId}`}><p>{match?.playerWhite}</p></Link>
         </div>
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">Black:</p>
-          <p>{match?.playerBlack}</p>
+          <Link href={`/player/${blackId}`}><p>{match?.playerBlack}</p></Link>
         </div>
         <div className="flex justify-between items-center border-t border-gray-20 pt-3 mt-2">
           <p className="font-semibold text-dark-100">Result/Winner:</p>
