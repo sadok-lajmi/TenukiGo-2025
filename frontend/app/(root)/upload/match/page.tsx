@@ -3,6 +3,7 @@
 import FormField from '@/components/FormField'
 import FileInput from '@/components/FileInput'
 import { ChangeEvent, useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation';
 
 const Page = () => {
     const [formData, setFormData] = useState({
@@ -131,6 +132,7 @@ const Page = () => {
     fetchPlayers();
   }, []);
 
+  const router = useRouter();
   // handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -175,24 +177,22 @@ const Page = () => {
   if (thumbnail.file) dataToSend.append('thumbnail', thumbnail.file);
   if (sgf.file) dataToSend.append('sgf', sgf.file);
 
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create_match`, {
-      method: 'POST',
-      body: dataToSend,
-    });
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create_match`, {
+    method: 'POST',
+    body: dataToSend,
+  });
+  const responseData = await response.json();
 
-    if (!response.ok) {
-      const err = await response.json();
-      setError(err.message || 'An error occurred during upload.');
-      return;
-    }
-
-    // Success: optionally reset form or redirect
-    console.log('Match uploaded successfully!');
-  } catch (err) {
-    setError('Network or server error.');
-    console.error(err);
+  if (!response.ok) {
+    const err = responseData['error'] || 'An error occurred during upload.';
+    setError(err.message || 'An error occurred during upload.');
+    return;
   }
+
+  // On success, redirect or show a success message
+  const matchId = responseData['match_id'];
+  router.push(`/match/${matchId}`);
 };
 
 

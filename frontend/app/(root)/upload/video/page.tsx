@@ -1,9 +1,9 @@
 'use client';
 
-
 import FormField from '@/components/FormField'
 import FileInput from '@/components/FileInput'
-import { ChangeEvent, useState, useRef, useEffect, use } from 'react'
+import { ChangeEvent, useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation';
 
 
 const Page = () => {
@@ -97,6 +97,7 @@ const Page = () => {
         fetchMatchesWithoutVideos();
     }, []);
 
+    const router = useRouter();
     // handle pushing the new data to the server
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -115,12 +116,16 @@ const Page = () => {
             method: 'POST',
             body: dataToSend,
         });
+        const responseData = await response.json();
 
         if (!response.ok) {
-            const error = await response.json();
+            const error = responseData['error'] || 'Failed to upload video.';
             setError(error.message || 'An error occurred during upload.');
             return;
         }   
+        // On success, redirect or show a success message
+        const videoId = responseData['video_id'];
+        router.push(`/video/${videoId}`);
     }
 
     // fetch the list of matches titles for the match input field
@@ -141,8 +146,6 @@ const Page = () => {
     return (
         <div className='wrapper-md upload-page'>
             <h1>Upload a video</h1>
-
-            {error && <div className='error-field'>{error}</div>}
 
             <form onSubmit={handleSubmit} className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
                 <h2 className="text-sm text-gray-600 text-end">the fields with a * are required</h2>
@@ -194,7 +197,7 @@ const Page = () => {
     
             </form>
             
-
+            {error && <div className='error-field'>{error}</div>}
         </div>
     )
 }

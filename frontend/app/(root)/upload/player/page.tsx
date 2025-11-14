@@ -2,6 +2,7 @@
 
 import FormField from '@/components/FormField'
 import { ChangeEvent, useState } from 'react'
+import { useRouter } from 'next/navigation';
 
 const Page = () => {
     const [formData, setFormData] = useState({
@@ -23,6 +24,7 @@ const Page = () => {
         }));
     }
 
+    const router = useRouter();
     // Pushing the new player data to server
     const handleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -36,12 +38,16 @@ const Page = () => {
             method: 'POST',
             body: dataToSend,
         });
+        const responseData = await response.json();
 
         if (!response.ok) {
-            const error = await response.json();
+            const error = responseData['error'] || 'An error occurred during upload.';
             setError(error.message || 'An error occurred during upload.');
             return;
         }
+        // On success, redirect or show a success message
+        const playerId = responseData['player_id'];
+        router.push(`/player/${playerId}`);
     }
 
     return (
