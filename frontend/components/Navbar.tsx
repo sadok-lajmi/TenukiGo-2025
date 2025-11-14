@@ -20,6 +20,10 @@ const Navbar = () => {
                 <button>Lives</button>
             </Link>
 
+            <Link href="/">
+                <button>Videos</button>
+            </Link>
+
             <Link href="/matches">
                 <button>Matches</button>
             </Link>
