@@ -23,30 +23,10 @@ match?: {
 }
 
 export default function VideoDetailsPage() {
-// Mock data (replace with API fetch later)
-const videoex: VideoDetails = {
-  id: "video-1",
-  title: "Alpha vs Beta Championship Final",
-  duration: "45",
-  uploadDate: "Nov 8, 2025",
-  videoUrl: "/videos/alpha-vs-beta.mp4",
-  thumbnail: "/images/match-thumb.jpg",
-  match: {
-    id: "1",
-    title: "Alpha vs Beta",
-    style: "Blitz",
-    playerWhite: "John Alpha",
-    playerBlack: "Emma Beta",
-    result: "1 - 0",
-    sgf: "/sgf/example.sgf",
-    description:
-      "An intense blitz match between two top-tier players with aggressive openings and tactical midgame transitions.",
-  },
-}
 
 // Fetch video details from API here and update state
-const [video, setVideo] = useState<VideoDetails>(videoex)
-const { match } = video
+const [video, setVideo] = useState<VideoDetails>(null as unknown as VideoDetails);
+const { match } = video || {}
 const [moreMatchInfo, setMoreMatchInfo] = useState<{date: string, black: string, white: string}>({date: Date.now().toString().slice(0,10), black: "", white: ""});
 const params = useParams()
 const videoId = params.videoId
@@ -87,8 +67,23 @@ useEffect(() => {
   fetchMoreData();
 }, [videoId]);
 
+if (!video) {
+  return (
+    <main className="wrapper page flex justify-center items-center py-20">
+      <p className="text-gray-500">Loading video…</p>
+    </main>
+  );
+}
+
 return (
+
   <main className="wrapper page flex flex-col gap-6 py-8">
+    <div className="flex justify-end"> 
+      <Link href={`/video/${videoId}/edit`}>
+        <img src="/assets/icons/edit.png" className="w-6 h-6 cursor-pointer left" />
+      </Link>
+    </div>
+
     {/* Video Section */}
     <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
       <div className="w-full rounded-xl overflow-hidden bg-black">
