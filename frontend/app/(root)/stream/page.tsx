@@ -30,7 +30,7 @@ const Page = () => {
       const response = await fetch( `${process.env.NEXT_PUBLIC_API_URL}/players`);
       const data = await response.json();
       const playersData = data['players'];
-      const playersNames: PlayerOption[] = playersData.map((player: any) => ({ label: player['firstname']+' '+player['lastname'], value: player['id'] }));
+      const playersNames: PlayerOption[] = playersData.map((player: any) => ({ label: player['firstname']+' '+player['lastname'], value: player['player_id'] }));
       setPlayers(playersNames);
     }
     fetchPlayers();
