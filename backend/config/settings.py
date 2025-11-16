@@ -2,15 +2,16 @@ import os
 from pathlib import Path
 
 # --- Configuration DB ---
-DB_URL = "postgresql://go_user:secret@localhost:5432/go_db"
-# DB_URL="postgresql://postgres:BaknineNouhaila@localhost:5432/go_db?sslmode=disable"
+# DB_URL = "postgresql://go_user:secret@localhost:5432/go_db"
+DB_URL="postgresql://postgres:BaknineNouhaila@localhost:5432/go_db?sslmode=disable"
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Remonter au dossier backend/
 BASE_DIR = os.path.dirname(CURRENT_DIR)
 
 DATA_DIR = os.path.join(os.path.dirname(BASE_DIR), "data", "storage")
-VIDEOS_DIR = os.path.join(DATA_DIR, "videos")
+VIDEO_DIR = os.path.join(DATA_DIR, "videos")
+THUMBNAIL_DIR = os.path.join(DATA_DIR,"thumbnails")
 SGF_DIR = os.path.join(DATA_DIR, "sgf_files")
 
 # --- Configuration uvicorn (serveur FastAPI) ---

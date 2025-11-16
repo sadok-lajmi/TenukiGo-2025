@@ -1,104 +1,84 @@
 import psycopg2
 from datetime import datetime, timezone
 from config.settings import DB_URL
+from psycopg2.extras import RealDictCursor
+
 
 def db():
-    return psycopg2.connect(DB_URL)
+    return psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
 
-def get_or_create_joueur(cur, prenom, nom, niveau=None):
-    # Vérifier existence
+def normalize_name(name: str) -> str:
+    return name.strip().title()
+
+def get_or_create_player(cur, firstname, lastname, level=None):
     cur.execute("""
-        SELECT joueur_id
-        FROM joueurs
-        WHERE prenom=%s AND nom=%s
-    """, (prenom, nom))
-    
+        SELECT player_id FROM player
+        WHERE firstname=%s AND lastname=%s
+    """, (firstname, lastname))
     row = cur.fetchone()
     if row:
-        return row[0] #renvoie l'id du joueur
+        return row[0]
 
-    # Sinon créer
     cur.execute("""
-        INSERT INTO joueurs (prenom, nom, niveau)
+        INSERT INTO player (firstname, lastname, level)
         VALUES (%s, %s, %s)
-        RETURNING joueur_id
-    """, (prenom, nom, niveau))
+        RETURNING player_id
+    """, (firstname, lastname, level))
+    return cur.fetchone()[0]
 
-    return cur.fetchone()[0] #renvoie l'id du joueur
-
-
-# Normalisation simple pour éviter les doublons
 def normalize_name(name: str) -> str:
-    return name.strip().title()  
-
+    return name.strip().title()
 
 def process_and_save_game(data: dict) -> dict:
-    """Fonction synchrone qui gère la logique de la base de données."""
+    """Insert a Go game into the DB using the SQL schema."""
     conn = None
     try:
-        blanc_nom = data.get("blanc_nom", "Joueur").strip().title()
-        blanc_prenom = data.get("blanc_prenom", "Blanc").strip().title()
-        noir_nom = data.get("noir_nom", "Joueur").strip().title()
-        noir_prenom = data.get("noir_prenom", "Noir").strip().title()
+        white_firstname = normalize_name(data.get("blanc_prenom", "Blanc"))
+        white_lastname = normalize_name(data.get("blanc_nom", "Joueur"))
+        black_firstname = normalize_name(data.get("noir_prenom", "Noir"))
+        black_lastname = normalize_name(data.get("noir_nom", "Joueur"))
         sgf_content = data.get("sgf_content", "(;GM[1])")
 
         conn = db()
         cur = conn.cursor()
 
-        # --- Gérer Joueur Blanc ---
-        cur.execute(
-            "SELECT joueur_id FROM joueurs WHERE prenom = %s AND nom = %s",
-            (blanc_prenom, blanc_nom)
-        )
-        blanc_row = cur.fetchone()
-        if blanc_row:
-            blanc_id = blanc_row[0]
-        else:
-            cur.execute(
-                "INSERT INTO joueurs (prenom, nom) VALUES (%s, %s) RETURNING joueur_id",
-                (blanc_prenom, blanc_nom)
-            )
-            blanc_id = cur.fetchone()[0]
+        # --- Create or get players ---
+        white_id = get_or_create_player(cur, white_firstname, white_lastname)
+        black_id = get_or_create_player(cur, black_firstname, black_lastname)
 
-        # --- Gérer Joueur Noir ---
-        cur.execute(
-            "SELECT joueur_id FROM joueurs WHERE prenom = %s AND nom = %s",
-            (noir_prenom, noir_nom)
-        )
-        noir_row = cur.fetchone()
-        if noir_row:
-            noir_id = noir_row[0]
-        else:
-            cur.execute(
-                "INSERT INTO joueurs (prenom, nom) VALUES (%s, %s) RETURNING joueur_id",
-                (noir_prenom, noir_nom)
-            )
-            noir_id = cur.fetchone()[0]
-        
-        # --- Insérer la partie ---
+        # --- Insert match ---
         cur.execute("""
-            INSERT INTO parties (style, blanc_id, noir_id, date, sgf, description)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING partie_id
-        """, ("amicale", blanc_id, noir_id, datetime.now(timezone.utc), sgf_content, "Partie live (broadcast)"))
-        
-        partie_id = cur.fetchone()[0]
+            INSERT INTO match (title, style, white_id, black_id, date, sgf, description)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING match_id
+        """, (
+            f"{white_firstname} vs {black_firstname}",
+            "friendly",
+            white_id,
+            black_id,
+            datetime.now(timezone.utc),
+            sgf_content,
+            "Partie live (broadcast)"
+        ))
+
+        match_id = cur.fetchone()[0]
         conn.commit()
-        
-        print(f"SUCCÈS: Partie {partie_id} insérée en BDD.")
-        
-        # Retourner les données à diffuser
+
+        print(f"SUCCÈS: Match {match_id} inséré en BDD.")
+
         return {
-            "status": "succes",
-            "partie_id": partie_id,
+            "status": "success",
+            "match_id": match_id,
             "sgf_content": sgf_content,
-            "joueur_blanc": f"{blanc_prenom} {blanc_nom}",
-            "joueur_noir": f"{noir_prenom} {noir_nom}"
+            "player_white": f"{white_firstname} {white_lastname}",
+            "player_black": f"{black_firstname} {black_lastname}"
         }
+
     except (Exception, psycopg2.DatabaseError) as error:
         print(f"Erreur lors de l'insertion DB: {error}")
-        if conn: conn.rollback()
-        raise error
+        if conn:
+            conn.rollback()
+        raise
     finally:
         if conn:
             cur.close()
