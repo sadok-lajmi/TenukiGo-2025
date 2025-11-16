@@ -1,643 +1,502 @@
-# Dependances externes
-import sys
-from fastapi import FastAPI, Path, WebSocket, WebSocketDisconnect, HTTPException, Form, UploadFile, File
-from fastapi.concurrency import run_in_threadpool
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.staticfiles import StaticFiles  
+from pathlib import Path
+from typing import List, Optional
 from datetime import datetime
-import json
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import os
-import shutil
 
-# Dependances internes
+app = FastAPI(title="Go Game API")
 
-from api.WebSocket import ConnectionManager  
-from database.services import process_and_save_game, db, get_or_create_joueur, normalize_name
-from config.settings import CLUB_PASSWORD, VIDEOS_DIR
-
-
-
-app = FastAPI()
+# ======================
+# CONFIGURATION
+# ======================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-manager = ConnectionManager()
 
+DB_URL = "postgresql://postgres:admingo@localhost:5432/Go"
 
-# ------------------------------
-# ENVOI DES DONNEES AU FRONTEND
-# ------------------------------
-@app.websocket("/ws/spectator_feed")
-async def websocket_spectator_endpoint(websocket: WebSocket):
-    """
-    Point de terminaison WebSocket pour les spectateurs.
-    Permet de recevoir des mises à jour en temps réel des parties.
-    """
+UPLOAD_DIR = Path("uploads")
+VIDEO_DIR = UPLOAD_DIR / "videos"
+THUMBNAIL_DIR = UPLOAD_DIR / "thumbnails"
 
-    await manager.connect(websocket)
-    try:
-        while True:
-            # Garde la connexion ouverte pour écouter
-            await websocket.receive_text() 
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
+# Create upload directories if they don't exist
+VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+THUMBNAIL_DIR.mkdir(parents=True, exist_ok=True)
 
+# Correct way to serve the /uploads directory
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-# ------------------------------------------------
-# RECUPERATION DES DONNEES DE LA CAMERA (BOUCHON)
-# ------------------------------------------------
-@app.websocket("/ws/camera_feed")
-async def websocket_camera_endpoint(websocket: WebSocket):
-    """
-    Bouchon pour recevoir les données de la caméra via WebSocket.
-    """
+# ======================
+# UTILITIES
+# ======================
+def get_db():
+    return psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
 
-    await websocket.accept()
-    print("Connexion de la caméra (bouchon) acceptée.")
-    try:
-        while True:
-            data = await websocket.receive_json()
+def normalize_name(name: str) -> str:
+    return name.strip().title()
 
-            if data.get("password") != CLUB_PASSWORD:
-                await websocket.send_json({"status": "erreur", "message": "Mot de passe invalide"})
-                await websocket.close()
-                break
+# -----------------------------------------------------------
+# LIST ROUTES
+# -----------------------------------------------------------
 
-            # 1. Sauvegarder en BDD (dans un thread)
-            try:
-                result_data = await run_in_threadpool(process_and_save_game, data)
-                
-                # 2. Diffuser le résultat aux spectateurs
-                await manager.broadcast(json.dumps(result_data))
-                
-                # 3. Confirmer à la caméra que c'est fait
-                await websocket.send_json({"status": "succes", "message": "Données reçues et diffusées"})
-
-            except Exception as e:
-                await websocket.send_json({"status": "erreur", "message": f"Erreur base de données: {e}"})
-
-    except WebSocketDisconnect:
-        print("Connexion caméra (bouchon) fermée.")
-
-
-@app.get("/tables")
-def get_tables():
-    """
-    Retourne la liste des tables dans la base de données
-    """
-
-    try:
-        conn = db()
-        cur = conn.cursor()
-        cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='public';")
-        tables = cur.fetchall()
-        conn.close()
-        return {"tables": [t[0] for t in tables]}
-    except Exception as e:
-        return {"error": str(e)}
-
-
-@app.get("/joueurs")
-def get_joueurs():
-    """
-    Retourne tous les joueurs
-    """
-
-    try:
-        conn = db()
-        cur = conn.cursor()
-        # Utiliser les guillemets doubles pour respecter la majuscule
-        cur.execute('SELECT * FROM "joueurs";')
-        rows = cur.fetchall()
-        conn.close()
-        return {"joueurs": rows}
-    except Exception as e:
-        return {"error": str(e)}
-
-
-# ---------------------------
-# AUTOCOMPLÉTION DES JOUEURS
-# ---------------------------
-@app.get("/search_joueurs")
-def search_joueurs(q: str):
-    """
-    Recherche des joueurs par prénom ou nom
-    """
-
-    conn = db()
+@app.get("/videos")
+def list_videos():
+    conn = get_db()
     cur = conn.cursor()
-
-    q_norm = q.strip().title()
-
     cur.execute("""
-        SELECT "joueur_id", "prenom", "nom"
-        FROM "joueurs"
-        WHERE "prenom" ILIKE %s OR "nom" ILIKE %s
-        ORDER BY "nom" ASC
-        LIMIT 15
-    """, (f"%{q_norm}%", f"%{q_norm}%"))
-
-    joueurs = [
-        {"id": row[0], "prenom": row[1], "nom": row[2], "full": f"{row[1]} {row[2]}"}
-        for row in cur.fetchall()
-    ]
-
-    cur.close()
+        SELECT 
+            v.video_id, v.title, v.path, v.url, v.thumbnail,
+            v.date_upload, v.duration, v.match_id, m.date AS match_date
+        FROM video v
+        LEFT JOIN match m ON v.match_id = m.match_id
+        ORDER BY v.date_upload DESC
+    """)
+    videos = cur.fetchall()
     conn.close()
-    return joueurs
+    return {"videos": videos, "count": len(videos)}
 
 
-# ---------------------
-# CRÉATION D'UN JOUEUR
-# ---------------------
-@app.post("/joueurs")
-def create_joueur(
-        prenom: str = Form(...),
-        nom: str = Form(...),
-        niveau: str = Form(None)
-    ):
-    """
-    Crée un nouveau joueur
-    """
-
-    prenom_norm = normalize_name(prenom)
-    nom_norm = normalize_name(nom)
-    conn = db()
+@app.get("/matches")
+def list_matches():
+    conn = get_db()
     cur = conn.cursor()
+    cur.execute("""
+        SELECT 
+            m.match_id, m.title, m.result, m.date, m.duration, m.description,
+            m.style,
+            w.firstname || ' ' || w.lastname AS white,
+            b.firstname || ' ' || b.lastname AS black,
+            v.video_id, v.thumbnail, v.title As video_title
+        FROM match m
+        LEFT JOIN player w ON m.white_id = w.player_id
+        LEFT JOIN player b ON m.black_id = b.player_id
+        LEFT JOIN video v ON m.match_id = v.match_id
+        ORDER BY m.date DESC
+    """)
+    matches = cur.fetchall()
+    conn.close()
+    return {"matches": matches, "count": len(matches)}
+
+
+@app.get("/players")
+def list_players():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT player_id, firstname, lastname, level
+        FROM player
+        ORDER BY lastname
+    """)
+    players = cur.fetchall()
+    conn.close()
+    return {"players": players, "count": len(players)}
+
+# -----------------------------------------------------------
+# DETAIL ROUTES
+# -----------------------------------------------------------
+
+@app.get("/video/{video_id}")
+def get_video(video_id: int):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT 
+            v.video_id, v.title, v.path, v.url, v.thumbnail,
+            v.date_upload, v.duration,
+            m.match_id, m.style, m.result, m.description,
+            m.date AS match_date,
+            w.firstname || ' ' || w.lastname AS white,
+            b.firstname || ' ' || b.lastname AS black,
+            m.sgf, m.title AS match_title
+        FROM video v
+        LEFT JOIN match m ON v.match_id = m.match_id
+        LEFT JOIN player w ON m.white_id = w.player_id
+        LEFT JOIN player b ON m.black_id = b.player_id
+        WHERE v.video_id = %s
+    """, (video_id,))
+    video = cur.fetchone()
+    conn.close()
+
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return video
+
+
+@app.get("/match/{match_id}")
+def get_match(match_id: int):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT 
+            m.match_id, m.title, m.result, m.style,
+            m.white_id AS white, m.black_id AS black,
+            m.duration, m.date,
+            v.video_id, v.url AS video, v.thumbnail,
+            m.sgf
+        FROM match m
+        LEFT JOIN video v ON m.match_id = v.match_id
+        WHERE m.match_id = %s
+    """, (match_id,))
+    match = cur.fetchone()
+    conn.close()
+
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    return match
+
+
+@app.get("/player/{player_id}")
+def get_player(player_id: int):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT player_id, firstname, lastname, level
+        FROM player
+        WHERE player_id = %s
+    """, (player_id,))
+    player = cur.fetchone()
+
+    if not player:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Player not found")
 
     cur.execute("""
-        SELECT "joueur_id"
-        FROM "joueurs"
-        WHERE "prenom" = %s AND "nom" = %s
-    """, (prenom_norm, nom_norm))
+        SELECT match_id FROM match
+        WHERE white_id = %s OR black_id = %s
+    """, (player_id, player_id))
+    matches = [row["match_id"] for row in cur.fetchall()]
+    count_matches = len(matches)
 
-    # Création du joueur
     cur.execute("""
-        INSERT INTO "joueurs" ("prenom", "nom", "niveau")
+        SELECT COUNT(*) FROM match
+        WHERE (white_id = %s AND result = 'white')
+           OR (black_id = %s AND result = 'black')
+    """, (player_id, player_id))
+    wins = cur.fetchone()["count"]
+
+    conn.close()
+    player["matches"] = matches
+    player["count_matches"] = count_matches
+    player["wins"] = wins
+    return player
+
+# -----------------------------------------------------------
+# CREATE / UPLOAD ROUTES
+# -----------------------------------------------------------
+
+@app.post("/create_player")
+def create_player(
+    firstname: str = Form(...),
+    lastname: str = Form(...),
+    level: Optional[str] = Form(None)
+):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO player (firstname, lastname, level)
         VALUES (%s, %s, %s)
-        RETURNING joueur_id
-    """, (prenom_norm, nom_norm, niveau))
-
-    joueur_id = cur.fetchone()[0]
-
+        RETURNING player_id
+    """, (firstname, lastname, level))
+    player_id = cur.fetchone()["player_id"]
     conn.commit()
-    cur.close()
     conn.close()
+    return {"message": "Player created", "player_id": player_id}
 
-    return {"id": joueur_id, "prenom": prenom_norm, "nom": nom_norm}
-
-
-# ----------------------
-# CRÉATION D'UNE PARTIE
-# ----------------------
-@app.post("/create_partie")
-def create_partie(
-        blanc_prenom: str = Form(...),
-        blanc_nom: str = Form(...),           
-        noir_prenom: str = Form(...),
-        noir_nom: str = Form(...),
-        niveau_blanc: str = Form(None),
-        niveau_noir: str = Form(None),
-        date: str = Form(None),  # Format: "YYYY-MM-DD" ou "YYYY-MM-DD HH:MM:SS"
-        victoire: str = Form(None),  # Ex: "blanc", "noir", "nul"
-        duree: int = Form(None),  # Durée en minutes
-        sgf: str = Form(None),  # Fichier SGF en texte
-        description: str = Form(None)
-    ):
-    """
-    Crée une nouvelle partie entre deux joueurs
-    """
-    
-    # Normalisation des noms
-    bp = normalize_name(blanc_prenom)
-    bn = normalize_name(blanc_nom)
-    np = normalize_name(noir_prenom)
-    nn = normalize_name(noir_nom)
-
-    conn = db()
-    cur = conn.cursor()
-    
-    try:
-        #Créer ou trouver joueur blanc
-        blanc_id = get_or_create_joueur(cur, bp, bn, niveau_blanc)
-
-        # Créer ou trouver joueur noir
-        noir_id = get_or_create_joueur(cur, np, nn, niveau_noir)
-        
-        # Si aucune date fournie → on met maintenant()
-        if not date or date.strip() == "":
-            date_obj = datetime.now()
-        else:
-            # Parser la date
-            try:
-                date_obj = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
-            except ValueError:
-                try:
-                    date_obj = datetime.strptime(date, "%Y-%m-%d")
-                except ValueError:
-                    raise HTTPException(
-                        status_code=400, 
-                        detail="Format de date invalide. Utilisez YYYY-MM-DD ou YYYY-MM-DD HH:MM:SS"
-                    )
-        
-        cur.execute("""
-            INSERT INTO "parties" (blanc_id, noir_id, victoire, date, duree, sgf, description)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING partie_id
-        """, (blanc_id, noir_id, victoire, date_obj, duree, sgf, description))
-        
-        partie_id = cur.fetchone()[0]
-        
-        conn.commit()
-        
-        return {
-            "partie_id": partie_id,
-            "blanc_id": blanc_id,
-            "noir_id": noir_id,
-            "date": date_obj.isoformat(),
-            "victoire": victoire,
-            "duree": duree,
-            "message": "Partie créée avec succès"
-        }
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
-    
-    finally:
-        cur.close()
-        conn.close()
-
-
-# -----------------------------
-# RÉCUPÉRER TOUTES LES PARTIES
-# -----------------------------
-@app.get("/parties")
-def get_parties():
-    """
-    Retourne toutes les parties avec les noms des joueurs
-    """
-
-    conn = db()
-    cur = conn.cursor()
-    
-    try:
-        cur.execute("""
-            SELECT 
-                p."partie_id", 
-                p.date, 
-                p.victoire,
-                p.duree,
-                p.description,
-                jb."prenom" as blanc_prenom, 
-                jb."nom" as blanc_nom,
-                jn."prenom" as noir_prenom,
-                jn."nom" as noir_nom
-            FROM "parties" p
-            LEFT JOIN "joueurs" jb ON p.blanc_id = jb."joueur_id"
-            LEFT JOIN "joueurs" jn ON p.noir_id = jn."joueur_id"
-            ORDER BY p.date DESC
-        """)
-        
-        parties = cur.fetchall()
-        
-        result = []
-        for partie in parties:
-            result.append({
-                "partie_id": partie[0],
-                "date": partie[1].isoformat() if partie[1] else None,
-                "victoire": partie[2],
-                "duree": partie[3],
-                "description": partie[4],
-                "blanc": f"{partie[5]} {partie[6]}" if partie[5] else None,
-                "noir": f"{partie[7]} {partie[8]}" if partie[7] else None
-            })
-        
-        return {"parties": result, "count": len(result)}
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
-    
-    finally:
-        cur.close()
-        conn.close()
-
-
-# -----------------------------
-# RÉCUPÉRER UNE PARTIE SPÉCIFIQUE
-# -----------------------------
-@app.get("/parties/{partie_id}")
-def get_partie(partie_id: int):
-    """
-    Retourne les détails complets d'une partie avec ses vidéos
-    """
-
-    conn = db()
-    cur = conn.cursor()
-    
-    try:
-        # Récupérer la partie avec les infos des joueurs
-        cur.execute("""
-            SELECT 
-                p.partie_id, 
-                p.date, 
-                p.victoire,
-                p.duree,
-                p.sgf,
-                p.description,
-                p.blanc_id,
-                p.noir_id,
-                jb."prenom" as blanc_prenom, 
-                jb."nom" as blanc_nom,
-                jn."prenom" as noir_prenom,
-                jn."nom" as noir_nom
-            FROM "parties" p
-            LEFT JOIN "joueurs" jb ON p.blanc_id = jb."joueur_id"
-            LEFT JOIN "joueurs" jn ON p.noir_id = jn."joueur_id"
-            WHERE p.partie_id = %s
-        """, (partie_id,))
-        
-        partie = cur.fetchone()
-        
-        if not partie:
-            raise HTTPException(status_code=404, detail="Partie non trouvée")
-        
-        # Récupérer les vidéos associées
-        cur.execute("""
-            SELECT video_id, titre, chemin, date_upload
-            FROM "video"
-            WHERE partie_id = %s
-            ORDER BY date_upload DESC
-        """, (partie_id,))
-        
-        videos = cur.fetchall()
-        
-        return {
-            "partie_id": partie[0],
-            "date": partie[1].isoformat() if partie[1] else None,
-            "victoire": partie[2],
-            "duree": partie[3],
-            "sgf": partie[4],
-            "description": partie[5],
-            "blanc": {
-                "id": partie[6],
-                "nom_complet": f"{partie[8]} {partie[9]}" if partie[8] else None
-            },
-            "noir": {
-                "id": partie[7],
-                "nom_complet": f"{partie[10]} {partie[11]}" if partie[10] else None
-            },
-            "videos": [
-                {
-                    "video_id": v[0],
-                    "titre": v[1],
-                    "chemin": v[2],
-                    "url": f"/uploads/{v[2]}",
-                    "date_upload": v[3].isoformat() if v[3] else None
-                }
-                for v in videos
-            ],
-            "videos_count": len(videos)
-        }
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
-    
-    finally:
-        cur.close()
-        conn.close()
-
-
-# -----------------------------
-# METTRE À JOUR UNE PARTIE
-# -----------------------------
-@app.put("/parties/{partie_id}")
-def update_partie(
-        partie_id: int,
-        victoire: str = Form(None),
-        duree: int = Form(None),
-        sgf: str = Form(None),
-        description: str = Form(None)
-    ):
-    """
-    Met à jour les informations d'une partie
-    """
-
-    conn = db()
-    cur = conn.cursor()
-    
-    try:
-        # Vérifier que la partie existe
-        cur.execute('SELECT partie_id FROM "parties" WHERE partie_id = %s', (partie_id,))
-        if not cur.fetchone():
-            raise HTTPException(status_code=404, detail="Partie non trouvée")
-        
-        # Construire la requête de mise à jour dynamiquement
-        updates = []
-        params = []
-        
-        if victoire is not None:
-            updates.append("victoire = %s")
-            params.append(victoire)
-        
-        if duree is not None:
-            updates.append("duree = %s")
-            params.append(duree)
-        
-        if sgf is not None:
-            updates.append("sgf = %s")
-            params.append(sgf)
-        
-        if description is not None:
-            updates.append("description = %s")
-            params.append(description)
-        
-        if not updates:
-            return {"message": "Aucune modification à effectuer"}
-        
-        params.append(partie_id)
-        query = f'UPDATE "parties" SET {", ".join(updates)} WHERE "partie_id" = %s'
-        
-        cur.execute(query, params)
-        conn.commit()
-        
-        return {
-            "partie_id": partie_id,
-            "message": "Partie mise à jour avec succès",
-            "updated_fields": len(updates)
-        }
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
-    
-    finally:
-        cur.close()
-        conn.close()
-
-
-
-@app.get("/get_sgf/{partie_id}")
-def get_sgf(partie_id: int):
-    conn = db()
-    cur = conn.cursor()
-
-    try:
-        cur.execute("""
-            SELECT sgf FROM partie WHERE partie_id = %s
-        """, (partie_id,))
-        row = cur.fetchone()
-
-        if not row:
-            raise HTTPException(404, "Partie non trouvée")
-
-        return {"partie_id": partie_id, "sgf": row[0]}
-
-    finally:
-        cur.close()
-        conn.close()
-        
-# -----------------------------
-# UPLOAD UNE VIDÉO
-# -----------------------------
-
-# Monter le dossier pour servir les vidéos
-app.mount("/videos", StaticFiles(directory=VIDEOS_DIR), name="videos")
 
 @app.post("/upload_video")
-async def upload_video(
-        file: UploadFile = File(...),
-        titre: str = Form(...),
-        partie_id: int = Form(...)
-    ):
-    """
-    Upload une vidéo et l'enregistre dans la base de données
-    """
+def upload_video(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    thumbnail: Optional[UploadFile] = File(None),
+    match_id: Optional[int] = Form(None)
+):
+    filename = f"{datetime.now().timestamp()}_{file.filename}"
+    file_path = VIDEO_DIR / filename
+    with open(file_path, "wb") as f:
+        f.write(file.file.read())
 
-    # Validation du type de fichier
-    allowed_extensions = [".mp4", ".avi", ".mov", ".mkv", ".webm"]
-    file_ext = os.path.splitext(file.filename)[1].lower()
-    
-    if file_ext not in allowed_extensions:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Format non supporté. Utilisez: {', '.join(allowed_extensions)}"
-        )
-    
-    conn = db()
+    thumb_url = None
+    if thumbnail:
+        thumb_name = f"{datetime.now().timestamp()}_{thumbnail.filename}"
+        thumb_path = THUMBNAIL_DIR / thumb_name
+        with open(thumb_path, "wb") as f:
+            f.write(thumbnail.file.read())
+        thumb_url = str(thumb_path)
+
+    conn = get_db()
     cur = conn.cursor()
-    
-    try:
-        # Vérifier que la partie existe
-        cur.execute('SELECT "partie_id" FROM "parties" WHERE "partie_id" = %s', (partie_id,))
-        if not cur.fetchone():
-            raise HTTPException(status_code=404, detail="Partie non trouvée")
-        
-        # Créer un nom de fichier unique
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        safe_titre = "".join(c for c in titre if c.isalnum() or c in (' ', '-', '_')).strip()
-        safe_titre = safe_titre.replace(' ', '_')[:50]  # Limiter la longueur
-        
-        filename = f"{safe_titre}_{timestamp}{file_ext}"
-        
-        # Organiser par date (optionnel mais recommandé)
-        date_folder = datetime.now().strftime("%Y/%m")
-        full_dir = VIDEOS_DIR / date_folder
-        full_dir.mkdir(parents=True, exist_ok=True)
-        
-        file_path = full_dir / filename
-        
-        # Sauvegarder le fichier
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        # Chemin relatif pour la base de données
-        relative_path = f"{date_folder}/{filename}"
-        
-        # Insérer dans la base de données
+    cur.execute("""
+        INSERT INTO video (title, path, url, thumbnail, match_id)
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING video_id
+    """, (title, str(file_path), str(file_path), thumb_url, match_id))
+    video_id = cur.fetchone()["video_id"]
+    conn.commit()
+    conn.close()
+    return {"message": "Video uploaded", "video_id": video_id}
+
+
+@app.post("/create_match")
+def create_match(
+    title: str = Form(...),
+    style: Optional[str] = Form(None),
+    white: int = Form(...),
+    black: int = Form(...),
+    result: str = Form(...),
+    date: Optional[datetime] = Form(None),
+    duration: Optional[int] = Form(None),
+    description: Optional[str] = Form(None),
+    video: Optional[UploadFile] = File(None),
+    video_id: Optional[int] = Form(None),
+    thumbnail: Optional[UploadFile] = File(None),
+    sgf: Optional[UploadFile] = File(None)
+):
+    conn = get_db()
+    cur = conn.cursor()
+
+    sgf_path = None
+    if sgf:
+        sgf_path = UPLOAD_DIR / f"{datetime.now().timestamp()}_{sgf.filename}"
+        with open(sgf_path, "wb") as f:
+            f.write(sgf.file.read())
+
+    cur.execute("""
+        INSERT INTO match (title, style, white_id, black_id, result, date, duration, description, sgf, video_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING match_id
+    """, (title, style, white, black, result, date, duration, description, str(sgf_path), video_id))
+    match_id = cur.fetchone()["match_id"]
+
+    if video:
+        vid_name = f"{datetime.now().timestamp()}_{video.filename}"
+        vid_path = VIDEO_DIR / vid_name
+        with open(vid_path, "wb") as f:
+            f.write(video.file.read())
+
+        thumb_path = None
+        if thumbnail:
+            thumb_name = f"{datetime.now().timestamp()}_{thumbnail.filename}"
+            thumb_path = THUMBNAIL_DIR / thumb_name
+            with open(thumb_path, "wb") as f:
+                f.write(thumbnail.file.read())
+
         cur.execute("""
-            INSERT INTO "video" ("titre", "chemin", "partie_id", "date_upload")
+            INSERT INTO video (title, path, url, thumbnail, match_id)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (title, str(vid_path), str(vid_path), str(thumb_path), match_id))
+
+    elif video_id:
+        cur.execute("UPDATE video SET match_id = %s WHERE video_id = %s", (match_id, video_id))
+
+    conn.commit()
+    conn.close()
+    return {"message": "Match created", "match_id": match_id}
+
+# -----------------------------------------------------------
+# EDITING ROUTES
+# -----------------------------------------------------------
+@app.post("/video/{video_id}/edit")
+def edit_video(
+    video_id: int,
+    title: Optional[str] = Form(None),
+    match_id: Optional[int] = Form(None),
+    thumbnail: Optional[UploadFile] = File(None)
+):
+    conn = get_db()
+    cur = conn.cursor()
+
+    # --- Fetch existing video ---
+    cur.execute("SELECT * FROM video WHERE video_id = %s", (video_id,))
+    video = cur.fetchone()
+    if not video:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    # Start with current values
+    new_thumbnail = video["thumbnail"]
+
+    # --- Handle thumbnail replacement ---
+    if thumbnail:
+        thumb_name = f"{datetime.now().timestamp()}_{thumbnail.filename}"
+        thumb_path = THUMBNAIL_DIR / thumb_name
+        with open(thumb_path, "wb") as f:
+            f.write(thumbnail.file.read())
+        new_thumbnail = str(thumb_path)
+
+    # --- match_id can be nullable ---
+    # match_id == None → remove association
+    # match_id given → set new relation
+
+    cur.execute("""
+        UPDATE video
+        SET
+            title = COALESCE(%s, title),
+            thumbnail = %s,
+            match_id = %s
+        WHERE video_id = %s
+    """, (
+        title,
+        new_thumbnail,
+        match_id,
+        video_id,
+    ))
+
+    conn.commit()
+    conn.close()
+
+    # Return updated result
+    return get_video(video_id)
+
+@app.post("/match/{match_id}/edit")
+def edit_match(
+    match_id: int,
+    title: Optional[str] = Form(None),
+    style: Optional[str] = Form(None),
+    white: Optional[int] = Form(None),
+    black: Optional[int] = Form(None),
+    result: Optional[str] = Form(None),
+    date: Optional[datetime] = Form(None),
+    duration: Optional[int] = Form(None),
+    description: Optional[str] = Form(None),
+
+    # NEW CLEAN INPUTS
+    video: Optional[UploadFile] = File(None),
+    sgf: Optional[UploadFile] = File(None),
+    video_id: Optional[str] = Form(None),  # match selects an existing video
+    remove_video: Optional[str] = Form(None),  # explicit removal
+    remove_sgf: Optional[str] = Form(None)
+):
+    conn = get_db()
+    cur = conn.cursor()
+    # ------------------------------------------------------
+    # 1. Load match
+    # ------------------------------------------------------
+    cur.execute("SELECT * FROM match WHERE match_id = %s", (match_id,))
+    match = cur.fetchone()
+    if not match:
+        raise HTTPException(404, "Match not found")
+
+    old_video_id = match["video_id"]
+
+    # ------------------------------------------------------
+    # 2. Update simple text fields
+    # ------------------------------------------------------
+    cur.execute("""
+        UPDATE match SET
+            title = COALESCE(%s, title),
+            style = COALESCE(%s, style),
+            white_id = COALESCE(%s, white_id),
+            black_id = COALESCE(%s, black_id),
+            result = COALESCE(%s, result),
+            date = COALESCE(%s, date),
+            duration = COALESCE(%s, duration),
+            description = COALESCE(%s, description)
+        WHERE match_id = %s
+    """, (title, style, white, black, result, date, duration, description, match_id))
+
+    # ------------------------------------------------------
+    # 3. SGF HANDLING
+    # ------------------------------------------------------
+    sgf_path = match["sgf"]
+
+    if sgf:  # replace SGF
+        sgf_path = UPLOAD_DIR / f"{datetime.now().timestamp()}_{sgf.filename}"
+        with open(sgf_path, "wb") as f:
+            f.write(sgf.file.read())
+        sgf_path = str(sgf_path)
+
+    elif remove_sgf == "true" and sgf_path:
+        # delete old file
+        p = Path(sgf_path)
+        if p.exists():
+            p.unlink()
+        sgf_path = None
+
+    # save sgf path
+    cur.execute("UPDATE match SET sgf = %s WHERE match_id = %s", (sgf_path, match_id))
+
+    # ------------------------------------------------------
+    # 4. VIDEO HANDLING
+    # ------------------------------------------------------
+
+    # CASE A — remove video
+    if remove_video == "true":
+        if old_video_id:
+            cur.execute("UPDATE video SET match_id = NULL WHERE video_id = %s", (old_video_id,))
+        cur.execute("UPDATE match SET video_id = NULL WHERE match_id = %s", (match_id,))
+
+    # CASE B — NEW VIDEO UPLOAD
+    if video:  
+        vid_name = f"{datetime.now().timestamp()}_{video.filename}"
+        vid_path = VIDEO_DIR / vid_name
+
+        with open(vid_path, "wb") as f:
+            f.write(video.file.read())
+
+        cur.execute("""
+            INSERT INTO video (title, path, url, thumbnail)
             VALUES (%s, %s, %s, %s)
-            RETURNING "video_id"
-        """, (titre, relative_path, partie_id, datetime.now()))
-        
-        video_id = cur.fetchone()[0]
-        
-        conn.commit()
-        
-        return {
-            "video_id": video_id,
-            "titre": titre,
-            "chemin": relative_path,
-            "url": f"/videos/{relative_path}",
-            "message": "Vidéo uploadée avec succès"
-        }
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        conn.rollback()
-        # Supprimer le fichier si l'insertion échoue
-        if file_path.exists():
-            file_path.unlink()
-        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
-    
-    finally:
-        cur.close()
-        conn.close()
+            RETURNING video_id
+        """, (title, str(vid_path), str(vid_path), None))
+
+        new_video_id = cur.fetchone()["video_id"]
+
+        cur.execute("UPDATE match SET video_id = %s WHERE match_id = %s",
+                    (new_video_id, match_id))
+
+    # CASE C — EXISTING VIDEO SELECTED (only if no new upload!)
+    elif video_id and video_id != "" and video_id != str(old_video_id):
+        cur.execute("UPDATE match SET video_id = %s WHERE match_id = %s",
+                    (video_id, match_id))
+
+    # ------------------------------------------------------
+    # END
+    # ------------------------------------------------------
+    conn.commit()
+    conn.close()
+    return get_match(match_id)
 
 
-# ----------------------------
-# RÉCUPÉRER TOUTES LES VIDÉOS
-# ----------------------------
-@app.get("/videos")
-def get_videos():
-    """
-    Retourne toutes les vidéos avec leurs URLs complètes
-    """
-    
-    conn = db()
+@app.post("/player/{player_id}/edit")
+def edit_player(
+    player_id: int,
+    firstname: Optional[str] = Form(None),
+    lastname: Optional[str] = Form(None),
+    level: Optional[str] = Form(None)
+):
+    conn = get_db()
     cur = conn.cursor()
-    
-    try:
-        cur.execute("""
-            SELECT v."video_id", v."titre", v."chemin", v."partie_id", v."date_upload",
-                   p.date as partie_date
-            FROM "video" v
-            LEFT JOIN "parties" p ON v."partie_id" = p.partie_id
-            ORDER BY v."date_upload" DESC
-        """)
-        
-        videos = cur.fetchall()
-        
-        result = []
-        for video in videos:
-            result.append({
-                "video_id": video[0],
-                "titre": video[1],
-                "chemin": video[2],
-                "url": f"/videos/{video[2]}",
-                "partie_id": video[3],
-                "date_upload": video[4].isoformat() if video[4] else None,
-                "partie_date": video[5].isoformat() if video[5] else None
-            })
-        
-        return {"videos": result, "count": len(result)}
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
-    
-    finally:
-        cur.close()
+
+    # Check exists
+    cur.execute("SELECT * FROM player WHERE player_id = %s", (player_id,))
+    player = cur.fetchone()
+    if not player:
         conn.close()
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    cur.execute("""
+        UPDATE player
+        SET firstname = COALESCE(%s, firstname),
+            lastname = COALESCE(%s, lastname),
+            level = %s
+        WHERE player_id = %s
+    """, (firstname, lastname, level, player_id))
+
+    conn.commit()
+    conn.close()
+
+    return get_player(player_id)
+
+# -----------------------------------------------------------
+# DELETE ROUTES
+# -----------------------------------------------------------
 
