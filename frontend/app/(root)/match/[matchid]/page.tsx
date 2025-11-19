@@ -12,7 +12,7 @@ interface MatchDetails {
   date: string
   duration: string | number
   sgfFile?: string
-  videoId?: string | number
+  videoId?: string | number | null
   videoUrl?: string
   thumbnail?: string
 }
@@ -57,6 +57,7 @@ export default function MatchDetailsPage() {
       sgfFile: matchData['sgf'] === "None" ? undefined : matchData['sgf'],
       videoUrl: matchData['video'],
       thumbnail: matchData['thumbnail'],
+      videoId: matchData['video_id'],
     });
   };
 
@@ -65,6 +66,11 @@ export default function MatchDetailsPage() {
 
   return (
     <main className="wrapper page flex flex-col gap-6 py-8">
+      <div className="flex justify-end"> 
+      <Link href={`/match/${matchId}/edit`}>
+        <img src="/assets/icons/edit.png" className="w-6 h-6 cursor-pointer left" />
+      </Link>
+    </div>
       {/* Title */}
       <h1 className="text-2xl font-bold text-dark-100">{match?.title}</h1>
 

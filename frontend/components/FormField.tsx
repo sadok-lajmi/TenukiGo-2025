@@ -5,15 +5,12 @@ const FormField = ({ id, label, type = 'text', value, onChange, placeholder, as 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
     const filteredOptions = options.filter(option =>
-        typeof value === "string"
-        ? options.filter(option =>
-        option.label.toLowerCase().includes(value.toLowerCase())
-        )
-        : options
-    )
+    option.label.toLowerCase().includes((value ?? "").toLowerCase()));
 
-    const handleSelect = (optionValue: string) => {
-        onChange({ target: { id: id, value: optionValue } } as any)
+
+    const handleSelect = (optionValue: string | number) => {
+        const safeValue = optionValue != null ? optionValue.toString() : "";
+        onChange({ target: { id: id, value: safeValue } } as any)
         setIsDropdownOpen(false)
     }
 
@@ -40,7 +37,7 @@ const FormField = ({ id, label, type = 'text', value, onChange, placeholder, as 
                     <input
                         id={id}
                         name={id}
-                        value={value}
+                        value={value ?? ''}
                         onChange={onChange}
                         placeholder={placeholder}
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}

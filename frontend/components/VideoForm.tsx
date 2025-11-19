@@ -91,38 +91,59 @@ export default function VideoForm({ mode, initialData }: VideoFormProps) {
 
   // SUBMIT ------------------------------------------
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  console.log("Submit triggered!"); // Test de déclenchement
 
-    if (mode === "create" && !video.file && !formData.title) {
-      setError("Please select a video file and enter a title.");
-      return;
-    }
+  // Vérifie que le titre et le fichier sont présents
+  console.log("Form data:", formData);
+  console.log("Video file:", video.file);
+  console.log("Thumbnail file:", thumbnail.file);
 
-    const form = new FormData();
-    form.append("title", formData.title);
-    if (formData.matchId) form.append("match_id", formData.matchId);
+  if (mode === "create" && !video.file && !formData.title) {
+    setError("Please select a video file and enter a title.");
+    return;
+  }
 
+  const form = new FormData();
+  form.append("title", formData.title);
+  if (formData.matchId) form.append("match_id", formData.matchId);
 
-    if (video.file) form.append("file", video.file);
-    if (thumbnail.file) form.append("thumbnail", thumbnail.file);
+  if (video.file) form.append("file", video.file);
+  if (thumbnail.file) form.append("thumbnail", thumbnail.file);
 
-    const url =
-      mode === "create"
-        ? `${process.env.NEXT_PUBLIC_API_URL}/upload_video`
-        : `${process.env.NEXT_PUBLIC_API_URL}/video/${initialData?.id}/edit`;
+  const url =
+    mode === "create"
+      ? `${process.env.NEXT_PUBLIC_API_URL}/upload_video`
+      : `${process.env.NEXT_PUBLIC_API_URL}/video/${initialData?.id}/edit`;
 
+  console.log("Uploading to URL:", url);
+
+  try {
     const response = await fetch(url, {
       method: "POST",
       body: form,
     });
 
+    console.log("Fetch response status:", response.status);
+
     const res = await response.json();
-    if (!response.ok) return setError(res.error || "Upload failed.");
+    console.log("Response JSON:", res);
+
+    if (!response.ok) {
+      setError(res.error || "Upload failed.");
+      return;
+    }
 
     const videoId = res.video_id || initialData?.id;
+    console.log("Upload success! Video ID:", videoId);
     router.push(`/video/${videoId}`);
-  };
+  } catch (err) {
+    console.error("Upload error:", err);
+    setError("Upload failed (network error).");
+  }
+};
+
 
   return (
     <form
