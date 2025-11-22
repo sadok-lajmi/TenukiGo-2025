@@ -23,30 +23,11 @@ match?: {
 }
 
 export default function VideoDetailsPage() {
-// Mock data (replace with API fetch later)
-const videoex: VideoDetails = {
-  id: "video-1",
-  title: "Alpha vs Beta Championship Final",
-  duration: "45",
-  uploadDate: "Nov 8, 2025",
-  videoUrl: "/videos/alpha-vs-beta.mp4",
-  thumbnail: "/images/match-thumb.jpg",
-  match: {
-    id: "1",
-    title: "Alpha vs Beta",
-    style: "Blitz",
-    playerWhite: "John Alpha",
-    playerBlack: "Emma Beta",
-    result: "1 - 0",
-    sgf: "/sgf/example.sgf",
-    description:
-      "An intense blitz match between two top-tier players with aggressive openings and tactical midgame transitions.",
-  },
-}
 
 // Fetch video details from API here and update state
-const [video, setVideo] = useState<VideoDetails>(videoex)
-const { match } = video
+const [video, setVideo] = useState<VideoDetails>(null as unknown as VideoDetails);
+const { match } = video || {}
+const [moreMatchInfo, setMoreMatchInfo] = useState<{date: string, black: string, white: string}>({date: Date.now().toString().slice(0,10), black: "", white: ""});
 const params = useParams()
 const videoId = params.videoId
 useEffect(() => {
@@ -75,11 +56,34 @@ useEffect(() => {
     }
   };
   fetchVideoData();
-}, [videoId])
+  // fetch more data
+  const fetchMoreData = async () => {
+    if (match) {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/match/${match.id}`);
+      const data = await response.json();
+      setMoreMatchInfo({date: data["date"], black: data["black"], white: data["white"]});
+    }
+  };
+  fetchMoreData();
+}, [videoId]);
 
+if (!video) {
+  return (
+    <main className="wrapper page flex justify-center items-center py-20">
+      <p className="text-gray-500">Loading video…</p>
+    </main>
+  );
+}
 
 return (
+
   <main className="wrapper page flex flex-col gap-6 py-8">
+    <div className="flex justify-end"> 
+      <Link href={`/video/${videoId}/edit`}>
+        <img src="/assets/icons/edit.png" className="w-6 h-6 cursor-pointer left" />
+      </Link>
+    </div>
+
     {/* Video Section */}
     <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
       <div className="w-full rounded-xl overflow-hidden bg-black">
@@ -104,7 +108,7 @@ return (
       <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
 
         <div className="flex justify-center">
-          <p className="font-semibold text-lg text-dark-100 text-yellow-700">{match.title}</p>
+          <Link href={`/match/${match.id}`}><p className="font-semibold text-lg text-dark-100 text-yellow-700">{match.title}</p></Link>
         </div>
 
         {match.style && (
@@ -115,22 +119,22 @@ return (
         )}
 
         <div className="flex justify-between items-center">
-          <p className="font-semibold text-dark-100">Duration:</p>
-          <p>{video.duration}</p>
+          <p className="font-semibold text-dark-100">Date:</p>
+          <p>{moreMatchInfo.date ? moreMatchInfo.date : "Inconnue"}</p>
         </div>
 
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">Player (White):</p>
-          <p>
+          <Link href={`/player/${moreMatchInfo.white}`}><p>
             {match.playerWhite}
-          </p>
+          </p></Link>
         </div>
 
         <div className="flex justify-between items-center">
           <p className="font-semibold text-dark-100">Player (Black):</p>
-          <p>
+          <Link href={`/player/${moreMatchInfo.black}`}><p>
             {match.playerBlack}
-          </p>
+          </p></Link>
         </div>
 
         {/* Added Result */}

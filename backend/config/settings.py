@@ -1,24 +1,36 @@
 import os
 from pathlib import Path
 
-# --- Configuration DB ---
-DB_URL = "postgresql://go_user:secret@localhost:5432/go_db"
-# DB_URL="postgresql://postgres:BaknineNouhaila@localhost:5432/go_db?sslmode=disable"
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+# -------------------------------
+# BASE DIRECTORIES
+# -------------------------------
+BASE_DIR = Path(__file__).parent.parent.resolve()
 
-# Remonter au dossier backend/
-BASE_DIR = os.path.dirname(CURRENT_DIR)
+# Upload directories
+UPLOAD_DIR = BASE_DIR / "uploads"
+VIDEO_DIR = UPLOAD_DIR / "videos"
+THUMBNAIL_DIR = UPLOAD_DIR / "thumbnails"
+SGF_DIR = UPLOAD_DIR / "sgf"
 
-DATA_DIR = os.path.join(os.path.dirname(BASE_DIR), "data", "storage")
-VIDEOS_DIR = os.path.join(DATA_DIR, "videos")
-SGF_DIR = os.path.join(DATA_DIR, "sgf_files")
+# Create directories if they don't exist
+VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+THUMBNAIL_DIR.mkdir(parents=True, exist_ok=True)
+SGF_DIR.mkdir(parents=True, exist_ok=True)
 
-# --- Configuration uvicorn (serveur FastAPI) ---
+
+# -------------------------------
+# DATABASE CONFIGURATION
+# -------------------------------
+# Example PostgreSQL URL
+DB_URL = "postgresql://postgres:BaknineNouhaila@localhost:5432/go_db?sslmode=disable"
+
+# -------------------------------
+# APP CONFIG
+# -------------------------------
+CLUB_PASSWORD = "clubgo2025"
+
+# -------------------------------
+# Uvicorn CONFIG
+# -------------------------------
 HOST = "0.0.0.0"
 PORT = 8000
-
-
-# --- Configuration ---
-CLUB_PASSWORD = "clubgo2025"
-# VIDEOS_DIR = Path("../../data/storage/videos")
-# SGF_FILES_DIR = Path("../../data/storage/sgf_files")
