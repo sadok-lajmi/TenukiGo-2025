@@ -31,9 +31,9 @@ export default function VideoPlayer({ url }: VideoPlayerProps) {
     if (Hls.isSupported()) {
       // Utilisation de la même configuration HLS
       const config: Partial<HlsConfig> = {
-        lowLatencyMode: true,
-        maxBufferLength: 4,
-        backBufferLength: 2,
+        lowLatencyMode: false,
+        maxBufferLength: 600,
+        backBufferLength: 600,
         liveSyncDurationCount: 2,
         liveMaxLatencyDurationCount: 3,
         enableWorker: true,
