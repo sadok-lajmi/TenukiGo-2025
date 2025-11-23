@@ -22,7 +22,7 @@ export default function EditVideoPage() {
       setInitialData({
         id: data.video_id,
         title: data.title,
-        matchId: data.match_id,
+        matchId: data.match_id?.toString(),
         thumbnail: data.thumbnail,
       });
     };
