@@ -2,6 +2,8 @@
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { Delete } from "lucide-react"
+import DeletePopUp from "@/components/DeletePopUp"
 
 interface MatchDetails {
   title: string
@@ -66,11 +68,12 @@ export default function MatchDetailsPage() {
 
   return (
     <main className="wrapper page flex flex-col gap-6 py-8">
-      <div className="flex justify-end"> 
-      <Link href={`/match/${matchId}/edit`}>
-        <img src="/assets/icons/edit.png" className="w-6 h-6 cursor-pointer left" />
-      </Link>
-    </div>
+      <div className="flex justify-end gap-2"> 
+        <Link href={`/match/${matchId}/edit`}>
+          <img src="/assets/icons/edit.png" className="w-6 h-6 cursor-pointer left" />
+        </Link>
+        <DeletePopUp mode="match" id={matchId?.toString()} />
+      </div>
       {/* Title */}
       <h1 className="text-2xl font-bold text-dark-100">{match?.title}</h1>
 
