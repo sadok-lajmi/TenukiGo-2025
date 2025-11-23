@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent, useRef, useEffect } from "react";
+import { useState, ChangeEvent, useRef, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import FormField from "@/components/FormField";
 import FileInput from "@/components/FileInput";
@@ -60,10 +60,14 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
   });
 
   // ---------------------------------------------------------
-  // REMOVE STATES (NEW)
+  // REMOVE STATES
   // ---------------------------------------------------------
   const [removeVideo, setRemoveVideo] = useState(false);
   const [removeSgf, setRemoveSgf] = useState(false);
+  // ---------------------------------------------------------
+  // SELECTION STATES
+  // ---------------------------------------------------------
+  const [selectExistingVideo, setSelectExistingVideo] = useState(false);
 
   // ---------------------------------------------------------
   // PLAYERS FETCH
@@ -83,6 +87,25 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
       setPlayers(playersNames);
     };
     fetchPlayers();
+  }, []);
+
+  // ---------------------------------------------------------
+  // VIDEOS FETCH
+  // ---------------------------------------------------------
+  type VideoOption = { label: string; value: string };
+  const [videos, setVideos] = useState<VideoOption[]>([]);
+  useEffect(() => {
+    const fetchVideos = async () => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`);
+      const data = await response.json();
+      const videosData = data["videos"];
+      const videoOptions: VideoOption[] = videosData.filter((video: any) => video.match_id === null).map((video: any) => ({
+        label: video["title"],
+        value: video["video_id"].toString(),
+      }));
+      setVideos(videoOptions);
+    };
+    fetchVideos();
   }, []);
 
   // ---------------------------------------------------------
@@ -246,7 +269,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
         placeholder="décrivez le match..."
       />
 
-      {/* REMOVAL CHECKBOXE */}
+      {/* CHECKBOXES */}
       {mode === "edit" && (
         <div className="flex flex-col gap-2 text-sm">
           <label className="flex items-center gap-2">
@@ -254,11 +277,16 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
               setRemoveVideo(e.target.checked); }} />
             Supprimer la vidéo actuelle
           </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={selectExistingVideo} onChange={(e) => {
+              setSelectExistingVideo(e.target.checked); }} />
+            Sélectionner une vidéo existante
+          </label>
         </div>
       )}
 
       {/* FILE INPUTS */}
-      {!removeVideo && (
+      {(!removeVideo && !selectExistingVideo) && (
       <FileInput
         id="video"
         label="Video"
@@ -270,6 +298,19 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
         onReset={() => handleResetFile(video, setVideo)}
         type="video"
       />)}
+
+      {/* EXISTING VIDEO SELECTOR */}
+      {(selectExistingVideo || mode === "create") && (
+        <FormField
+          id="video_id"
+          label="Vidéo existante"
+          as="search"
+          options={videos}
+          value={formData.video_id}
+          onChange={handleInputChange}
+          placeholder="cherchez des vidéos existantes..."
+        />
+      )}
       
       {/* REMOVAL CHECKBOXE */}
       {mode === "edit" && (

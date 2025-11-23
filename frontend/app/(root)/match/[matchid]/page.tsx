@@ -113,7 +113,7 @@ export default function MatchDetailsPage() {
       {/* Video Section (if exists) */}
       {match?.videoUrl && (
         <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
-          <h2 className="text-lg font-semibold text-dark-100">Match Video</h2>
+          <Link href={`/video/${match.videoId?.toString()}`} className="text-lg font-semibold text-dark-100">Match Video</Link>
           <div className="w-full rounded-xl overflow-hidden">
             <video
               width="640"
