@@ -39,6 +39,9 @@ export default function VideoForm({ mode, initialData }: VideoFormProps) {
     inputRef: useRef<HTMLInputElement>(null),
   });
 
+  // state for showing the current match
+  const [currentMatch, setCurrentMatch] = useState<string>(initialData?.matchId || "");
+
   const [matchOptions, setMatchOptions] = useState<MatchOption[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -159,7 +162,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         value={formData.matchId}
         onChange={handleInputChange}
         options={matchOptions}
-        placeholder="Search for a match"
+        placeholder={currentMatch ? `Mettez ${currentMatch} si vous voulez garder la partie actuelle` : "Sélectionnez une partie"}
       />
 
       {/* Video Input: only visible in create mode */}

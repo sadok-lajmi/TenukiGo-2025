@@ -92,6 +92,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
   // ---------------------------------------------------------
   // VIDEOS FETCH
   // ---------------------------------------------------------
+  const [currentVideo, setCurrentVideo] = useState<string>(initialData?.videoId?.toString() || "");
   type VideoOption = { label: string; value: string };
   const [videos, setVideos] = useState<VideoOption[]>([]);
   useEffect(() => {
@@ -308,7 +309,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
           options={videos}
           value={formData.video_id}
           onChange={handleInputChange}
-          placeholder="cherchez des vidéos existantes..."
+          placeholder={currentVideo ? `Mettez ${currentVideo} si vous voulez garder la vidéo actuelle` : "Sélectionnez une vidéo"}
         />
       )}
       
