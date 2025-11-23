@@ -1,5 +1,4 @@
 import uvicorn
-from api.routes import app
 from config.settings import HOST, PORT
 
 if __name__ == "__main__":

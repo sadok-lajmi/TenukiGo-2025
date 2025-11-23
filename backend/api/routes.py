@@ -1,17 +1,14 @@
-import json
-from fastapi import FastAPI, Path, WebSocket, WebSocketDisconnect, HTTPException, Form, UploadFile, File
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Form, UploadFile, File
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles  
 from pathlib import Path as PathLib
-from typing import List, Optional
+from typing import Optional
 from datetime import datetime
-import psycopg2
-import os
+import json
 
 from api.WebSocket import ConnectionManager  
-from database.services import process_and_save_game, db, get_or_create_player, normalize_name
+from database.services import process_and_save_game, db
 from config.settings import CLUB_PASSWORD, VIDEO_DIR, THUMBNAIL_DIR, UPLOAD_DIR, SGF_DIR
 
 app = FastAPI(title="Go Game API")

@@ -1,0 +1,4 @@
+fastapi                 # Le framework web
+uvicorn[standard]       # Le serveur ASGI pour faire tourner FastAPI
+psycopg2-binary         # Le pilote (driver) pour la base de données PostgreSQL
+python-multipart        # Nécessaire pour que FastAPI gère les 'UploadFile' et 'Form'

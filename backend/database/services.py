@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from config.settings import DB_URL
 from psycopg2.extras import RealDictCursor
 
-
 def db():
     return psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
 
@@ -25,9 +24,6 @@ def get_or_create_player(cur, firstname, lastname, level=None):
         RETURNING player_id
     """, (firstname, lastname, level))
     return cur.fetchone()[0]
-
-def normalize_name(name: str) -> str:
-    return name.strip().title()
 
 def process_and_save_game(data: dict) -> dict:
     """Insert a Go game into the DB using the SQL schema."""
