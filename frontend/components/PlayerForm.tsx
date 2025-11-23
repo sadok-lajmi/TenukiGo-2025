@@ -15,6 +15,7 @@ interface PlayerFormProps {
 }
 
 export default function PlayerForm({ mode, initialData }: PlayerFormProps) {
+    const [password, setPassword] = useState("");
 
     const [formData, setFormData] = useState({
         firstname: initialData?.firstname || '',
@@ -39,6 +40,11 @@ export default function PlayerForm({ mode, initialData }: PlayerFormProps) {
     // Pushing the new player data to server
     const handleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        // Validate password
+        if (password !== process.env.NEXT_PUBLIC_PASSWORD) {
+            setError("Mot de passe incorrect.");
+            return;
+        }
 
         if ( !formData.firstname || !formData.lastname) {
             setError('Please enter first name and last name.');
@@ -97,9 +103,19 @@ export default function PlayerForm({ mode, initialData }: PlayerFormProps) {
                     placeholder='what is their level'
                 />
                 
-                <button type='submit' className="bg-yellow-500 text-white px-4 py-2 rounded-lg w-30 self-center">
-                    {mode === "create" ? "Add" : "Save"}
+                {/* Password */}
+                <div className="flex justify-center mt-4 gap-2">
+                <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Entrez le mot de passe"
+                    className="border border-gray-300 rounded px-3 py-2 mt-2 w-50"
+                />
+                <button className="bg-yellow-500 text-white px-4 py-2 rounded-xl w-30 self-center">
+                    {mode === "create" ? "Upload" : "Save"}
                 </button>
+                </div>
                 {error && <div className='error-field'>{error}</div>}
 
             </form>

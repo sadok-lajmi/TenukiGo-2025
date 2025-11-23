@@ -19,6 +19,7 @@ interface VideoFormProps {
 
 export default function VideoForm({ mode, initialData }: VideoFormProps) {
   const router = useRouter();
+  const [password, setPassword] = useState("");
 
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
@@ -96,6 +97,11 @@ export default function VideoForm({ mode, initialData }: VideoFormProps) {
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
+  // Validate password
+  if (password !== process.env.NEXT_PUBLIC_PASSWORD) {
+    setError("Mot de passe incorrect.");
+    return;
+  }
 
   if (mode === "create" && !video.file && !formData.title) {
     setError("Please select a video file and enter a title.");
@@ -192,9 +198,19 @@ const handleSubmit = async (e: React.FormEvent) => {
         type="image"
       />
 
+      {/* Password */}
+      <div className="flex justify-center mt-4 gap-2">
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Entrez le mot de passe"
+        className="border border-gray-300 rounded px-3 py-2 mt-2 w-50"
+      />
       <button className="bg-yellow-500 text-white px-4 py-2 rounded-xl w-30 self-center">
         {mode === "create" ? "Upload" : "Save"}
       </button>
+      </div>
 
       {error && <div className="error-field">{error}</div>}
     </form>

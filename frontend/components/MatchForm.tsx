@@ -26,7 +26,7 @@ interface MatchFormProps {
 
 export default function MatchForm({ mode, initialData }: MatchFormProps) {
   const router = useRouter();
-
+  const [password, setPassword] = useState("");
   // ---------------------------------------------------------
   // BASE TEXT FIELDS
   // ---------------------------------------------------------
@@ -146,6 +146,11 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Validate password
+    if (password !== process.env.NEXT_PUBLIC_PASSWORD) {
+      setError("Mot de passe incorrect.");
+      return;
+    }
 
     // --------------------------------------------------
     // CLIENT-SIDE VALIDATION (NEW)
@@ -337,9 +342,19 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
         type="sgf"
       />)}
 
+      {/* Password */}
+      <div className="flex justify-center mt-4 gap-2">
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Entrez le mot de passe"
+        className="border border-gray-300 rounded px-3 py-2 mt-2 w-50"
+      />
       <button className="bg-yellow-500 text-white px-4 py-2 rounded-xl w-30 self-center">
         {mode === "create" ? "Upload" : "Save"}
       </button>
+      </div>
 
       {error && <div className="error-field text-red-500">{error}</div>}
     </form>
