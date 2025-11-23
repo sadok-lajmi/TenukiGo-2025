@@ -93,12 +93,6 @@ export default function VideoForm({ mode, initialData }: VideoFormProps) {
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  console.log("Submit triggered!"); // Test de déclenchement
-
-  // Vérifie que le titre et le fichier sont présents
-  console.log("Form data:", formData);
-  console.log("Video file:", video.file);
-  console.log("Thumbnail file:", thumbnail.file);
 
   if (mode === "create" && !video.file && !formData.title) {
     setError("Please select a video file and enter a title.");
