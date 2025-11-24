@@ -128,7 +128,7 @@ const parseSGF = (sgfContent: string): Move[] => {
 
 // --- COMPOSANT PRINCIPAL ---
 
-export default function GoSgfViewer() {
+export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, upload?: boolean }) {
   const [sgfFile, setSgfFile] = useState<string>('');
   const [defaultSgf, setDefaultSgf] = useState<string>(''); // Pour stocker la version originale chargée
   const [currentMoveIndex, setCurrentMoveIndex] = useState<number>(0);
@@ -138,7 +138,7 @@ export default function GoSgfViewer() {
   // Charger le SGF par défaut depuis le dossier public au montage
   useEffect(() => {
     setIsLoading(true);
-    fetch('/sgf/example.sgf')
+    fetch(sgfUrl ?? '/sgf/example.sgf')
       .then(response => {
         if (!response.ok) {
           throw new Error(`Impossible de charger le SGF (Status: ${response.status})`);
@@ -365,6 +365,7 @@ export default function GoSgfViewer() {
           </div>
 
           {/* Upload SGF */}
+          { upload && (
           <div className="bg-white p-6 rounded-xl shadow-md">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
               <Upload size={20} />
@@ -392,6 +393,7 @@ export default function GoSgfViewer() {
                 Réinitialiser (Partie exemple)
             </button>
           </div>
+          )}
         </div>
       </main>
     </div>

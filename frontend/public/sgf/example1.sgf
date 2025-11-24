@@ -1,0 +1,16 @@
+(;GM[1]FF[4]CA[UTF-8]SZ[9]
+PB[BlackPlayer]PW[WhitePlayer]
+BR[1k]WR[1k]
+DT[2025-01-01]RE[B+R]
+C[Example 9x9 Go game in SGF format]
+
+;B[ee]
+;W[dd]
+;B[fg]
+;W[cf]
+;B[ch]
+;W[ge]
+;B[gh]
+;W[fh]
+;B[hh]
+)

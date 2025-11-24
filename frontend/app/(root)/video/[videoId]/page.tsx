@@ -3,6 +3,7 @@ import { useState, useEffect, use } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/dist/client/link"
 import DeletePopUp from "@/components/DeletePopUp"
+import GoSgfViewer from "@/components/GoSgfViewer"
 
 interface VideoDetails {
 id: string
@@ -160,6 +161,10 @@ return (
           >
             Download SGF File
           </Link>
+        )}
+        {/* SGF Viewer if the sgf exists */}
+        {match?.sgf && (
+          <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgf}`} />
         )}
       </section>
     ) : (

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Delete } from "lucide-react"
 import DeletePopUp from "@/components/DeletePopUp"
+import GoSgfViewer from "@/components/GoSgfViewer"
 
 interface MatchDetails {
   title: string
@@ -113,8 +114,12 @@ export default function MatchDetailsPage() {
       {/* Video Section (if exists) */}
       {match?.videoUrl && (
         <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
-          <Link href={`/video/${match.videoId?.toString()}`} className="text-lg font-semibold text-dark-100">Match Video</Link>
-          <div className="w-full rounded-xl overflow-hidden">
+  
+            {match?.sgfFile && (
+            <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgfFile}`} />
+            )}
+            <div className="w-full rounded-xl overflow-hidden">
+            <Link href={`/video/${match.videoId?.toString()}`} className="text-lg font-semibold text-dark-100">Match Video</Link>
             <video
               width="640"
               height="360"
