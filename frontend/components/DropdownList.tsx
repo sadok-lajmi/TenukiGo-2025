@@ -1,10 +1,14 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react'
+import { ChangeEvent, useState } from 'react'
 
-const DropdownList = () => {
+const DropdownList = ({onChange}: {onChange: (e: string) => void}) => {
     const [isOpen, setIsOpen] = useState(false);
+    const handleSelect = (option: string) => {
+        onChange(option as any);
+        setIsOpen(false);
+    }
     return (
         <div className='relative'>
             <div className='cursor-pointer' onClick={() => setIsOpen(!isOpen)}>
@@ -20,7 +24,7 @@ const DropdownList = () => {
             {isOpen && (
                 <ul className='dropdown'>
                     {['Most Recent', 'Oldest'].map((option) => (
-                        <li key={option} className='list-item'>
+                        <li key={option} onClick={() => handleSelect(option)} className='list-item'>
                             {option}
                         </li>
                     ))}

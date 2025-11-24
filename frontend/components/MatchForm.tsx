@@ -36,7 +36,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
     white: initialData?.white?.toString() || "",
     black: initialData?.black?.toString() || "",
     result: initialData?.result || "",
-    date: initialData?.date || "",
+    date: initialData?.date || Date.now().toString(),
     duration: initialData?.duration?.toString() || "",
     description: initialData?.description || "",
     video_id: initialData?.videoId?.toString() || "",

@@ -4,6 +4,7 @@ import Header from '@/components/Header'
 import VideoCard from '@/components/VideoCard'
 import DropdownList from '@/components/DropdownList'
 import {use, useEffect, useState} from 'react'
+import { set } from 'better-auth';
 
 
 const Page = () => {
@@ -28,15 +29,32 @@ const Page = () => {
     video['title'].toLowerCase().includes(query.toLowerCase())
   )
 
+  const [sortOption, setSortOption] = useState<string>('Most Recent')
+  const handleSortChange = (option: string) => {
+    if (option === 'Most Recent') {
+      setSortOption('Most Recent');
+    } else if (option === 'Oldest') {
+      setSortOption('Oldest');
+    }
+  }
+
+  const sortedVideos = filteredVideos.sort((a, b) => {
+    if (sortOption === 'Most Recent') {
+      return new Date(b['date_upload']).getTime() - new Date(a['date_upload']).getTime();
+    } else {
+      return new Date(a['date_upload']).getTime() - new Date(b['date_upload']).getTime();
+    }
+  });
+
   return (
     <main className='wrapper page'>
       <Header title='All Videos' subHeader='Public Library' query={query} onChange={handleSearchChange} type="videos"/>
-      <DropdownList />
+      <DropdownList onChange={handleSortChange} />
       <section className='video-grid'>
-        {filteredVideos.length === 0 ? (
+        {sortedVideos.length === 0 ? (
           <p>No videos found.</p>
         ) : (
-          filteredVideos.map((video) => (
+          sortedVideos.map((video) => (
             <VideoCard key={video['video_id']} id={video['video_id']} title={video['title']} thumbnail={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${video['thumbnail']}`} createdAt={new Date(video['date_upload'])} duration={video['duration']} />
           ))
         )}
