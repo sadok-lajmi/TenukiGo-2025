@@ -30,9 +30,9 @@ const Page = () => {
       {streams.length > 0 ?
         (<div className="streams-list">
           {streams.map((stream: any) => (
-            <div key={stream["id"]} className="stream-item">
+            <div key={stream["stream_id"]} className="stream-item">
               <VideoPlayer url={stream["url"]} />
-              <Link href={`/watch/${stream["id"]}`}>{stream["title"]}</Link>
+              <Link href={`/watch/${stream["stream_id"]}`}>{stream["title"]}</Link>
             </div>
           ))}
         </div>
@@ -40,8 +40,6 @@ const Page = () => {
           <p>No live streams available at the moment.</p>
         )
       }
-
-      
 
     </div>
   );

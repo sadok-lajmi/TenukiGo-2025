@@ -19,6 +19,7 @@ interface VideoFormProps {
 
 export default function VideoForm({ mode, initialData }: VideoFormProps) {
   const router = useRouter();
+  const [password, setPassword] = useState("");
 
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
@@ -38,6 +39,9 @@ export default function VideoForm({ mode, initialData }: VideoFormProps) {
       : "",
     inputRef: useRef<HTMLInputElement>(null),
   });
+
+  // state for showing the current match
+  const [currentMatch, setCurrentMatch] = useState<string>(initialData?.matchId || "");
 
   const [matchOptions, setMatchOptions] = useState<MatchOption[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -93,12 +97,11 @@ export default function VideoForm({ mode, initialData }: VideoFormProps) {
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  console.log("Submit triggered!"); // Test de déclenchement
-
-  // Vérifie que le titre et le fichier sont présents
-  console.log("Form data:", formData);
-  console.log("Video file:", video.file);
-  console.log("Thumbnail file:", thumbnail.file);
+  // Validate password
+  if (password !== process.env.NEXT_PUBLIC_PASSWORD) {
+    setError("Mot de passe incorrect.");
+    return;
+  }
 
   if (mode === "create" && !video.file && !formData.title) {
     setError("Please select a video file and enter a title.");
@@ -165,7 +168,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         value={formData.matchId}
         onChange={handleInputChange}
         options={matchOptions}
-        placeholder="Search for a match"
+        placeholder={currentMatch ? `Mettez ${currentMatch} si vous voulez garder la partie actuelle` : "Sélectionnez une partie"}
       />
 
       {/* Video Input: only visible in create mode */}
@@ -195,9 +198,19 @@ const handleSubmit = async (e: React.FormEvent) => {
         type="image"
       />
 
+      {/* Password */}
+      <div className="flex justify-center mt-4 gap-2">
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Entrez le mot de passe"
+        className="border border-gray-300 rounded px-3 py-2 mt-2 w-50"
+      />
       <button className="bg-yellow-500 text-white px-4 py-2 rounded-xl w-30 self-center">
         {mode === "create" ? "Upload" : "Save"}
       </button>
+      </div>
 
       {error && <div className="error-field">{error}</div>}
     </form>

@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import MatchCard from "@/components/MatchCard"
-import { use, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useParams } from "next/dist/client/components/navigation"
+import DeletePopUp from "@/components/DeletePopUp"
 
 interface PlayerDetails {
   firstName: string
@@ -73,6 +74,13 @@ export default function PlayerDetailsPage() {
 
   return (
     <main className="wrapper page flex flex-col gap-6 py-8">
+      <div className="flex justify-end gap-2"> 
+        <Link href={`/player/${playerId}/edit`}>
+          <img src="/assets/icons/edit.png" className="w-6 h-6 cursor-pointer left" />
+        </Link>
+        <DeletePopUp mode="player" id={playerId?.toString()} />
+      </div>
+
       {/* Player Name */}
       <h1 className="text-2xl font-bold text-dark-100">
         {player.firstName} {player.lastName}

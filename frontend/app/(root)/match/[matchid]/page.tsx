@@ -2,6 +2,9 @@
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { Delete } from "lucide-react"
+import DeletePopUp from "@/components/DeletePopUp"
+import GoSgfViewer from "@/components/GoSgfViewer"
 
 interface MatchDetails {
   title: string
@@ -66,11 +69,12 @@ export default function MatchDetailsPage() {
 
   return (
     <main className="wrapper page flex flex-col gap-6 py-8">
-      <div className="flex justify-end"> 
-      <Link href={`/match/${matchId}/edit`}>
-        <img src="/assets/icons/edit.png" className="w-6 h-6 cursor-pointer left" />
-      </Link>
-    </div>
+      <div className="flex justify-end gap-2"> 
+        <Link href={`/match/${matchId}/edit`}>
+          <img src="/assets/icons/edit.png" className="w-6 h-6 cursor-pointer left" />
+        </Link>
+        <DeletePopUp mode="match" id={matchId?.toString()} />
+      </div>
       {/* Title */}
       <h1 className="text-2xl font-bold text-dark-100">{match?.title}</h1>
 
@@ -110,8 +114,12 @@ export default function MatchDetailsPage() {
       {/* Video Section (if exists) */}
       {match?.videoUrl && (
         <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
-          <h2 className="text-lg font-semibold text-dark-100">Match Video</h2>
-          <div className="w-full rounded-xl overflow-hidden">
+  
+            {match?.sgfFile && (
+            <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgfFile}`} />
+            )}
+            <div className="w-full rounded-xl overflow-hidden">
+            <Link href={`/video/${match.videoId?.toString()}`} className="text-lg font-semibold text-dark-100">Match Video</Link>
             <video
               width="640"
               height="360"

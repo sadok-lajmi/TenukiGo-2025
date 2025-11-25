@@ -2,6 +2,8 @@
 import { useState, useEffect, use } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/dist/client/link"
+import DeletePopUp from "@/components/DeletePopUp"
+import GoSgfViewer from "@/components/GoSgfViewer"
 
 interface VideoDetails {
 id: string
@@ -78,10 +80,11 @@ if (!video) {
 return (
 
   <main className="wrapper page flex flex-col gap-6 py-8">
-    <div className="flex justify-end"> 
+    <div className="flex justify-end gap-2"> 
       <Link href={`/video/${videoId}/edit`}>
         <img src="/assets/icons/edit.png" className="w-6 h-6 cursor-pointer left" />
       </Link>
+      <DeletePopUp mode="video" id={videoId?.toString()} />
     </div>
 
     {/* Video Section */}
@@ -158,6 +161,10 @@ return (
           >
             Download SGF File
           </Link>
+        )}
+        {/* SGF Viewer if the sgf exists */}
+        {match?.sgf && (
+          <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgf}`} />
         )}
       </section>
     ) : (

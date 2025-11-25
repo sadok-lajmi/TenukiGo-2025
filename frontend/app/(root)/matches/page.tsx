@@ -29,15 +29,31 @@ const Page = () => {
     match['description'].toLowerCase().includes(query.toLowerCase())
   )
 
+  const [sortOption, setSortOption] = useState<string>('Most Recent')
+  const handleSortChange = (option: string) => {
+    if (option === 'Most Recent') {
+      setSortOption('Most Recent');
+    } else if (option === 'Oldest') {
+      setSortOption('Oldest');
+    }
+  }
+  const sortedMatches = filteredMatches.sort((a, b) => {
+    if (sortOption === 'Most Recent') {
+      return new Date(b['date']).getTime() - new Date(a['date']).getTime();
+    } else {
+      return new Date(a['date']).getTime() - new Date(b['date']).getTime();
+    }
+  });
+
   return (
     <main className='wrapper page'>
       <Header title='All Matches' subHeader='Public Library' query={query} onChange={handleSearchChange} type="matches"/>
-      <DropdownList />
+      <DropdownList onChange={handleSortChange}/>
       <section className='video-grid'>
-        {filteredMatches.length === 0 ? (
+        {sortedMatches.length === 0 ? (
           <p>No matches found.</p>
         ) : (
-          filteredMatches.map((match) => (
+          sortedMatches.map((match) => (
             <MatchCard key={match['match_id']} id={match['match_id']} title={match['title']} thumbnail={match['thumbnail']} date={new Date(match['date'])} duration={match['duration']} />
           ))
         )}

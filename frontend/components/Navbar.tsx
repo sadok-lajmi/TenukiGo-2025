@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-const user = {};
+const user = {}; // Replace with actual user authentication logic in the future
 
 const Navbar = () => {
     const router = useRouter();

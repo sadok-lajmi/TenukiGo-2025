@@ -47,12 +47,12 @@ const FormField = ({ id, label, type = 'text', value, onChange, placeholder, as 
                         <ul className='dropdown'>
                             {filteredOptions.length > 0 ? (
                                 filteredOptions.map(({ label, value }) => (
-                                    <li key={label} onClick={() => handleSelect(value)} className="list-item">
+                                    <li key={value} onClick={() => handleSelect(value)} className="list-item">
                                         {label}
                                     </li>
                                 ))
                             ) : (
-                                <li>No {label} found</li>
+                                <li>pas de {label}</li>
                             )}
                         </ul>
                     )}

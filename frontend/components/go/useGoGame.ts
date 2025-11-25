@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { BoardState, Move, Player, BOARD_SIZE } from './types';
+// Assurez-vous d'importer BOARD_SIZE depuis vos types
+import { BoardState, Move, Player, BOARD_SIZE } from '@/components/go/types';
 
 // --- LOGIQUE GO (Moteur & Parseur) ---
+// (Je garde les fonctions pures existantes ici, inchangées)
 
 export const createEmptyBoard = (): BoardState =>
   Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
@@ -75,7 +77,8 @@ export const parseSGF = (sgfContent: string): Move[] => {
 // --- LE HOOK ---
 
 export const useGoGame = (defaultSgfUrl?: string) => {
-  const [sgfContent, setSgfContent] = useState<string>('');
+  // Changement majeur : moves est maintenant un state, pas un useMemo
+  const [moves, setMoves] = useState<Move[]>([]);
   const [currentMoveIndex, setCurrentMoveIndex] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [defaultSgf, setDefaultSgf] = useState<string>('');
@@ -83,18 +86,18 @@ export const useGoGame = (defaultSgfUrl?: string) => {
   // Charger le SGF par défaut
   useEffect(() => {
     if (!defaultSgfUrl) {
-        setIsLoading(false);
-        return;
+      setIsLoading(false);
+      return;
     }
-    
+
     const fetchSgf = async () => {
       try {
         setIsLoading(true);
         const response = await fetch(defaultSgfUrl);
         if (!response.ok) throw new Error('Failed to fetch SGF');
         const text = await response.text();
-        setDefaultSgf(text); // Stocker pour le reset
-        setSgfContent(text); // Charger
+        setDefaultSgf(text);
+        setMoves(parseSGF(text)); // Initialise les moves
       } catch (error) {
         console.error("Error loading default SGF:", error);
       } finally {
@@ -104,36 +107,66 @@ export const useGoGame = (defaultSgfUrl?: string) => {
     fetchSgf();
   }, [defaultSgfUrl]);
 
-  const moves = useMemo(() => parseSGF(sgfContent), [sgfContent]);
-
   const currentBoard = useMemo(() => {
     let board = createEmptyBoard();
     for (let i = 0; i < currentMoveIndex; i++) {
-      board = playMove(board, moves[i]);
+      if (moves[i]) {
+        board = playMove(board, moves[i]);
+      }
     }
     return board;
   }, [moves, currentMoveIndex]);
 
   const lastMove = currentMoveIndex > 0 ? moves[currentMoveIndex - 1] : null;
 
+  // --- Actions de Navigation ---
   const nextMove = useCallback(() => setCurrentMoveIndex(prev => Math.min(moves.length, prev + 1)), [moves.length]);
   const prevMove = useCallback(() => setCurrentMoveIndex(prev => Math.max(0, prev - 1)), []);
   const goToStart = useCallback(() => setCurrentMoveIndex(0), []);
   const goToEnd = useCallback(() => setCurrentMoveIndex(moves.length), [moves.length]);
 
   const handleSgfUpload = (newSgfContent: string) => {
-    setSgfContent(newSgfContent);
+    setMoves(parseSGF(newSgfContent));
     setCurrentMoveIndex(0);
   };
 
   const resetToDefault = () => {
-    setSgfContent(defaultSgf);
+    setMoves(parseSGF(defaultSgf));
     setCurrentMoveIndex(0);
+  };
+
+  // --- NOUVELLE FONCTION : Jouer un coup interactif ---
+  const playInteractiveMove = (x: number, y: number) => {
+    // 1. Vérifier si l'intersection est vide
+    if (currentBoard[y][x] !== null) return;
+
+    // 2. Déterminer la couleur du joueur
+    // Si c'est le premier coup (index 0), Noir commence. Sinon, on inverse la couleur du dernier coup joué.
+    const lastPlayerColor = currentMoveIndex > 0 ? moves[currentMoveIndex - 1].player : 'W';
+    const nextColor: Player = lastPlayerColor === 'B' ? 'W' : 'B';
+
+    // 3. Créer le nouveau coup
+    const newMove: Move = {
+      player: nextColor,
+      x,
+      y,
+      isPass: false
+    };
+
+    // 4. Mettre à jour la liste des coups
+    // Si on est au milieu de la partie, on coupe l'historique futur (comme un "branch")
+    const newHistory = moves.slice(0, currentMoveIndex).concat(newMove);
+
+    setMoves(newHistory);
+    setCurrentMoveIndex(newHistory.length);
   };
 
   // Gestion des touches
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Désactive les raccourcis si on tape dans un input (optionnel)
+      if (e.target instanceof HTMLInputElement) return;
+
       if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) e.preventDefault();
       if (e.key === 'ArrowRight') nextMove();
       if (e.key === 'ArrowLeft') prevMove();
@@ -156,5 +189,7 @@ export const useGoGame = (defaultSgfUrl?: string) => {
     goToEnd,
     handleSgfUpload,
     resetToDefault,
+    playInteractiveMove, // Nouvelle fonction exportée
+    loadSgf: handleSgfUpload, // Alias pour compatibilité
   };
 };
