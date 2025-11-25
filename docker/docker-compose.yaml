@@ -1,0 +1,56 @@
+services:
+  # --- Base de données ---
+  db:
+    image: postgres:16
+    container_name: tenuki-postgres
+    environment:
+      POSTGRES_USER: go_user
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: go_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/init.sql
+      - tenuki-pgdata:/var/lib/postgresql/data
+
+  # --- Backend ---
+  backend:
+    build: ../backend
+    container_name: tenuki-backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ../backend:/app
+      - uploads_data:/app/uploads # Montage du volume pour les fichiers uploadés
+    ports:
+      - "8000:8000"
+    environment:
+      DB_URL: postgresql://go_user:secret@db:5432/go_db
+      AI_SERVICE_URL: http://analyse:5001/process # URL interne Docker
+    depends_on:
+      - db
+
+  # --- Frontend ---
+  frontend:
+    build: ../frontend
+    container_name: tenuki-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+
+  # --- Module analyse ---
+  analyse:
+    build: ../modules/analyse
+    container_name: tenuki-analyse
+    volumes:
+      - ../modules/analyse:/app
+      - uploads_data:/app/uploads # Montage du même volume pour accéder aux fichiers uploadés
+    ports:
+      - "5001:5001"
+
+volumes:
+  tenuki-pgdata:
+  uploads_data: # Volume nommé pour partager les fichiers
