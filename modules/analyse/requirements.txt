@@ -1,0 +1,10 @@
+opencv-python
+numpy
+keras
+ultralytics
+scikit-learn
+pydantic
+uvicorn
+fastapi
+tensorflow
+#sente # Problème d'installation, nécessité d'installation manuelle
