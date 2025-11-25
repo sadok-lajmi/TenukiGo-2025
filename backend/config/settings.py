@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 # -------------------------------
 # BASE DIRECTORIES
@@ -18,18 +19,18 @@ SGF_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # -------------------------------
-# DATABASE CONFIGURATION
+# DATABASE CONFIG
 # -------------------------------
-# Example PostgreSQL URL
-DB_URL = "postgresql://postgres:BaknineNouhaila@localhost:5432/go_db?sslmode=disable"
+#DB_URL = "postgresql://postgres:BaknineNouhaila@localhost:5432/go_db?sslmode=disable"
+DB_URL = os.getenv("DB_URL")
 
 # -------------------------------
 # APP CONFIG
 # -------------------------------
-CLUB_PASSWORD = "clubgo2025"
+CLUB_PASSWORD = os.getenv("CLUB_PASSWORD")
 
 # -------------------------------
-# Uvicorn CONFIG
+# API CONFIG
 # -------------------------------
 HOST = "0.0.0.0"
 PORT = 8000

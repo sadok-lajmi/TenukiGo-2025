@@ -7,9 +7,10 @@ from typing import Optional
 from datetime import datetime
 import json
 
-from api.WebSocket import ConnectionManager  
+from api.WebSocket import ConnectionManager
 from database.services import process_and_save_game, db
 from config.settings import CLUB_PASSWORD, VIDEO_DIR, THUMBNAIL_DIR, UPLOAD_DIR, SGF_DIR
+from modules.analyse.config.settings import HOST as VIDEO_PROCESSOR_HOST, PORT as VIDEO_PROCESSOR_PORT
 
 app = FastAPI(title="Go Game API")
 
