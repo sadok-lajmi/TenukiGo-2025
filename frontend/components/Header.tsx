@@ -22,34 +22,34 @@ const Header = ({ subHeader, title, userImg, query, onChange, type } : SharedHea
                 {type === 'videos' && (
                 <Link href="/upload/video">
                     <Image src="/assets/icons/upload.svg" alt="Upload Icon" width={16} height={16} />
-                    <span>Upload a Video</span>
+                    <span>Poster une Vidéo</span>
                 </Link>)}
 
                 {type === 'matches' && (
                 <Link href="/upload/match">
                     <Image src="/assets/icons/upload.svg" alt="Upload Icon" width={16} height={16} />
-                    <span>Upload a Match</span>
+                    <span>Poster une Partie</span>
                 </Link>)}
 
                 {type === 'players' && (
                 <Link href="/upload/player">
                     <Image src="/assets/icons/upload.svg" alt="Upload Icon" width={16} height={16} />
-                    <span>Add a Player</span>
+                    <span>Ajouter un Joueur</span>
                 </Link>)}
                 
                 <Link href="/stream" className="bg-yellow-500 text-white">
                     <Image src={ICONS.record} alt="Record Icon" width={16} height={16} />
-                    <span>Livestream</span>
+                    <span>Diffuser</span>
                 </Link>
 
-                <Link href="/watch/1" className="bg-gray-500 text-white">
-                    <Image src="/assets/icons/watching.png" alt="Upload Icon" width={16} height={16} />
-                    <span>Watch Live</span>
+                <Link href="/play" className="bg-gray-500 text-white">
+                    <Image src="/assets/icons/go-game.svg" className="color-white" alt="play Icon" width={16} height={16} />
+                    <span>Jouer</span>
                 </Link>
                 
                 <Link href="/replay">
                     <Image src="/assets/icons/rewind.png" alt="Review Icon" width={16} height={16} />
-                    <span>Replay</span>
+                    <span>Analyser</span>
                 </Link>
                        
             </aside>

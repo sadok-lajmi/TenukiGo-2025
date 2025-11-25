@@ -65,7 +65,7 @@ export default function GoPlayable() {
             <div className="flex flex-col md:flex-row gap-8 items-start w-full justify-center">
 
                 {/* Plateau */}
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 self-center size-[min(100%,400px)] shadow-sm bg-white">
                     <GoBoard
                         ref={svgRef}
                         boardState={currentBoard}
