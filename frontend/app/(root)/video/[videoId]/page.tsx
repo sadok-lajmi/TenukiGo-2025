@@ -26,6 +26,7 @@ match?: {
 }
 
 export default function VideoDetailsPage() {
+const [error, setError] = useState<string | null>(null);
 
 // Fetch video details from API here and update state
 const [video, setVideo] = useState<VideoDetails>(null as unknown as VideoDetails);
@@ -79,6 +80,27 @@ if (!video) {
   );
 }
 
+// handle conversion to sgf
+const handleConvertToSgf = async () => {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/video/${videoId}/convert-to-sgf`, {
+      method: 'POST',
+    });
+    if (response.ok) {
+      const data = await response.json();
+      // Update the video state with the new SGF file
+      setVideo(prevVideo => ({
+        ...prevVideo,
+        sgf: data.sgf, // Assuming the API returns the SGF file path in 'sgf'
+      }));
+    } else {
+      setError('Failed to convert video to SGF');
+    }
+  } catch (error) {
+    setError('Error converting video to SGF');
+  }
+};
+
 return (
 
   <main className="wrapper page flex flex-col gap-6 py-8">
@@ -102,10 +124,14 @@ return (
       </div>
 
       {/* Title + Date */}
+      <div className="flex justify-between items-center">
       <div className="flex flex-col mt-3 gap-1">
         <h1 className="text-xl font-semibold text-dark-100">{video.title}</h1>
         <p className="text-sm text-gray-100">Uploaded: {video.uploadDate}</p>
       </div>
+        { !(video.sgf) && <button onClick={handleConvertToSgf} className="px-3 py-2 bg-yellow-700 text-white text-sm rounded-full w-fit ">Convertir en SGF</button>}
+      </div>
+      {error && <p className="text-red-500 text-sm">{error}</p>}
       {/* SGF File (of the video if it exists) */}
       {video?.sgf && (
         <Link

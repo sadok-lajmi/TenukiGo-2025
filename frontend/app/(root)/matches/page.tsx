@@ -47,7 +47,7 @@ const Page = () => {
 
   return (
     <main className='wrapper page'>
-      <Header title='All Matches' subHeader='Public Library' query={query} onChange={handleSearchChange} type="matches"/>
+      <Header title='Parties' subHeader='Librairie Publique' query={query} onChange={handleSearchChange} type="matches"/>
       <DropdownList onChange={handleSortChange}/>
       <section className='video-grid'>
         {sortedMatches.length === 0 ? (

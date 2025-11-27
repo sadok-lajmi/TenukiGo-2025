@@ -48,7 +48,7 @@ const Page = () => {
 
   return (
     <main className='wrapper page'>
-      <Header title='All Videos' subHeader='Public Library' query={query} onChange={handleSearchChange} type="videos"/>
+      <Header title='Vidéos' subHeader='Librairie Publique' query={query} onChange={handleSearchChange} type="videos"/>
       <DropdownList onChange={handleSortChange} />
       <section className='video-grid'>
         {sortedVideos.length === 0 ? (
