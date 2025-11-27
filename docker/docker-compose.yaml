@@ -25,7 +25,7 @@ services:
       - "8000:8000"
     environment:
       DB_URL: postgresql://go_user:secret@db:5432/go_db
-      AI_SERVICE_URL: http://analyse:5001/process # URL interne Docker
+      ANALYSE_SERVICE_URL: http://analyse:5000 # URL interne Docker
     depends_on:
       - db
 
@@ -45,11 +45,12 @@ services:
   analyse:
     build: ../modules/analyse
     container_name: tenuki-analyse
+    command: uvicorn api:app --host 0.0.0.0 --port 5000
     volumes:
       - ../modules/analyse:/app
       - uploads_data:/app/uploads # Montage du même volume pour accéder aux fichiers uploadés
     ports:
-      - "5001:5001"
+      - "5000:5000"
 
 volumes:
   tenuki-pgdata:
