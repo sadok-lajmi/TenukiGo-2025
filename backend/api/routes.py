@@ -7,16 +7,15 @@ from typing import Optional
 from datetime import datetime
 from pathlib import Path
 import json
+import os
+import requests
 
-from api.WebSocket import ConnectionManager
+from api.ConnectionManager import ConnectionManager
 from database.services import process_and_save_game, db
-from config.settings import CLUB_PASSWORD, VIDEO_DIR, THUMBNAIL_DIR, UPLOAD_DIR, SGF_DIR
-from modules.analyse.config.settings import HOST as VIDEO_PROCESSOR_HOST, PORT as VIDEO_PROCESSOR_PORT
+from api.utils import upload_file, remove_base_dir_from_url
+from config.settings import CLUB_PASSWORD, VIDEO_DIR, THUMBNAIL_DIR, SGF_DIR, UPLOAD_DIR
 
 app = FastAPI(title="Go Game API")
-@app.get("/test")
-def test():
-    return {"status": "working", "time": str(datetime.now())}
 
 # ======================
 # CONFIGURATION
@@ -38,10 +37,8 @@ app.add_middleware(
 # Mount static files for serving uploads
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
+# Manager for WebSocket connections
 manager = ConnectionManager()
-
-# Base URL for generating absolute URLs
-BASE_URL = "http://localhost:8000"
 
 # ======================
 # UTILITY FUNCTIONS
@@ -491,35 +488,13 @@ async def upload_video(
     print("=" * 50)
     
     try:
-        # Generate unique filenames with timestamp
-        timestamp = datetime.now().timestamp()
-        video_filename = f"{timestamp}_{video.filename}"
-        thumb_filename = f"{timestamp}_{thumbnail.filename}"
-        
-        # Full FILESYSTEM paths for saving files
-        video_path = VIDEO_DIR / video_filename
-        thumb_path = THUMBNAIL_DIR / thumb_filename
-        
-        print(f"💾 Saving video to filesystem: {video_path}")
-        
         # Save video file
-        with open(video_path, "wb") as f:
-            content = await video.read()
-            f.write(content)
-            print(f"✅ Video saved: {len(content)} bytes")
-        
-        print(f"💾 Saving thumbnail to filesystem: {thumb_path}")
-        
+        video_path = await upload_file(video, VIDEO_DIR)
+        video_url = remove_base_dir_from_url(video_path)
+
         # Save thumbnail file
-        with open(thumb_path, "wb") as f:
-            content = await thumbnail.read()
-            f.write(content)
-            print(f"✅ Thumbnail saved: {len(content)} bytes")
-        
-        # Generate WEB URLs (not filesystem paths!)
-        # These are what get sent to the frontend
-        video_url = f"/uploads/videos/{video_filename}"
-        thumb_url = f"/uploads/thumbnails/{thumb_filename}"
+        thumb_path = await upload_file(thumbnail, THUMBNAIL_DIR)
+        thumb_url = remove_base_dir_from_url(thumb_path)
         
         print(f"🔗 Video URL (for database): {video_url}")
         print(f"🔗 Thumbnail URL (for database): {thumb_url}")
@@ -547,7 +522,7 @@ async def upload_video(
             RETURNING video_id
         """, (
             title,
-            f"uploads/videos/{video_filename}",  # Relative path (for backup/reference)
+            video_path,       # Relative path (for backup/reference)
             video_url,         # WEB URL (this is what frontend sees!)
             thumb_url,         # WEB URL (this is what frontend sees!)
             match_id_int
@@ -596,45 +571,31 @@ async def create_match(
     conn = db()
     cur = conn.cursor()
 
-    sgf_relative_path = None
+    sgf_url = None
     if sgf:
-        sgf_filename = f"{datetime.now().timestamp()}_{sgf.filename}"
-        sgf_path = SGF_DIR / sgf_filename
-        with open(sgf_path, "wb") as f:
-            content = await sgf.read()
-            f.write(content)
-        sgf_relative_path = f"/uploads/sgf/{sgf_filename}"
+        sgf_path = upload_file(sgf, SGF_DIR)
+        sgf_url = remove_base_dir_from_url(sgf_path)
 
     cur.execute("""
         INSERT INTO match (title, style, white_id, black_id, result, date, duration, description, sgf)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING match_id
-    """, (title, style, white, black, result, date, duration, description, sgf_relative_path))
+    """, (title, style, white, black, result, date, duration, description, sgf_url))
     match_id = cur.fetchone()["match_id"]
 
     if video:
-        vid_name = f"{datetime.now().timestamp()}_{video.filename}"
-        vid_path = VIDEO_DIR / vid_name
-        with open(vid_path, "wb") as f:
-            content = await video.read()
-            f.write(content)
+        video_path = upload_file(video, VIDEO_DIR)
+        video_url = remove_base_dir_from_url(video_path)
 
         thumb_url = None
         if thumbnail:
-            thumb_name = f"{datetime.now().timestamp()}_{thumbnail.filename}"
-            thumb_path = THUMBNAIL_DIR / thumb_name
-            with open(thumb_path, "wb") as f:
-                content = await thumbnail.read()
-                f.write(content)
-            thumb_url = f"/uploads/thumbnails/{thumb_name}"
-
-        # Use proper URL format from the start
-        video_url = f"/uploads/videos/{vid_name}"
+            thumb_path = upload_file(thumbnail, THUMBNAIL_DIR)
+            thumb_url = remove_base_dir_from_url(thumb_path)
         
         cur.execute("""
             INSERT INTO video (title, path, url, thumbnail, match_id)
             VALUES (%s, %s, %s, %s, %s)
-        """, (title, f"uploads/videos/{vid_name}", video_url, thumb_url, match_id))
+        """, (title, video_path, video_url, thumb_url, match_id))
 
     elif video_id:
         cur.execute("UPDATE video SET match_id = %s WHERE video_id = %s", (match_id, video_id))
@@ -672,17 +633,12 @@ async def edit_video(
         raise HTTPException(status_code=404, detail="Video not found")
 
     # Start with current values
-    new_thumbnail = video["thumbnail"]
+    thumb_url = video["thumbnail"]
 
     # Handle thumbnail replacement
     if thumbnail:
-        thumb_name = f"{datetime.now().timestamp()}_{thumbnail.filename}"
-        thumb_path = THUMBNAIL_DIR / thumb_name
-        with open(thumb_path, "wb") as f:
-            content = await thumbnail.read()
-            f.write(content)
-        # Generate web URL (not absolute URL with BASE_URL)
-        new_thumbnail = f"/uploads/thumbnails/{thumb_name}"
+        thumb_path = upload_file(thumbnail, THUMBNAIL_DIR)
+        thumb_url = remove_base_dir_from_url(thumb_path)
 
     cur.execute("""
         UPDATE video
@@ -693,7 +649,7 @@ async def edit_video(
         WHERE video_id = %s
     """, (
         title,
-        new_thumbnail,
+        thumb_url,
         match_id,
         video_id,
     ))
@@ -752,12 +708,7 @@ async def edit_match(
     sgf_path = match["sgf"]
 
     if sgf:  # replace SGF
-        sgf_filename = f"{datetime.now().timestamp()}_{sgf.filename}"
-        sgf_full_path = SGF_DIR / sgf_filename
-        with open(sgf_full_path, "wb") as f:
-            content = await sgf.read()
-            f.write(content)
-        sgf_path = f"uploads/sgf/{sgf_filename}"
+        sgf_path = remove_base_dir_from_url(upload_file(sgf, THUMBNAIL_DIR))
 
     elif remove_sgf == "true" and sgf_path:
         # delete old file
@@ -779,21 +730,14 @@ async def edit_match(
 
     # CASE B — NEW VIDEO UPLOAD
     elif video:  
-        vid_name = f"{datetime.now().timestamp()}_{video.filename}"
-        vid_path = VIDEO_DIR / vid_name
-
-        with open(vid_path, "wb") as f:
-            content = await video.read()
-            f.write(content)
-
-        # Generate web URL (not absolute URL with BASE_URL)
-        video_url = f"/uploads/videos/{vid_name}"
+        video_path = upload_file(video, VIDEO_DIR)
+        video_url = remove_base_dir_from_url(video_path)
 
         cur.execute("""
             INSERT INTO video (title, path, url, thumbnail)
             VALUES (%s, %s, %s, %s)
             RETURNING video_id
-        """, (title, f"uploads/videos/{vid_name}", video_url, None))
+        """, (title, video_path, video_url, None))
 
         new_video_id = cur.fetchone()["video_id"]
 
@@ -862,15 +806,12 @@ def edit_video(
         raise HTTPException(status_code=404, detail="Video not found")
 
     # Start with current values
-    new_thumbnail = video["thumbnail"]
+    thumb_url = video["thumbnail"]
 
     # --- Handle thumbnail replacement ---
     if thumbnail:
-        thumb_name = f"{datetime.now().timestamp()}_{thumbnail.filename}"
-        thumb_path = THUMBNAIL_DIR / thumb_name
-        with open(thumb_path, "wb") as f:
-            f.write(thumbnail.file.read())
-        new_thumbnail = str(thumb_path)
+        thumb_path = upload_file(thumbnail, THUMBNAIL_DIR)
+        thumb_url = remove_base_dir_from_url(thumb_path)
 
     # --- match_id can be nullable ---
     # match_id == None → remove association
@@ -885,7 +826,7 @@ def edit_video(
         WHERE video_id = %s
     """, (
         title,
-        new_thumbnail,
+        thumb_url,
         match_id,
         video_id,
     ))
@@ -949,10 +890,7 @@ def edit_match(
     sgf_path = match["sgf"]
 
     if sgf:  # replace SGF
-        sgf_path = SGF_DIR / f"{datetime.now().timestamp()}_{sgf.filename}"
-        with open(sgf_path, "wb") as f:
-            f.write(sgf.file.read())
-        sgf_path = str(sgf_path)
+        sgf_path = remove_base_dir_from_url(upload_file(sgf, SGF_DIR))
 
     elif remove_sgf == "true" and sgf_path:
         # delete old file
@@ -976,17 +914,17 @@ def edit_match(
 
     # CASE B — NEW VIDEO UPLOAD
     if video:  
-        vid_name = f"{datetime.now().timestamp()}_{video.filename}"
-        vid_path = VIDEO_DIR / vid_name
+        video_path = upload_file(video, VIDEO_DIR)
+        video_url = remove_base_dir_from_url(video_path)
 
-        with open(vid_path, "wb") as f:
+        with open(video_path, "wb") as f:
             f.write(video.file.read())
 
         cur.execute("""
             INSERT INTO video (title, path, url, thumbnail)
             VALUES (%s, %s, %s, %s)
             RETURNING video_id
-        """, (title, str(vid_path), str(vid_path), None))
+        """, (title, video_path, video_url, None))
 
         new_video_id = cur.fetchone()["video_id"]
         # Remove old association if any
