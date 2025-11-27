@@ -27,7 +27,7 @@ from config.settings import (
 
 app = FastAPI(title="Video Processor")
 
-logger = logging.getLogger('config.settings.py')
+logger = logging.getLogger(__name__)
 
 
 def initialize_board(cap: cv2.VideoCapture,
@@ -46,7 +46,7 @@ def initialize_board(cap: cv2.VideoCapture,
 
         try:
             # Use end_game=False, we don't need SGF yet
-            _, _ = go_game.initialize_game(frame, end_game=False)
+            _ = go_game.initialize_game(frame, end_game=False)
             logger.info(
                 f"Board initialized successfully on frame {frame_count_init}!"
             )
@@ -101,7 +101,7 @@ def process_video(cap: cv2.VideoCapture, go_game: GoGame) -> int:
                 logger.info(f"Processed {processed_frames} analysis frames... "
                             f"(video frame {frame_count}/{total_frames})")
 
-            _, _ = go_game.main_loop(frame, end_game=False)
+            _ = go_game.main_loop(frame, end_game=False)
 
         except Exception as e:
             # Log warnings less frequently to avoid spam
@@ -221,5 +221,5 @@ def process(filename: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host=HOST, port=PORT)
-    run_pipeline("modules/analyse/data/test_video.mp4")
+    #uvicorn.run(app, host=HOST, port=PORT)
+    run_pipeline(os.path.join("data", "test.mp4"))

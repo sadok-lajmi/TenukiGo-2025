@@ -45,7 +45,7 @@ class GoGame:
     
     def initialize_game(self, frame: np.ndarray,
                         current_player: str = "BLACK",
-                        end_game: bool = False) -> Tuple[np.ndarray, str]:
+                        end_game: bool = False) -> str:
         """
         Initialize the game state from a single frame.
 
@@ -64,6 +64,7 @@ class GoGame:
         self.board_detect.process_frame(frame)
 
         if self.transparent_mode:
+            self.copy_board_to_numpy()
             return self.post_treatment(end_game)
         else:
             try:
@@ -126,7 +127,7 @@ class GoGame:
             )
 
     def main_loop(self, frame: np.ndarray,
-                  end_game: bool = False) -> Tuple[np.ndarray, str]:
+                  end_game: bool = False) -> str:
         """
         Process a single frame and update the game state.
 
@@ -141,10 +142,20 @@ class GoGame:
         self.board_detect.process_frame(frame)
 
         if self.transparent_mode:
+            self.copy_board_to_numpy()
             return self.post_treatment(end_game)
         else:
             self.define_new_move()
             return self.get_sgf()
+        
+    def copy_board_to_numpy(self):
+        """Convert board state to numpy array and store if different."""
+        # state is (row, col, (B, W))
+        _ = self.board_detect.get_state()
+        # final_board is (row, col) with 0, 1, 2
+        final_board = self.board_detect.state_to_array()
+        if not self.numpy_board or np.any(final_board != self.numpy_board[-1]):
+            self.numpy_board.append(final_board)
 
     def play_move(self, x: int, y: int, stone_color: int):
         """
