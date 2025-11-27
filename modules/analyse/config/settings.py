@@ -5,7 +5,7 @@ import os
 # MODULE CONFIG
 # -------------------------------
 HOST = "0.0.0.0"
-PORT = 5001
+PORT = 5000
 
 # -------------------------------
 # ANALYSIS CONFIG
@@ -14,18 +14,11 @@ ANALYSIS_INTERVAL = 0.1  # seconds
 MAX_INIT_FRAMES = 300
 
 # -------------------------------
-# BASE DIRECTORIES
+# PATH & DIRECTORIES
 # -------------------------------
-DEFAULT_YOLO_PATH = os.path.join("models", "model.pt")
-DEFAULT_KERAS_PATH = os.path.join("models", "modelCNN.keras")
-#UPLOAD_FOLDER = "/app/uploads" # Correspond au montage Docker
-#DEFAULT_OUTPUT_SGF = os.path.join(UPLOAD_FOLDER, "sgf/game_output.sgf")
-
-# -------------------------------
-# TEST DIRECTORIES
-# -------------------------------
-UPLOAD_FOLDER = os.path.join("data")
-DEFAULT_OUTPUT_SGF = os.path.join(UPLOAD_FOLDER, "game_output.sgf")
+YOLO_PATH = os.path.join("models", "model.pt")
+KERAS_PATH = os.path.join("models", "modelCNN.keras")
+UPLOAD_DIR = "/app/uploads" # Correspond au montage Docker
 
 # -------------------------------
 # LOGGING SETUP 
