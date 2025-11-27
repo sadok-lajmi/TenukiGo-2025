@@ -30,11 +30,9 @@ __pycache__/
 .venv/
 
 
-
-
-# ----------------------------------------
+# ------------------------------------------------------
 # 2. EXCLUSIONS SPECIFIQUES AU PROJET REACT (frontend/)
-# ----------------------------------------
+# ------------------------------------------------------
 
 # Dependencies
 frontend/node_modules/
@@ -73,9 +71,17 @@ frontend/.env*
 frontend/*.tsbuildinfo
 frontend/next-env.d.ts
 
-#pycache files
-__pycache__/
-*.py[cod]
 
-#upload folder
+# ------------------------------------------------
+# 2. EXCLUSIONS SPECIFIQUES AU BACKEND (backend/)
+# ------------------------------------------------
+
+# Pycache files
+backend/__pycache__/
+backend/*.py[cod]
+
+# Upload folder
 backend/uploads/
+
+# Environment files
+backend/.env
