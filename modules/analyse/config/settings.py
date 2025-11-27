@@ -24,7 +24,7 @@ DEFAULT_KERAS_PATH = os.path.join("models", "modelCNN.keras")
 # -------------------------------
 # TEST DIRECTORIES
 # -------------------------------
-UPLOAD_FOLDER = os.path.join("modules", "analyse", "data")
+UPLOAD_FOLDER = os.path.join("data")
 DEFAULT_OUTPUT_SGF = os.path.join(UPLOAD_FOLDER, "game_output.sgf")
 
 # -------------------------------
