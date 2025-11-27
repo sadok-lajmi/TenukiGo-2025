@@ -17,6 +17,7 @@ app = FastAPI(title="Go Game API")
 @app.get("/test")
 def test():
     return {"status": "working", "time": str(datetime.now())}
+
 # ======================
 # CONFIGURATION
 # ======================
