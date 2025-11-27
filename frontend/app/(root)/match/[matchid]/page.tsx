@@ -18,6 +18,7 @@ interface MatchDetails {
   videoId?: string | number | null
   videoUrl?: string
   thumbnail?: string
+  videosgf?: string
 }
 
 export default function MatchDetailsPage() {
@@ -61,6 +62,7 @@ export default function MatchDetailsPage() {
       videoUrl: matchData['video'],
       thumbnail: matchData['thumbnail'],
       videoId: matchData['video_id'],
+      videosgf: matchData['video_sgf'],
     });
   };
 
@@ -111,13 +113,21 @@ export default function MatchDetailsPage() {
         </Link>
       )}
 
+      <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
+      {/* SGF Viewer if the sgf exists */}
+      {/* use the sgf related to the video first if there's any */}
+        {match?.videosgf ? (
+        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.videosgf}`} />
+        ) : (
+        match?.sgfFile && (
+        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgfFile}`} />
+        )
+        )}
+      </section>
+
       {/* Video Section (if exists) */}
       {match?.videoUrl && (
         <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
-  
-            {match?.sgfFile && (
-            <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgfFile}`} />
-            )}
             <div className="w-full rounded-xl overflow-hidden">
             <Link href={`/video/${match.videoId?.toString()}`} className="text-lg font-semibold text-dark-100">Match Video</Link>
             <video
@@ -130,6 +140,15 @@ export default function MatchDetailsPage() {
               <source src={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.videoUrl}`} type="video/mp4" />
             </video>
           </div>
+          {/* SGF File (of the video if it exists) */}
+          {match?.videosgf && (
+            <Link
+              href={`${process.env.NEXT_PUBLIC_UPLOADS_URL}${match.videosgf}`}
+              className="block text-blue-500 underline hover:text-blue-600 font-medium"
+            >
+              Download SGF File
+            </Link>
+          )}
         </section>
       )}
     </main>

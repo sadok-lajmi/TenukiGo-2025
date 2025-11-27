@@ -12,6 +12,7 @@ duration: string
 uploadDate: string
 videoUrl: string
 thumbnail?: string
+sgf?: string
 match?: {
   id: string | number
   title: string
@@ -44,6 +45,7 @@ useEffect(() => {
         uploadDate: data["date_upload"],
         videoUrl: data["url"],
         thumbnail: data["thumbnail"],
+        sgf: data["video_sgf"],
         match: data["match_id"] ? {
           id: data["match_id"],
           title: data["match_title"],
@@ -104,6 +106,19 @@ return (
         <h1 className="text-xl font-semibold text-dark-100">{video.title}</h1>
         <p className="text-sm text-gray-100">Uploaded: {video.uploadDate}</p>
       </div>
+      {/* SGF File (of the video if it exists) */}
+      {video?.sgf && (
+        <Link
+          href={`${process.env.NEXT_PUBLIC_UPLOADS_URL}${video.sgf}`}
+          className="block text-blue-500 underline hover:text-blue-600 font-medium"
+        >
+          Download SGF File
+        </Link>
+      )}
+      {/* SGF Viewer if the sgf exists */}
+      {video?.sgf && (
+        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL}${video.sgf}`} />
+      )}
     </section>
 
     {/* Match Info Section */}
@@ -163,7 +178,7 @@ return (
           </Link>
         )}
         {/* SGF Viewer if the sgf exists */}
-        {match?.sgf && (
+        {(match?.sgf && !(video?.sgf)) && (
           <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgf}`} />
         )}
       </section>
