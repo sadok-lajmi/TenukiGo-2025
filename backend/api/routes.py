@@ -12,8 +12,8 @@ import requests
 
 from api.ConnectionManager import ConnectionManager
 from database.services import process_and_save_game, db
-from api.utils import upload_file, remove_base_dir_from_url
-from config.settings import CLUB_PASSWORD, VIDEO_DIR, THUMBNAIL_DIR, SGF_DIR, UPLOAD_DIR
+from api.utils import upload_file, upload_file_from_content, remove_base_dir_from_url
+from config.settings import CLUB_PASSWORD, VIDEO_DIR, THUMBNAIL_DIR, SGF_DIR, UPLOAD_DIR, ANALYSE_SERVICE_URL
 
 app = FastAPI(title="Go Game API")
 
@@ -552,6 +552,47 @@ async def upload_video(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
+@app.post("/generate_sgf_from_video")
+def generate_sgf_from_video(video_id: int):
+    """Generate SGF from an uploaded video using the Analyse module"""
+    conn = db()
+    cur = conn.cursor()
+    
+    # Fetch video details
+    cur.execute("SELECT * FROM video WHERE video_id = %s", (video_id,))
+    video = cur.fetchone()
+    if not video:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    video_url = video['url']
+    if not video_url:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Video URL is missing")
+    
+    # Call Analyse module API
+    try:
+        response = requests.post(ANALYSE_SERVICE_URL, json={"video_url": os.path.basename(video_url)}, timeout=300)
+        response.raise_for_status()
+        sgf_content = response.json().get("sgf")
+        
+        if not sgf_content:
+            raise HTTPException(status_code=500, detail="SGF generation failed")
+        
+        # Save SGF to file
+        sgf_path = upload_file_from_content("video_{video_id}.sgf", sgf_content, SGF_DIR)
+        sgf_url = remove_base_dir_from_url(sgf_path)
+        
+        # Update database
+        cur.execute("UPDATE match SET sgf = %s WHERE match_id = %s", (sgf_url, video['match_id']))
+        conn.commit()
+        conn.close()
+        
+        return {"message": "SGF generated and saved", "sgf_url": sgf_url}
+    
+    except requests.RequestException as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail=f"Analyse module error: {str(e)}")
 
 @app.post("/create_match")
 async def create_match(
