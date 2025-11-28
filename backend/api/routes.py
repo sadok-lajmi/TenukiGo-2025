@@ -8,6 +8,8 @@ from datetime import datetime
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
+import json
+from ..modules.completion.service import MoveCompletionService, create_board_state_from_array
 
 app = FastAPI(title="Go Game API")
 
@@ -43,6 +45,9 @@ def get_db():
 
 def normalize_name(name: str) -> str:
     return name.strip().title()
+
+# Initialize move completion service
+completion_service = MoveCompletionService()
 
 # -----------------------------------------------------------
 # LIST ROUTES
@@ -499,4 +504,135 @@ def edit_player(
 # -----------------------------------------------------------
 # DELETE ROUTES
 # -----------------------------------------------------------
+
+# -----------------------------------------------------------
+# MOVE COMPLETION ROUTES
+# -----------------------------------------------------------
+
+@app.post("/completion/suggest")
+def suggest_move_completion(
+    initial_board: str = Form(...),
+    final_board: str = Form(...),
+    use_ai: bool = Form(False),
+    board_size: int = Form(19)
+):
+    """
+    Suggest a sequence of moves that could lead from initial_board to final_board.
+    
+    Args:
+        initial_board: JSON string representing initial board state as 2D array
+        final_board: JSON string representing final board state as 2D array  
+        use_ai: Whether to use AI model for completion (requires model loading)
+        board_size: Size of the Go board (default 19)
+    
+    Returns:
+        JSON with suggested moves and metadata
+    """
+    try:
+        # Parse board states
+        initial_array = json.loads(initial_board)
+        final_array = json.loads(final_board)
+        
+        # Validate board dimensions
+        if len(initial_array) != board_size or len(final_array) != board_size:
+            raise HTTPException(status_code=400, detail="Board size mismatch")
+        
+        for row in initial_array + final_array:
+            if len(row) != board_size:
+                raise HTTPException(status_code=400, detail="Board dimensions not square")
+        
+        # Create board states
+        initial_state = create_board_state_from_array(initial_array, board_size)
+        final_state = create_board_state_from_array(final_array, board_size)
+        
+        # Get completion suggestion
+        result = completion_service.suggest_completion(
+            initial_state, final_state, use_ai=use_ai
+        )
+        
+        return result
+        
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON format for board states")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+
+
+@app.post("/completion/load_ai_model")
+def load_ai_model(model_file: UploadFile = File(...)):
+    """
+    Load an AI model for move completion.
+    
+    Args:
+        model_file: Keras model file (.keras or .h5)
+    
+    Returns:
+        Status of model loading
+    """
+    try:
+        # Save uploaded model temporarily
+        model_path = f"/tmp/{model_file.filename}"
+        with open(model_path, "wb") as f:
+            f.write(model_file.file.read())
+        
+        # Try to load the model
+        try:
+            from tensorflow.keras.models import load_model
+            model = load_model(model_path)
+            completion_service.set_ai_model(model)
+            
+            # Clean up temporary file
+            os.remove(model_path)
+            
+            return {
+                "success": True,
+                "message": "AI model loaded successfully",
+                "model_name": model_file.filename
+            }
+        except Exception as model_error:
+            # Clean up on error
+            if os.path.exists(model_path):
+                os.remove(model_path)
+            return {
+                "success": False,
+                "message": f"Failed to load model: {str(model_error)}",
+                "model_name": model_file.filename
+            }
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File handling error: {str(e)}")
+
+
+@app.post("/completion/load_legacy_model")  
+def load_legacy_model():
+    """
+    Load the AI model from the legacy Tenuki2025 system.
+    
+    Returns:
+        Status of model loading from legacy system
+    """
+    try:
+        result = completion_service.load_legacy_model()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading legacy model: {str(e)}")
+
+
+@app.get("/completion/status")
+def get_completion_status():
+    """
+    Get the status of the move completion service.
+    
+    Returns:
+        Information about available completion methods and AI model status
+    """
+    model_info = completion_service.get_model_info()
+    return {
+        "service_available": True,
+        "ai_model_loaded": completion_service.ai_model is not None,
+        "supported_methods": ["algorithmic", "ai"],
+        "default_board_size": 19,
+        "max_board_size": 25,
+        "model_info": model_info
+    }
 
