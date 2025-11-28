@@ -83,7 +83,7 @@ if (!video) {
 // handle conversion to sgf
 const handleConvertToSgf = async () => {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/video/${videoId}/convert-to-sgf`, {
+    const response = await fetch("http://127.0.0.1:8001/process?filename=test.mp4", {
       method: 'POST',
     });
     if (response.ok) {

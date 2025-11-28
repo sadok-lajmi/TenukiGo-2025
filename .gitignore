@@ -85,3 +85,5 @@ backend/uploads/
 
 # Environment files
 backend/.env
+modules/analyse/.env
+modules/analyse/venv/
