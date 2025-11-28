@@ -4,7 +4,7 @@ import os
 from config.settings import (
     HOST,
     PORT,
-    UPLOAD_DIR,
+    VIDEO_DIR,
 )
 from video_processing_pipeline import run_pipeline
 
@@ -13,7 +13,7 @@ app = FastAPI(title="Analyse Module API")
 @app.post("/analyse")
 def analyse(filename: str):
     """Endpoint to analyse a video file and return the SGF content."""
-    file_path = os.path.join(UPLOAD_DIR, filename)
+    file_path = os.path.join(VIDEO_DIR, filename)
     
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Video not found")

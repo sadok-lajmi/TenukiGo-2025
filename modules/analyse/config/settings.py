@@ -19,6 +19,7 @@ MAX_INIT_FRAMES = 300
 YOLO_PATH = os.path.join("models", "model.pt")
 KERAS_PATH = os.path.join("models", "modelCNN.keras")
 UPLOAD_DIR = "/app/uploads" # Correspond au montage Docker
+VIDEO_DIR = os.path.join(UPLOAD_DIR, "videos")
 
 # -------------------------------
 # LOGGING SETUP 
