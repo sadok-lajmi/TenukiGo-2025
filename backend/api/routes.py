@@ -1,7 +1,6 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Form, UploadFile, File
 from fastapi.concurrency import run_in_threadpool
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles  
+from fastapi.middleware.cors import CORSMiddleware 
 from pathlib import Path as PathLib
 from typing import Optional
 from datetime import datetime
@@ -13,7 +12,7 @@ import requests
 from api.ConnectionManager import ConnectionManager
 from database.services import process_and_save_game, db
 from api.utils import upload_file, upload_file_from_content, remove_base_dir_from_url
-from config.settings import CLUB_PASSWORD, VIDEO_DIR, THUMBNAIL_DIR, SGF_DIR, UPLOAD_DIR, ANALYSE_SERVICE_URL
+from config.settings import CLUB_PASSWORD, VIDEO_DIR, THUMBNAIL_DIR, SGF_DIR, ANALYSE_SERVICE_URL
 
 app = FastAPI(title="Go Game API")
 
@@ -24,18 +23,13 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "http://localhost:5173",
         "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173"
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  
     allow_headers=["*"],
     expose_headers=["*"],
 )
-
-# Mount static files for serving uploads
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Manager for WebSocket connections
 manager = ConnectionManager()
@@ -458,6 +452,7 @@ def create_player(
     lastname: str = Form(...),
     level: Optional[str] = Form(None)
 ):
+    print(f"Creating player: {firstname} {lastname}, level: {level}")
     conn = db()
     cur = conn.cursor()
     cur.execute("""
@@ -465,6 +460,7 @@ def create_player(
         VALUES (%s, %s, %s)
         RETURNING player_id
     """, (firstname, lastname, level))
+    print(f"Created player: {firstname} {lastname}, level: {level}")
     player_id = cur.fetchone()["player_id"]
     conn.commit()
     conn.close()
@@ -475,8 +471,8 @@ def create_player(
 async def upload_video(
     title: str = Form(...),
     video: UploadFile = File(...),
-    thumbnail: UploadFile = File(...),
-    matchId: str = Form("")
+    thumbnail: Optional[UploadFile] = File(None),
+    matchId: Optional[str] = Form(None)
 ):
     """Upload video with thumbnail"""
     print("=" * 50)
@@ -551,48 +547,6 @@ async def upload_video(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
-
-@app.post("/generate_sgf_from_video")
-def generate_sgf_from_video(video_id: int):
-    """Generate SGF from an uploaded video using the Analyse module"""
-    conn = db()
-    cur = conn.cursor()
-    
-    # Fetch video details
-    cur.execute("SELECT * FROM video WHERE video_id = %s", (video_id,))
-    video = cur.fetchone()
-    if not video:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Video not found")
-    
-    video_url = video['url']
-    if not video_url:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Video URL is missing")
-    
-    # Call Analyse module API
-    try:
-        response = requests.post(ANALYSE_SERVICE_URL, json={"video_url": os.path.basename(video_url)}, timeout=300)
-        response.raise_for_status()
-        sgf_content = response.json().get("sgf")
-        
-        if not sgf_content:
-            raise HTTPException(status_code=500, detail="SGF generation failed")
-        
-        # Save SGF to file
-        sgf_path = upload_file_from_content("video_{video_id}.sgf", sgf_content, SGF_DIR)
-        sgf_url = remove_base_dir_from_url(sgf_path)
-        
-        # Update database
-        cur.execute("UPDATE match SET sgf = %s WHERE match_id = %s", (sgf_url, video['match_id']))
-        conn.commit()
-        conn.close()
-        
-        return {"message": "SGF generated and saved", "sgf_url": sgf_url}
-    
-    except requests.RequestException as e:
-        conn.close()
-        raise HTTPException(status_code=500, detail=f"Analyse module error: {str(e)}")
 
 @app.post("/create_match")
 async def create_match(
@@ -1125,4 +1079,45 @@ def delete_player(player_id: int):
     return {"message": "Player deleted"}
 
 
-
+@app.post("/video/{video_id}/convert-to-sgf")
+def generate_sgf_from_video(video_id: int):
+    """Generate SGF from an uploaded video using the Analyse module"""
+    conn = db()
+    cur = conn.cursor()
+    
+    # Fetch video details
+    cur.execute("SELECT * FROM video WHERE video_id = %s", (video_id,))
+    video = cur.fetchone()
+    if not video:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    video_url = video['url']
+    if not video_url:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Video URL is missing")
+    
+    # Call Analyse module API
+    try:
+        response = requests.post(ANALYSE_SERVICE_URL, json={"filename": os.path.basename(video_url)}, timeout=300)
+        response.raise_for_status()
+        sgf_content = response.json().get("sgf")
+        
+        if not sgf_content:
+            raise HTTPException(status_code=500, detail="SGF generation failed")
+        
+        # Save SGF to file
+        sgf_path = upload_file_from_content("video_{video_id}.sgf", sgf_content, SGF_DIR)
+        sgf_url = remove_base_dir_from_url(sgf_path)
+        
+        # Update database if video is linked to a match
+        if video['match_id']:
+            cur.execute("UPDATE match SET sgf = %s WHERE match_id = %s", (sgf_url, video['match_id']))
+            conn.commit()
+        
+        conn.close()
+        return {"message": "SGF generated and saved", "sgf": sgf_url}
+    
+    except requests.RequestException as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail=f"Analyse module error: {str(e)}")
