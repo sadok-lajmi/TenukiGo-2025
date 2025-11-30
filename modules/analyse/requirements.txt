@@ -1,5 +1,5 @@
-opencv-python
-numpy
+opencv-python-headless
+numpy<2
 keras
 ultralytics
 scikit-learn
@@ -7,4 +7,4 @@ pydantic
 uvicorn
 fastapi
 tensorflow
-#sente # Problème d'installation, nécessité d'installation manuelle
+sente # Problème d'installation, nécessité d'installation manuelle
