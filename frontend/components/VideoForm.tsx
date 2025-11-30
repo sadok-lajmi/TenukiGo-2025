@@ -112,7 +112,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   form.append("title", formData.title);
   if (formData.matchId) form.append("match_id", formData.matchId);
 
-  if (video.file) form.append("file", video.file);
+  if (video.file) form.append("video", video.file);
   if (thumbnail.file) form.append("thumbnail", thumbnail.file);
 
   const url =
