@@ -113,17 +113,19 @@ export default function MatchDetailsPage() {
         </Link>
       )}
 
-      <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
+      
       {/* SGF Viewer if the sgf exists */}
       {/* use the sgf related to the video first if there's any */}
-        {match?.videosgf ? (
+      {match?.videosgf ? (
+        <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
         <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.videosgf}`} />
-        ) : (
+        </section> ) : (
         match?.sgfFile && (
+        <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
         <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgfFile}`} />
-        )
-        )}
-      </section>
+        </section> )
+      )}
+      
 
       {/* Video Section (if exists) */}
       {match?.videoUrl && (
