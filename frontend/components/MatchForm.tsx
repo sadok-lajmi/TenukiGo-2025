@@ -159,6 +159,10 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
       setError("Veuillez remplir tous les champs obligatoires (*)");
       return;
     }
+    if (formData.white === formData.black) {
+      setError("Les joueurs blanc et noir doivent être différents.");
+      return;
+    }
 
     const form = new FormData();
 
@@ -205,7 +209,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
     >
       <p className="text-gray-600 text-sm">Les champs marqués d'un * sont obligatoires.</p>
 
-      <FormField id="title" label="Title *" value={formData.title} onChange={handleInputChange} placeholder="Entrez le titre du match" />
+      <FormField id="title" label="Titre *" value={formData.title} onChange={handleInputChange} placeholder="Entrez le titre du match" />
 
       <FormField
         id="style"
@@ -247,10 +251,10 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
         as="select"
         options={[
           { label: "Selectionnez le résultat", value: "" },
-          { label: "Noir gagne", value: "black" },
-          { label: "Blanc gagne", value: "white" },
-          { label: "Nul", value: "draw" },
-          { label: "Abandon", value: "abandon" },
+          { label: "Noir gagne", value: "Noir gagne" },
+          { label: "Blanc gagne", value: "Blanc gagne" },
+          { label: "Nul", value: "Nul" },
+          { label: "Abandon", value: "Abandon" },
         ]}
         value={formData.result}
         onChange={handleInputChange}
@@ -260,7 +264,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
 
       <FormField
         id="duration"
-        label="Duration (min)"
+        label="Durée (min)"
         type="number"
         value={formData.duration}
         onChange={handleInputChange}
