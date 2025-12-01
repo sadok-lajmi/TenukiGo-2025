@@ -29,16 +29,16 @@ const Page = () => {
     match['description'].toLowerCase().includes(query.toLowerCase())
   )
 
-  const [sortOption, setSortOption] = useState<string>('Most Recent')
+  const [sortOption, setSortOption] = useState<string>('Plus Récent');
   const handleSortChange = (option: string) => {
-    if (option === 'Most Recent') {
-      setSortOption('Most Recent');
-    } else if (option === 'Oldest') {
-      setSortOption('Oldest');
+    if (option === 'Plus Récent') {
+      setSortOption('Plus Récent');
+    } else if (option === 'Plus Ancien') {
+      setSortOption('Plus Ancien');
     }
   }
   const sortedMatches = filteredMatches.sort((a, b) => {
-    if (sortOption === 'Most Recent') {
+    if (sortOption === 'Plus Récent') {
       return new Date(b['date']).getTime() - new Date(a['date']).getTime();
     } else {
       return new Date(a['date']).getTime() - new Date(b['date']).getTime();

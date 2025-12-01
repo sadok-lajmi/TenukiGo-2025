@@ -24,7 +24,7 @@ const Page = () => {
   return (
     <div className="wrapper-md watch-page">
       <header className="page-header">
-        <h1>Watch Live Matches</h1>
+        <h1>Regardez des parties en direct</h1>
       </header>
 
       {streams.length > 0 ?
@@ -37,7 +37,7 @@ const Page = () => {
           ))}
         </div>
         ) : (
-          <p>No live streams available at the moment.</p>
+          <p>Pas de diffusions disponibles pour le moment...</p>
         )
       }
 

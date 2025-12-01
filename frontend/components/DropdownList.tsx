@@ -15,7 +15,7 @@ const DropdownList = ({onChange}: {onChange: (e: string) => void}) => {
                 <div className='filter-trigger'>
                     <figure>
                         <Image src='/assets/icons/hamburger.svg' alt='menu' width={14} height={14} />
-                        Most Recent
+                        {' Trier par'}
                     </figure>
                     <Image src='/assets/icons/arrow-down.svg' alt='arrow down' width={20} height={20} />
                 </div>
@@ -23,7 +23,7 @@ const DropdownList = ({onChange}: {onChange: (e: string) => void}) => {
 
             {isOpen && (
                 <ul className='dropdown'>
-                    {['Most Recent', 'Oldest'].map((option) => (
+                    {['Plus Récent', 'Plus Ancien'].map((option) => (
                         <li key={option} onClick={() => handleSelect(option)} className='list-item'>
                             {option}
                         </li>
