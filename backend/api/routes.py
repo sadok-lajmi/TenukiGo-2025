@@ -750,7 +750,7 @@ def edit_match(
     sgf_path = match["sgf"]
 
     if sgf:  # replace SGF
-        sgf_path = LOCAL_UPLOAD_DIR / f"{datetime.now().timestamp()}_{sgf.filename}"
+        sgf_path = SGF_DIR / f"{datetime.now().timestamp()}_{sgf.filename}"
         with open(sgf_path, "wb") as f:
             f.write(sgf.file.read())
         sgf_path = str(sgf_path)
