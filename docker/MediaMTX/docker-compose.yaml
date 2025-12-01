@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    restart: unless-stopped
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro
+      - ../../recordings:/project_recordings
+    ports:
+      - "1935:1935"   # RTMP ingest
+      - "8080:8080"   # HLS
+      - "9997:9997"   # API HTTP
+      - "8889:8889"   # WebRTC
+    working_dir: /
