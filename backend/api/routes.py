@@ -377,6 +377,13 @@ def get_video(video_id: int):
         
     if video['thumbnail']:
         video['thumbnail'] = clean_path_for_url(video['thumbnail'])
+
+    if video['video_sgf']:
+        video['video_sgf'] = clean_path_for_url(video['video_sgf'])
+        
+    if video['sgf']:
+        video['sgf'] = clean_path_for_url(video['sgf'])
+
     return video
 
 
