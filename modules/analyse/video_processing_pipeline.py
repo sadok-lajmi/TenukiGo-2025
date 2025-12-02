@@ -16,7 +16,6 @@ from config.settings import (
     ANALYSIS_INTERVAL,
     YOLO_PATH,
     KERAS_PATH,
-    SGF_OUTPUT_PATH,
     MAX_INIT_FRAMES
 )
 
@@ -140,11 +139,11 @@ def run_pipeline(video_path: str = None):
         return
 
     # --- 2. Process Video ---
-    processed_frames = process_video(cap, go_game)
+    _ = process_video(cap, go_game)
     cap.release()
     cv2.destroyAllWindows()
 
-    # --- 3. Post-Process and Save SGF ---
+    # --- 3. Post-Process ---
     final_sgf = None
     num_states = len(go_game.numpy_board)
     logger.info(f"Running AI post-processing on {num_states} "
@@ -171,24 +170,8 @@ def run_pipeline(video_path: str = None):
             except Exception as fallback_error:
                 logger.error(f"Fallback also failed: {fallback_error}")
                 final_sgf = None
+    return final_sgf
 
-    # --- 4. Save File ---
-    if final_sgf:
-        # Ensure output directory exists
-        output_dir = os.path.dirname(SGF_OUTPUT_PATH)
-        if output_dir:
-            os.makedirs(output_dir, exist_ok=True)
-
-        try:
-            with open(SGF_OUTPUT_PATH, "w") as f:
-                f.write(final_sgf)
-            logger.info(f"\n✓ Successfully saved game to {SGF_OUTPUT_PATH}")
-            logger.info(f"  Total frames analyzed: {processed_frames}")
-        except IOError as e:
-            logger.error(f"\n✗ Error: "
-                         f"Could not write SGF to {SGF_OUTPUT_PATH}: {e}")
-    else:
-        logger.error("\n✗ Error: No SGF data was generated.")
 
 if __name__ == "__main__":
     run_pipeline(os.path.join("data", "test.mp4"))
