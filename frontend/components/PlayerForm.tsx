@@ -47,7 +47,7 @@ export default function PlayerForm({ mode, initialData }: PlayerFormProps) {
         }
 
         if ( !formData.firstname || !formData.lastname) {
-            setError('Please enter first name and last name.');
+            setError('Veuillez entrer le prénom et le nom.');
             return;
         }
 
@@ -65,8 +65,8 @@ export default function PlayerForm({ mode, initialData }: PlayerFormProps) {
         const responseData = await response.json();
 
         if (!response.ok) {
-            const error = responseData['error'] || 'An error occurred during upload.';
-            setError(error.message || 'An error occurred during upload.');
+            const error = responseData['error'] || "Une erreur s'est produite lors du téléchargement.";
+            setError(error.message || "Une erreur s'est produite lors du téléchargement.");
             return;
         }
         // On success, redirect or show a success message
@@ -80,27 +80,27 @@ export default function PlayerForm({ mode, initialData }: PlayerFormProps) {
             <form onSubmit={handleSubmit} className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
                 <FormField 
                     id='firstname'
-                    label='First Name'
+                    label='Prénom'
                     value={formData.firstname}
                     onChange={handleInputChange}
-                    placeholder='Enter their first name'
+                    placeholder='Entrez leur prénom'
                 />
 
                 <FormField 
                     id='lastname'
-                    label='Last Name'
+                    label='Nom'
                     value={formData.lastname}
                     onChange={handleInputChange}
-                    placeholder='Enter their last name'
+                    placeholder='Entrez leur nom'
                 />
                 
                 <FormField 
                     id='level'
-                    label='Level'
+                    label='Niveau'
                     value={formData.level}
                     onChange={handleInputChange}
                     as='textarea'
-                    placeholder='what is their level'
+                    placeholder='Entrez leur niveau'
                 />
                 
                 {/* Password */}

@@ -89,24 +89,24 @@ export default function PlayerDetailsPage() {
       {/* Player Summary Card */}
       <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
         <div className="flex justify-between items-center">
-          <p className="font-semibold text-dark-100">Level:</p>
+          <p className="font-semibold text-dark-100">Niveau:</p>
           <p>{player.level}</p>
         </div>
 
         <div className="flex justify-between items-center">
-          <p className="font-semibold text-dark-100">Matches Played:</p>
+          <p className="font-semibold text-dark-100">Parties jouées:</p>
           <p>{player.matchesPlayed}</p>
         </div>
 
         <div className="flex justify-between items-center">
-          <p className="font-semibold text-dark-100">Wins:</p>
+          <p className="font-semibold text-dark-100">Victoires:</p>
           <p className="font-bold text-green-600">{player.wins}</p>
         </div>
       </section>
 
       {/* Matches List */}
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold text-dark-100 mb-2">Matches played :</h2>
+        <h2 className="text-xl font-semibold text-dark-100 mb-2">Parties jouées :</h2>
 
         {matchInfos.length > 0 ? (
           matchInfos.map((matchinfo) => (

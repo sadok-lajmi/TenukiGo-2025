@@ -192,7 +192,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
     const data = await response.json();
 
     if (!response.ok) {
-      setError(data.error || "Submission failed.");
+      setError(data.error || "Échec de la soumission.");
       return;
     }
 
@@ -227,7 +227,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
 
       <FormField
         id="white"
-        label="Player White *"
+        label="Joueur (Blanc) *"
         as="search"
         options={players}
         value={formData.white}
@@ -237,7 +237,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
 
       <FormField
         id="black"
-        label="Player Black *"
+        label="Joueur (Noir) *"
         as="search"
         options={players}
         value={formData.black}
@@ -247,7 +247,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
 
       <FormField
         id="result"
-        label="Result *"
+        label="Résultat *"
         as="select"
         options={[
           { label: "Selectionnez le résultat", value: "" },
