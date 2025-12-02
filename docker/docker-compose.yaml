@@ -53,6 +53,8 @@ services:
       - uploads_data:/app/uploads # Montage du même volume pour accéder aux fichiers uploadés
     ports:
       - "5000:5000"
+    environment:
+      - TF_ENABLE_ONEDNN_OPTS=0
 
 volumes:
   tenuki-pgdata:
