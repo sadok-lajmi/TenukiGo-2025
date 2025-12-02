@@ -163,6 +163,10 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
       setError("Les joueurs blanc et noir doivent être différents.");
       return;
     }
+    if (formData.duration <= "0") {
+      setError("La durée doit être un nombre positif.");
+      return;
+    }
 
     const form = new FormData();
 
