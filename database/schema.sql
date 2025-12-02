@@ -20,7 +20,6 @@ CREATE TABLE match (
     result VARCHAR(20), -- "white", "black", "draw", "educational"
     duration INTEGER,
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    video_id INTEGER, -- FK vers video (optionnel)
     sgf TEXT, -- chemin vers le fichier sgf de la partie
     description TEXT,
     FOREIGN KEY (white_id) REFERENCES player(player_id) ON DELETE SET NULL,
@@ -36,6 +35,7 @@ CREATE TABLE video (
     thumbnail TEXT, -- chemin vers la miniature
     date_upload TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     duration INTEGER,
+    sgf TEXT, -- chemin vers le fichier sgf associé
     match_id INTEGER UNIQUE, -- garantit 1-1 : une vidéo → un match
     FOREIGN KEY (match_id) REFERENCES match(match_id) ON DELETE SET NULL
 );
@@ -48,15 +48,6 @@ CREATE TABLE stream (
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- correspond à la date du match
     FOREIGN KEY (match_id) REFERENCES match(match_id) ON DELETE CASCADE
 );
-
--- ------------------------------------------------
--- Ajout de la contrainte circulaire (ALTER TABLE)
--- ------------------------------------------------
-
--- Maintenant que la table 'video' existe, on peut lier 'match' vers 'video'
-ALTER TABLE match
-ADD CONSTRAINT fk_match_video
-FOREIGN KEY (video_id) REFERENCES video(video_id) ON DELETE SET NULL;
 
 -- ------------------------------------------------
 -- Indexes utiles
