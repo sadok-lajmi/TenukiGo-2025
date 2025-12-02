@@ -1,6 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Form, UploadFile, File
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware 
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path as PathLib
 from typing import Optional
 from datetime import datetime
@@ -11,8 +12,8 @@ import requests
 
 from api.ConnectionManager import ConnectionManager
 from database.services import process_and_save_game, db
-from api.utils import upload_file, upload_file_from_content, remove_base_dir_from_url
-from config.settings import CLUB_PASSWORD, VIDEO_DIR, THUMBNAIL_DIR, SGF_DIR, ANALYSE_SERVICE_URL
+from api.utils import upload_file, upload_file_from_content
+from config.settings import CLUB_PASSWORD, UPLOAD_DIR, VIDEO_DIR, THUMBNAIL_DIR, SGF_DIR, ANALYSE_SERVICE_URL
 
 app = FastAPI(title="Go Game API")
 
@@ -30,6 +31,9 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+# Mount static files for serving uploads
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # Manager for WebSocket connections
 manager = ConnectionManager()
@@ -478,19 +482,21 @@ async def upload_video(
     print("=" * 50)
     print("📥 UPLOAD REQUEST RECEIVED")
     print(f"   Title: {title}")
-    print(f"   Match ID: '{matchId}'")
     print(f"   Video: {video.filename} ({video.content_type})")
-    print(f"   Thumbnail: {thumbnail.filename} ({thumbnail.content_type})")
+    if matchId:
+        print(f"   Match ID: '{matchId}'")
+    if thumbnail:
+        print(f"   Thumbnail: {thumbnail.filename} ({thumbnail.content_type})")
     print("=" * 50)
     
     try:
         # Save video file
-        video_path = await upload_file(video, VIDEO_DIR)
-        video_url = remove_base_dir_from_url(video_path)
+        video_url = await upload_file(video, VIDEO_DIR)
 
-        # Save thumbnail file
-        thumb_path = await upload_file(thumbnail, THUMBNAIL_DIR)
-        thumb_url = remove_base_dir_from_url(thumb_path)
+        # Save thumbnail file if provided
+        thumb_url = None
+        if thumbnail:
+            thumb_url = await upload_file(thumbnail, THUMBNAIL_DIR)
         
         print(f"🔗 Video URL (for database): {video_url}")
         print(f"🔗 Thumbnail URL (for database): {thumb_url}")
@@ -518,7 +524,7 @@ async def upload_video(
             RETURNING video_id
         """, (
             title,
-            video_path,       # Relative path (for backup/reference)
+            video_url,       # Relative path (for backup/reference)
             video_url,         # WEB URL (this is what frontend sees!)
             thumb_url,         # WEB URL (this is what frontend sees!)
             match_id_int
@@ -568,8 +574,7 @@ async def create_match(
 
     sgf_url = None
     if sgf:
-        sgf_path = upload_file(sgf, SGF_DIR)
-        sgf_url = remove_base_dir_from_url(sgf_path)
+        sgf_url = upload_file(sgf, SGF_DIR)
 
     cur.execute("""
         INSERT INTO match (title, style, white_id, black_id, result, date, duration, description, sgf)
@@ -579,18 +584,16 @@ async def create_match(
     match_id = cur.fetchone()["match_id"]
 
     if video:
-        video_path = upload_file(video, VIDEO_DIR)
-        video_url = remove_base_dir_from_url(video_path)
+        video_url = upload_file(video, VIDEO_DIR)
 
         thumb_url = None
         if thumbnail:
-            thumb_path = upload_file(thumbnail, THUMBNAIL_DIR)
-            thumb_url = remove_base_dir_from_url(thumb_path)
+            thumb_url = upload_file(thumbnail, THUMBNAIL_DIR)
         
         cur.execute("""
             INSERT INTO video (title, path, url, thumbnail, match_id)
             VALUES (%s, %s, %s, %s, %s)
-        """, (title, video_path, video_url, thumb_url, match_id))
+        """, (title, video_url, video_url, thumb_url, match_id))
 
     elif video_id:
         cur.execute("UPDATE video SET match_id = %s WHERE video_id = %s", (match_id, video_id))
@@ -632,8 +635,7 @@ async def edit_video(
 
     # Handle thumbnail replacement
     if thumbnail:
-        thumb_path = upload_file(thumbnail, THUMBNAIL_DIR)
-        thumb_url = remove_base_dir_from_url(thumb_path)
+        thumb_url = upload_file(thumbnail, THUMBNAIL_DIR)
 
     cur.execute("""
         UPDATE video
@@ -703,7 +705,7 @@ async def edit_match(
     sgf_path = match["sgf"]
 
     if sgf:  # replace SGF
-        sgf_path = remove_base_dir_from_url(upload_file(sgf, THUMBNAIL_DIR))
+        sgf_path = upload_file(sgf, THUMBNAIL_DIR)
 
     elif remove_sgf == "true" and sgf_path:
         # delete old file
@@ -725,14 +727,13 @@ async def edit_match(
 
     # CASE B — NEW VIDEO UPLOAD
     elif video:  
-        video_path = upload_file(video, VIDEO_DIR)
-        video_url = remove_base_dir_from_url(video_path)
+        video_url = upload_file(video, VIDEO_DIR)
 
         cur.execute("""
             INSERT INTO video (title, path, url, thumbnail)
             VALUES (%s, %s, %s, %s)
             RETURNING video_id
-        """, (title, video_path, video_url, None))
+        """, (title, video_url, video_url, None))
 
         new_video_id = cur.fetchone()["video_id"]
 
@@ -805,8 +806,7 @@ def edit_video(
 
     # --- Handle thumbnail replacement ---
     if thumbnail:
-        thumb_path = upload_file(thumbnail, THUMBNAIL_DIR)
-        thumb_url = remove_base_dir_from_url(thumb_path)
+        thumb_url = upload_file(thumbnail, THUMBNAIL_DIR)
 
     # --- match_id can be nullable ---
     # match_id == None → remove association
@@ -885,7 +885,7 @@ def edit_match(
     sgf_path = match["sgf"]
 
     if sgf:  # replace SGF
-        sgf_path = remove_base_dir_from_url(upload_file(sgf, SGF_DIR))
+        sgf_path = upload_file(sgf, SGF_DIR)
 
     elif remove_sgf == "true" and sgf_path:
         # delete old file
@@ -909,17 +909,13 @@ def edit_match(
 
     # CASE B — NEW VIDEO UPLOAD
     if video:  
-        video_path = upload_file(video, VIDEO_DIR)
-        video_url = remove_base_dir_from_url(video_path)
-
-        with open(video_path, "wb") as f:
-            f.write(video.file.read())
+        video_url = upload_file(video, VIDEO_DIR)
 
         cur.execute("""
             INSERT INTO video (title, path, url, thumbnail)
             VALUES (%s, %s, %s, %s)
             RETURNING video_id
-        """, (title, video_path, video_url, None))
+        """, (title, video_url, video_url, None))
 
         new_video_id = cur.fetchone()["video_id"]
         # Remove old association if any
@@ -1099,16 +1095,14 @@ def generate_sgf_from_video(video_id: int):
     
     # Call Analyse module API
     try:
-        response = requests.post(ANALYSE_SERVICE_URL, json={"filename": os.path.basename(video_url)}, timeout=300)
-        response.raise_for_status()
-        sgf_content = response.json().get("sgf")
+        response = requests.post("http://analyse:5000/process", json={"filename": os.path.basename(video_url)}, timeout=300)
+        sgf_content: str = response.json().get("sgf")
         
         if not sgf_content:
             raise HTTPException(status_code=500, detail="SGF generation failed")
         
         # Save SGF to file
-        sgf_path = upload_file_from_content("video_{video_id}.sgf", sgf_content, SGF_DIR)
-        sgf_url = remove_base_dir_from_url(sgf_path)
+        sgf_url = upload_file_from_content("video_{video_id}.sgf", sgf_content.encode('utf-8'), SGF_DIR)
         
         # Update database if video is linked to a match
         if video['match_id']:
