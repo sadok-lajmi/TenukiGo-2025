@@ -11,15 +11,19 @@ PORT = 8000
 # -------------------------------
 
 # Upload directories
-UPLOAD_DIR = "app/uploads/" # Corresponds to Docker container path
+UPLOAD_DIR = "uploads" # Corresponds to Docker container path
 VIDEO_DIR = os.path.join(UPLOAD_DIR, "videos")
 THUMBNAIL_DIR = os.path.join(UPLOAD_DIR, "thumbnails")
 SGF_DIR =  os.path.join(UPLOAD_DIR, "sgf_files")
 
+# Ensure directories exist
+os.makedirs(VIDEO_DIR, exist_ok=True)
+os.makedirs(THUMBNAIL_DIR, exist_ok=True)
+os.makedirs(SGF_DIR, exist_ok=True)
+
 # -------------------------------
 # DATABASE CONFIG
 # -------------------------------
-#DB_URL = "postgresql://postgres:BaknineNouhaila@localhost:5432/go_db?sslmode=disable"
 DB_URL = os.getenv("DB_URL")
 
 # -------------------------------
