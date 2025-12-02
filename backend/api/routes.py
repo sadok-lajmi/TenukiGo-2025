@@ -287,13 +287,6 @@ def list_videos():
     """)
     videos = cur.fetchall()
     
-    # Clean up URLs before returning
-    for video in videos:
-        if video['thumbnail']:
-            video['thumbnail'] = clean_path_for_url(video['thumbnail'])
-        if video['url']:
-            video['url'] = clean_path_for_url(video['url'])
-    
     conn.close()
     return {"videos": videos, "count": len(videos)}
 
@@ -316,11 +309,6 @@ def list_matches():
         ORDER BY m.date DESC
     """)
     matches = cur.fetchall()
-    
-    # Clean up thumbnail URLs
-    for match in matches:
-        if match['thumbnail']:
-            match['thumbnail'] = clean_path_for_url(match['thumbnail'])
     
     conn.close()
     return {"matches": matches, "count": len(matches)}
@@ -366,17 +354,6 @@ def get_video(video_id: int):
 
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
-    if video['url']:
-        video['url'] = clean_path_for_url(video['url'])
-        
-    if video['thumbnail']:
-        video['thumbnail'] = clean_path_for_url(video['thumbnail'])
-
-    if video['video_sgf']:
-        video['video_sgf'] = clean_path_for_url(video['video_sgf'])
-        
-    if video['sgf']:
-        video['sgf'] = clean_path_for_url(video['sgf'])
 
     return video
 
@@ -401,13 +378,7 @@ def get_match(match_id: int):
 
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
-    if match['sgf']:
-        match['sgf'] = clean_path_for_url(match['sgf'])
-    
-    if match.get('video'):
-        match['video'] = clean_path_for_url(match['video'])
-    if match.get('thumbnail'):
-        match['thumbnail'] = clean_path_for_url(match['thumbnail'])
+
     return match
 
 
@@ -493,12 +464,12 @@ async def upload_video(
     
     try:
         # 2. Sauvegarde du fichier vidéo (Utilisation de la fonction utilitaire asynchrone)
-        video_url = await upload_file(file, VIDEO_DIR)
+        video_path, video_url = await upload_file(file, VIDEO_DIR)
 
         # 3. Sauvegarde de la miniature
         thumb_url = None
         if thumbnail:
-            thumb_url = await upload_file(thumbnail, THUMBNAIL_DIR)
+            _, thumb_url = await upload_file(thumbnail, THUMBNAIL_DIR)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
@@ -513,7 +484,7 @@ async def upload_video(
         RETURNING video_id
     """, (
         title,
-        video_url,
+        video_path,
         video_url,
         thumb_url,
         match_id_int
@@ -554,7 +525,7 @@ async def create_match(
     sgf_url = None
     if sgf:
         # Use the utility to save the SGF file
-        sgf_url = await upload_file(sgf, SGF_DIR)
+        _, sgf_url = await upload_file(sgf, SGF_DIR)
 
     # Insert Match record first
     cur.execute("""
@@ -566,17 +537,17 @@ async def create_match(
 
     if video:
         # Save video and get URLs
-        video_url = await upload_file(video, VIDEO_DIR)
+        video_path, video_url = await upload_file(video, VIDEO_DIR)
 
         thumb_url = None
         if thumbnail:
-            thumb_url = await upload_file(thumbnail, THUMBNAIL_DIR)
+            _, thumb_url = await upload_file(thumbnail, THUMBNAIL_DIR)
         
         # Insert Video record
         cur.execute("""
             INSERT INTO video (title, path, url, thumbnail, match_id)
             VALUES (%s, %s, %s, %s, %s)
-        """, (title, video_url, video_url, thumb_url, match_id))
+        """, (title, video_path, video_url, thumb_url, match_id))
         
     elif video_id:
         cur.execute("UPDATE video SET match_id = %s WHERE video_id = %s", (match_id, video_id))
@@ -605,7 +576,7 @@ async def create_match(
 
     sgf_url = None
     if sgf:
-        sgf_url = upload_file(sgf, SGF_DIR)
+        _, sgf_url = await upload_file(sgf, SGF_DIR)
 
     cur.execute("""
         INSERT INTO match (title, style, white_id, black_id, result, date, duration, description, sgf)
@@ -615,16 +586,16 @@ async def create_match(
     match_id = cur.fetchone()["match_id"]
 
     if video:
-        video_url = upload_file(video, VIDEO_DIR)
+        video_path, video_url = await upload_file(video, VIDEO_DIR)
 
         thumb_url = None
         if thumbnail:
-            thumb_url = upload_file(thumbnail, THUMBNAIL_DIR)
+            _, thumb_url = await upload_file(thumbnail, THUMBNAIL_DIR)
         
         cur.execute("""
             INSERT INTO video (title, path, url, thumbnail, match_id)
             VALUES (%s, %s, %s, %s, %s)
-        """, (title, video_url, video_url, thumb_url, match_id))
+        """, (title, video_path, video_url, thumb_url, match_id))
 
     elif video_id:
         cur.execute("UPDATE video SET match_id = %s WHERE video_id = %s", (match_id, video_id))
@@ -632,47 +603,6 @@ async def create_match(
     conn.commit()
     conn.close()
     return {"message": "Match created", "match_id": match_id}
-
-@app.post("/generate_sgf_from_video")
-def generate_sgf_from_video(video_id: int):
-    """Generate SGF from an uploaded video using the Analyse module"""
-    conn = db()
-    cur = conn.cursor()
-    
-    # Fetch video details
-    cur.execute("SELECT * FROM video WHERE video_id = %s", (video_id,))
-    video = cur.fetchone()
-    if not video:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Video not found")
-    
-    video_url = video['url']
-    if not video_url:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Video URL is missing")
-    
-    # Call Analyse module API
-    try:
-        response = requests.post(ANALYSE_SERVICE_URL, json={"video_url": os.path.basename(video_url)}, timeout=300)
-        response.raise_for_status()
-        sgf_content = response.json().get("sgf")
-        
-        if not sgf_content:
-            raise HTTPException(status_code=500, detail="SGF generation failed")
-        
-        # Save SGF to file
-        sgf_url = upload_file_from_content("video_{video_id}.sgf", sgf_content, SGF_DIR)
-        
-        # Update database
-        cur.execute("UPDATE match SET sgf = %s WHERE match_id = %s", (sgf_url, video['match_id']))
-        conn.commit()
-        conn.close()
-        
-        return {"message": "SGF generated and saved", "sgf_url": sgf_url}
-    
-    except requests.RequestException as e:
-        conn.close()
-        raise HTTPException(status_code=500, detail=f"Analyse module error: {str(e)}")
 
 # ======================
 # HEALTH CHECK
@@ -686,7 +616,7 @@ def read_root():
 # EDITING ROUTES
 # -----------------------------------------------------------
 @app.post("/video/{video_id}/edit")
-def edit_video(
+async def edit_video(
     video_id: int,
     title: Optional[str] = Form(None),
     match_id: Optional[int] = Form(None),
@@ -707,7 +637,7 @@ def edit_video(
 
     # --- Handle thumbnail replacement ---
     if thumbnail:
-        thumb_url = upload_file(thumbnail, THUMBNAIL_DIR)
+        _, thumb_url = await upload_file(thumbnail, THUMBNAIL_DIR)
 
     cur.execute("""
         UPDATE video
@@ -730,7 +660,7 @@ def edit_video(
     return get_video(video_id)
 
 @app.post("/match/{match_id}/edit")
-def edit_match(
+async def edit_match(
     match_id: int,
     title: Optional[str] = Form(None),
     style: Optional[str] = Form(None),
@@ -783,7 +713,7 @@ def edit_match(
     sgf_path = match["sgf"]
 
     if sgf:  # replace SGF
-        sgf_path = upload_file(sgf, SGF_DIR)
+        _, sgf_path = await upload_file(sgf, SGF_DIR)
 
     elif remove_sgf == "true" and sgf_path:
         # delete old file
@@ -806,13 +736,13 @@ def edit_match(
 
     # CASE B — NEW VIDEO UPLOAD
     if video:  
-        video_url = upload_file(video, VIDEO_DIR)
+        video_path, video_url = await upload_file(video, VIDEO_DIR)
 
         cur.execute("""
             INSERT INTO video (title, path, url, thumbnail)
             VALUES (%s, %s, %s, %s)
             RETURNING video_id
-        """, (title, video_url, video_url, None))
+        """, (title, video_path, video_url, None))
 
         new_video_id = cur.fetchone()["video_id"]
         # Remove old association if any
@@ -1037,7 +967,7 @@ def generate_sgf_from_video(video_id: int):
             raise HTTPException(status_code=500, detail="SGF generation failed")
         
         # Save SGF to file
-        sgf_url = upload_file_from_content("video_{video_id}.sgf", sgf_content.encode('utf-8'), SGF_DIR)
+        _, sgf_url = upload_file_from_content("video_%s.sgf".format(video_id), sgf_content.encode('utf-8'), SGF_DIR)
         
         # Update database if video is linked to a match
         if video['match_id']:

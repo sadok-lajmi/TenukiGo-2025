@@ -8,8 +8,7 @@ async def upload_file(file: UploadFile, directory: str) -> str:
     with open(file_path, "wb") as f:
         content = await file.read()
         f.write(content)
-    print(f"File saved to {file_path}")
-    return file_path
+    return file_path, "/" + file_path
 
 def upload_file_from_content(filename: str, content: str, directory: str) -> str:
     """Upload a file from a content and return its path."""
@@ -17,4 +16,4 @@ def upload_file_from_content(filename: str, content: str, directory: str) -> str
     file_path = os.path.join(directory, filename)
     with open(file_path, "wb") as f:
         f.write(content)
-    return file_path
+    return file_path, "/" + file_path
