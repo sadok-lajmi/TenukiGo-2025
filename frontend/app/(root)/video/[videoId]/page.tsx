@@ -115,9 +115,9 @@ return (
     <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
       <div className="w-full rounded-xl overflow-hidden bg-black">
         <video
-          src={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${video.videoUrl}`}
+          src={`${process.env.NEXT_PUBLIC_API_URL}${video.videoUrl}`}
           controls
-          poster={video.thumbnail ? `${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${video.thumbnail}` : undefined}
+          poster={video.thumbnail ? `${process.env.NEXT_PUBLIC_API_URL}${video.thumbnail}` : undefined}
           width="100%"
           height="100%"
         />
@@ -135,7 +135,7 @@ return (
       {/* SGF File (of the video if it exists) */}
       {video?.sgf && (
         <Link
-          href={`${process.env.NEXT_PUBLIC_UPLOADS_URL}${video.sgf}`}
+          href={`${process.env.NEXT_PUBLIC_API_URL}${video.sgf}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
           Importer le SGF 
@@ -143,7 +143,7 @@ return (
       )}
       {/* SGF Viewer if the sgf exists */}
       {video?.sgf && (
-        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL}${video.sgf}`} />
+        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_API_URL}${video.sgf}`} />
       )}
     </section>
 
@@ -197,7 +197,7 @@ return (
         {/* SGF File (if exists) */}
         {match?.sgf && (
           <Link
-            href={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgf}`}
+            href={`${process.env.NEXT_PUBLIC_API_URL}${match.sgf}`}
             className="block text-blue-500 underline hover:text-blue-600 font-medium"
           >
             Importer le SGF
@@ -205,7 +205,7 @@ return (
         )}
         {/* SGF Viewer if the sgf exists */}
         {(match?.sgf && !(video?.sgf)) && (
-          <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgf}`} />
+          <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_API_URL}${match.sgf}`} />
         )}
       </section>
     ) : (

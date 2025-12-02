@@ -106,7 +106,7 @@ export default function MatchDetailsPage() {
       {/* SGF File (if exists) */}
       {match?.sgfFile && (
         <Link
-          href={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgfFile}`}
+          href={`${process.env.NEXT_PUBLIC_API_URL}${match.sgfFile}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
           Importer le SGF
@@ -118,11 +118,11 @@ export default function MatchDetailsPage() {
       {/* use the sgf related to the video first if there's any */}
       {match?.videosgf ? (
         <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
-        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.videosgf}`} />
+        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_API_URL}${match.videosgf}`} />
         </section> ) : (
         match?.sgfFile && (
         <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
-        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgfFile}`} />
+        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_API_URL}${match.sgfFile}`} />
         </section> )
       )}
       
@@ -136,16 +136,16 @@ export default function MatchDetailsPage() {
               width="640"
               height="360"
               controls
-              poster={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.thumbnail}`}
+              poster={`${process.env.NEXT_PUBLIC_API_URL}${match.thumbnail}`}
               className="w-full rounded-xl shadow-md"
             >
-              <source src={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.videoUrl}`} type="video/mp4" />
+              <source src={`${process.env.NEXT_PUBLIC_API_URL}${match.videoUrl}`} type="video/mp4" />
             </video>
           </div>
           {/* SGF File (of the video if it exists) */}
           {match?.videosgf && (
             <Link
-              href={`${process.env.NEXT_PUBLIC_UPLOADS_URL}${match.videosgf}`}
+              href={`${process.env.NEXT_PUBLIC_API_URL}${match.videosgf}`}
               className="block text-blue-500 underline hover:text-blue-600 font-medium"
             >
               Importer le SGF
