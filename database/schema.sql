@@ -20,12 +20,10 @@ CREATE TABLE match (
     result VARCHAR(20), -- "white", "black", "draw", "educational"
     duration INTEGER,
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    video_id INTEGER, -- FK vers video (optionnel)
     sgf TEXT, -- chemin vers le fichier sgf de la partie
     description TEXT,
     FOREIGN KEY (white_id) REFERENCES player(player_id) ON DELETE SET NULL,
-    FOREIGN KEY (black_id) REFERENCES player(player_id) ON DELETE SET NULL,
-    FOREIGN KEY (video_id) REFERENCES video(video_id) ON DELETE SET NULL
+    FOREIGN KEY (black_id) REFERENCES player(player_id) ON DELETE SET NULL
 );
 
 -- Table video (1-1 avec match via match_id unique)
@@ -37,6 +35,7 @@ CREATE TABLE video (
     thumbnail TEXT, -- chemin vers la miniature
     date_upload TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     duration INTEGER,
+    sgf TEXT, -- chemin vers le fichier sgf associé
     match_id INTEGER UNIQUE, -- garantit 1-1 : une vidéo → un match
     FOREIGN KEY (match_id) REFERENCES match(match_id) ON DELETE SET NULL
 );
