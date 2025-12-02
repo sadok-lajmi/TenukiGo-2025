@@ -18,8 +18,3 @@ def upload_file_from_content(filename: str, content: str, directory: str) -> str
     with open(file_path, "wb") as f:
         f.write(content)
     return file_path
-
-def remove_base_dir_from_url(path: str) -> str:
-    """Remove '/app' from path to a convert it to a web URL.
-    Example: '/app/uploads/videos/video.mp4' -> '/uploads/videos/video.mp4'"""
-    return path.replace("/app", "")
