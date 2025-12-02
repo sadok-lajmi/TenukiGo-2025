@@ -29,17 +29,17 @@ const Page = () => {
     video['title'].toLowerCase().includes(query.toLowerCase())
   )
 
-  const [sortOption, setSortOption] = useState<string>('Most Recent')
+  const [sortOption, setSortOption] = useState<string>('Plus Récent');
   const handleSortChange = (option: string) => {
-    if (option === 'Most Recent') {
-      setSortOption('Most Recent');
-    } else if (option === 'Oldest') {
-      setSortOption('Oldest');
+    if (option === 'Plus Récent') {
+      setSortOption('Plus Récent');
+    } else if (option === 'Plus Ancien') {
+      setSortOption('Plus Ancien');
     }
   }
 
   const sortedVideos = filteredVideos.sort((a, b) => {
-    if (sortOption === 'Most Recent') {
+    if (sortOption === 'Plus Récent') {
       return new Date(b['date_upload']).getTime() - new Date(a['date_upload']).getTime();
     } else {
       return new Date(a['date_upload']).getTime() - new Date(b['date_upload']).getTime();

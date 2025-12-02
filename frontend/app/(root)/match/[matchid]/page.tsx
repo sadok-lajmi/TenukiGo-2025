@@ -84,21 +84,21 @@ export default function MatchDetailsPage() {
       <div className="flex flex-wrap items-center gap-4 text-gray-100 font-medium">
         {match?.style && <p>Style : {match.style}</p>}
         <p>Date : {match?.date}</p>
-        <p>Duration : {match?.duration}</p>
+        <p>Durée : {match?.duration} min</p>
       </div>
 
       {/* Players Section */}
       <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
         <div className="flex justify-between items-center">
-          <p className="font-semibold text-dark-100">White:</p>
+          <p className="font-semibold text-dark-100">Joueur (Blanc):</p>
           <Link href={`/player/${whiteId}`}><p>{match?.playerWhite}</p></Link>
         </div>
         <div className="flex justify-between items-center">
-          <p className="font-semibold text-dark-100">Black:</p>
+          <p className="font-semibold text-dark-100">Joueur (Noir):</p>
           <Link href={`/player/${blackId}`}><p>{match?.playerBlack}</p></Link>
         </div>
         <div className="flex justify-between items-center border-t border-gray-20 pt-3 mt-2">
-          <p className="font-semibold text-dark-100">Result/Winner:</p>
+          <p className="font-semibold text-dark-100">Résultat:</p>
           <p className="font-bold text-dark-100">{match?.result}</p>
         </div>
       </section>
@@ -109,27 +109,29 @@ export default function MatchDetailsPage() {
           href={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgfFile}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
-          Download SGF File
+          Importer le SGF
         </Link>
       )}
 
-      <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
+      
       {/* SGF Viewer if the sgf exists */}
       {/* use the sgf related to the video first if there's any */}
-        {match?.videosgf ? (
+      {match?.videosgf ? (
+        <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
         <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.videosgf}`} />
-        ) : (
+        </section> ) : (
         match?.sgfFile && (
+        <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
         <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgfFile}`} />
-        )
-        )}
-      </section>
+        </section> )
+      )}
+      
 
       {/* Video Section (if exists) */}
       {match?.videoUrl && (
         <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
             <div className="w-full rounded-xl overflow-hidden">
-            <Link href={`/video/${match.videoId?.toString()}`} className="text-lg font-semibold text-dark-100">Match Video</Link>
+            <Link href={`/video/${match.videoId?.toString()}`} className="text-lg font-semibold text-dark-100">Vidéo de la partie</Link>
             <video
               width="640"
               height="360"
@@ -146,7 +148,7 @@ export default function MatchDetailsPage() {
               href={`${process.env.NEXT_PUBLIC_UPLOADS_URL}${match.videosgf}`}
               className="block text-blue-500 underline hover:text-blue-600 font-medium"
             >
-              Download SGF File
+              Importer le SGF
             </Link>
           )}
         </section>

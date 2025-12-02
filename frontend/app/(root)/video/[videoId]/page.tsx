@@ -127,7 +127,7 @@ return (
       <div className="flex justify-between items-center">
       <div className="flex flex-col mt-3 gap-1">
         <h1 className="text-xl font-semibold text-dark-100">{video.title}</h1>
-        <p className="text-sm text-gray-100">Uploaded: {video.uploadDate}</p>
+        <p className="text-sm text-gray-100">Postée le : {video.uploadDate}</p>
       </div>
         { !(video.sgf) && <button onClick={handleConvertToSgf} className="px-3 py-2 bg-yellow-700 text-white text-sm rounded-full w-fit ">Convertir en SGF</button>}
       </div>
@@ -138,7 +138,7 @@ return (
           href={`${process.env.NEXT_PUBLIC_UPLOADS_URL}${video.sgf}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
-          Download SGF File
+          Importer le SGF 
         </Link>
       )}
       {/* SGF Viewer if the sgf exists */}
@@ -168,14 +168,14 @@ return (
         </div>
 
         <div className="flex justify-between items-center">
-          <p className="font-semibold text-dark-100">Player (White):</p>
+          <p className="font-semibold text-dark-100">Joueur (Blanc):</p>
           <Link href={`/player/${moreMatchInfo.white}`}><p>
             {match.playerWhite}
           </p></Link>
         </div>
 
         <div className="flex justify-between items-center">
-          <p className="font-semibold text-dark-100">Player (Black):</p>
+          <p className="font-semibold text-dark-100">Joueur (Noir):</p>
           <Link href={`/player/${moreMatchInfo.black}`}><p>
             {match.playerBlack}
           </p></Link>
@@ -183,7 +183,7 @@ return (
 
         {/* Added Result */}
         <div className="flex justify-between items-center border-t border-gray-20 pt-3 mt-2">
-          <p className="font-semibold text-dark-100">Result:</p>
+          <p className="font-semibold text-dark-100">Résultat:</p>
           <p className="font-bold text-dark-100">{match.result}</p>
         </div>
 
@@ -200,7 +200,7 @@ return (
             href={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgf}`}
             className="block text-blue-500 underline hover:text-blue-600 font-medium"
           >
-            Download SGF File
+            Importer le SGF
           </Link>
         )}
         {/* SGF Viewer if the sgf exists */}
@@ -209,7 +209,7 @@ return (
         )}
       </section>
     ) : (
-      <p className="text-gray-100 text-sm">No match information available for this video.</p>
+      <p className="text-gray-100 text-sm">Pas de partie associée à cette vidéo.</p>
     )}
   </main>
 )

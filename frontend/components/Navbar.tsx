@@ -21,15 +21,15 @@ const Navbar = () => {
             </Link>
 
             <Link href="/">
-                <button>Videos</button>
+                <button>Vidéos</button>
             </Link>
 
             <Link href="/matches">
-                <button>Matches</button>
+                <button>Parties</button>
             </Link>
 
             <Link href="/players">
-                <button>Players</button>
+                <button>Joueurs</button>
             </Link>
 
             {user && (

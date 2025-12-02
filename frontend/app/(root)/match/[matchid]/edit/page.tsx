@@ -37,7 +37,7 @@ export default function Page() {
 
   return (
     <div className="wrapper-md upload-page">
-      <h1>Edit Match</h1>
+      <h1>Modifiez la partie</h1>
       <MatchForm mode="edit" initialData={initialData} />
     </div>
   );

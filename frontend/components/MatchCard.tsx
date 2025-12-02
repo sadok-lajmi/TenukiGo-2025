@@ -11,8 +11,8 @@ const MatchCard = ({ id, title, thumbnail, date, duration }: MatchCardProps) => 
       <div className="flex flex-col gap-2">
         <h2 className="text-lg font-bold text-dark-100">{title}</h2>
         <div className="flex items-center gap-6 text-sm text-gray-100 font-medium">
-          <p>Duration: {duration ? duration : 'Unknown duration'} min</p>
-          <p>Date: {date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Unknown date'}</p>
+          <p>Durée: {duration ? duration : 'Inconnue'} min</p>
+          <p>Date: {date ? new Date(date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Date inconnue'}</p>
         </div>
       </div>
 

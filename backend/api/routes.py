@@ -346,7 +346,6 @@ def list_players():
 # ======================
 # DETAIL ROUTES
 # ======================
-
 @app.get("/video/{video_id}")
 def get_video(video_id: int):
     conn = db()
@@ -354,7 +353,7 @@ def get_video(video_id: int):
     cur.execute("""
         SELECT 
             v.video_id, v.title, v.path, v.url, v.thumbnail,
-            v.date_upload, v.duration,
+            v.date_upload, v.duration, v.sgf AS video_sgf,
             m.match_id, m.style, m.result, m.description,
             m.date AS match_date,
             w.firstname || ' ' || w.lastname AS white,
@@ -371,13 +370,18 @@ def get_video(video_id: int):
 
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
-    
-    # Clean up URLs
-    if video['thumbnail']:
-        video['thumbnail'] = clean_path_for_url(video['thumbnail'])
     if video['url']:
         video['url'] = clean_path_for_url(video['url'])
-    
+        
+    if video['thumbnail']:
+        video['thumbnail'] = clean_path_for_url(video['thumbnail'])
+
+    if video['video_sgf']:
+        video['video_sgf'] = clean_path_for_url(video['video_sgf'])
+        
+    if video['sgf']:
+        video['sgf'] = clean_path_for_url(video['sgf'])
+
     return video
 
 
@@ -390,7 +394,7 @@ def get_match(match_id: int):
             m.match_id, m.title, m.result, m.style,
             m.white_id AS white, m.black_id AS black,
             m.duration, m.date,
-            v.video_id, v.url AS video, v.thumbnail,
+            v.video_id, v.url AS video, v.thumbnail, v.sgf AS video_sgf,
             m.sgf
         FROM match m
         LEFT JOIN video v ON m.match_id = v.match_id
@@ -401,14 +405,15 @@ def get_match(match_id: int):
 
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
+    if match['sgf']:
+        match['sgf'] = clean_path_for_url(match['sgf'])
     
-    # Clean up URLs
-    if match['thumbnail']:
-        match['thumbnail'] = clean_path_for_url(match['thumbnail'])
-    if match['video']:
+    if match.get('video'):
         match['video'] = clean_path_for_url(match['video'])
-    
+    if match.get('thumbnail'):
+        match['thumbnail'] = clean_path_for_url(match['thumbnail'])
     return match
+
 
 
 @app.get("/player/{player_id}")
@@ -449,6 +454,9 @@ def get_player(player_id: int):
 # ======================
 # CREATE / UPLOAD ROUTES
 # ======================
+# -----------------------------------------------------------
+# CREATE / UPLOAD ROUTES
+# -----------------------------------------------------------
 
 @app.post("/create_player")
 def create_player(
@@ -474,85 +482,112 @@ def create_player(
 @app.post("/upload_video")
 async def upload_video(
     title: str = Form(...),
-    video: UploadFile = File(...),
+    file: UploadFile = File(...),  # Compatible avec le nom de champ 'file' attendu par le frontend
     thumbnail: Optional[UploadFile] = File(None),
-    matchId: Optional[str] = Form(None)
+    match_id: Optional[str] = Form(None)  # Compatible avec le nom de champ 'match_id'
 ):
-    """Upload video with thumbnail"""
-    print("=" * 50)
-    print("📥 UPLOAD REQUEST RECEIVED")
-    print(f"   Title: {title}")
-    print(f"   Video: {video.filename} ({video.content_type})")
-    if matchId:
-        print(f"   Match ID: '{matchId}'")
-    if thumbnail:
-        print(f"   Thumbnail: {thumbnail.filename} ({thumbnail.content_type})")
-    print("=" * 50)
+    # 1. Traitement du match_id pour assurer qu'il est un entier ou None
+    match_id_int = None
+    if match_id and match_id.strip() and match_id.lower() != "none":
+        try:
+            match_id_int = int(match_id)
+        except ValueError:
+            # En cas de valeur invalide (e.g., texte), on l'ignore silencieusement
+            pass
     
     try:
-        # Save video file
+        # 2. Sauvegarde du fichier vidéo (Utilisation de la fonction utilitaire asynchrone)
+        video_url = await upload_file(file, VIDEO_DIR)
+
+        # 3. Sauvegarde de la miniature
+        thumb_url = None
+        if thumbnail:
+            thumb_url = await upload_file(thumbnail, THUMBNAIL_DIR)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+    
+    # 4. Insertion dans la base de données
+    conn = db()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO video (title, path, url, thumbnail, match_id)
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING video_id
+    """, (
+        title,
+        video_url,
+        video_url,
+        thumb_url,
+        match_id_int
+    ))
+    
+    result = cur.fetchone()
+    video_id = result["video_id"]
+    conn.commit()
+    conn.close()
+    
+    return {
+        "success": True,
+        "message": "Video uploaded successfully",
+        "video_id": video_id,
+        "video_url": video_url,
+        "thumbnail_url": thumb_url
+    }
+
+
+@app.post("/create_match")
+async def create_match(
+    title: str = Form(...),
+    style: Optional[str] = Form(None),
+    white: int = Form(...),
+    black: int = Form(...),
+    result: str = Form(...),
+    date: Optional[datetime] = Form(None),
+    duration: Optional[int] = Form(None),
+    description: Optional[str] = Form(None),
+    video: Optional[UploadFile] = File(None),
+    video_id: Optional[int] = Form(None),
+    thumbnail: Optional[UploadFile] = File(None),
+    sgf: Optional[UploadFile] = File(None)
+):
+    conn = db()
+    cur = conn.cursor()
+
+    sgf_url = None
+    if sgf:
+        # Use the utility to save the SGF file
+        sgf_url = await upload_file(sgf, SGF_DIR)
+
+    # Insert Match record first
+    cur.execute("""
+        INSERT INTO match (title, style, white_id, black_id, result, date, duration, description, sgf)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING match_id
+    """, (title, style, white, black, result, date, duration, description, sgf_url)) # sgf_url is a str
+    match_id = cur.fetchone()["match_id"]
+
+    if video:
+        # Save video and get URLs
         video_url = await upload_file(video, VIDEO_DIR)
 
-        # Save thumbnail file if provided
         thumb_url = None
         if thumbnail:
             thumb_url = await upload_file(thumbnail, THUMBNAIL_DIR)
         
-        print(f"🔗 Video URL (for database): {video_url}")
-        print(f"🔗 Thumbnail URL (for database): {thumb_url}")
-        
-        # Convert matchId to integer or None
-        match_id_int = None
-        if matchId and matchId.strip() and matchId != "":
-            try:
-                match_id_int = int(matchId)
-                print(f"✓ Parsed match_id: {match_id_int}")
-            except ValueError:
-                print(f"⚠️  Invalid match_id format: '{matchId}', setting to None")
-        
-        # Save to database
-        conn = db()
-        cur = conn.cursor()
-        
-        print(f"💽 Inserting into database...")
-        
-        # CRITICAL: Save WEB URL (video_url) not filesystem path (video_path)!
-        # The 'path' column can store filesystem path for backup, but 'url' is what frontend uses
+        # Insert Video record
         cur.execute("""
             INSERT INTO video (title, path, url, thumbnail, match_id)
             VALUES (%s, %s, %s, %s, %s)
-            RETURNING video_id
-        """, (
-            title,
-            video_url,       # Relative path (for backup/reference)
-            video_url,         # WEB URL (this is what frontend sees!)
-            thumb_url,         # WEB URL (this is what frontend sees!)
-            match_id_int
-        ))
+        """, (title, video_url, video_url, thumb_url, match_id))
         
-        result = cur.fetchone()
-        video_id = result["video_id"]
-        conn.commit()
-        conn.close()
-        
-        print(f"✅ SUCCESS! Video ID: {video_id}")
-        print(f"   Frontend will use: {video_url}")
-        print("=" * 50)
-        
-        return {
-            "success": True,
-            "message": "Video uploaded successfully",
-            "video_id": video_id,
-            "video_url": video_url,
-            "thumbnail_url": thumb_url
-        }
-        
-    except Exception as e:
-        print(f"❌ UPLOAD ERROR: {str(e)}")
-        print("=" * 50)
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+    elif video_id:
+        cur.execute("UPDATE video SET match_id = %s WHERE video_id = %s", (match_id, video_id))
+
+    conn.commit()
+    conn.close()
+    return {"message": "Match created", "match_id": match_id}
 
 @app.post("/create_match")
 async def create_match(
@@ -602,6 +637,47 @@ async def create_match(
     conn.close()
     return {"message": "Match created", "match_id": match_id}
 
+@app.post("/generate_sgf_from_video")
+def generate_sgf_from_video(video_id: int):
+    """Generate SGF from an uploaded video using the Analyse module"""
+    conn = db()
+    cur = conn.cursor()
+    
+    # Fetch video details
+    cur.execute("SELECT * FROM video WHERE video_id = %s", (video_id,))
+    video = cur.fetchone()
+    if not video:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    video_url = video['url']
+    if not video_url:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Video URL is missing")
+    
+    # Call Analyse module API
+    try:
+        response = requests.post(ANALYSE_SERVICE_URL, json={"video_url": os.path.basename(video_url)}, timeout=300)
+        response.raise_for_status()
+        sgf_content = response.json().get("sgf")
+        
+        if not sgf_content:
+            raise HTTPException(status_code=500, detail="SGF generation failed")
+        
+        # Save SGF to file
+        sgf_url = upload_file_from_content("video_{video_id}.sgf", sgf_content, SGF_DIR)
+        
+        # Update database
+        cur.execute("UPDATE match SET sgf = %s WHERE match_id = %s", (sgf_url, video['match_id']))
+        conn.commit()
+        conn.close()
+        
+        return {"message": "SGF generated and saved", "sgf_url": sgf_url}
+    
+    except requests.RequestException as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail=f"Analyse module error: {str(e)}")
+
 # ======================
 # HEALTH CHECK
 # ======================
@@ -609,177 +685,6 @@ async def create_match(
 @app.get("/")
 def read_root():
     return {"message": "Go Game API is running"}
-
-# -----------------------------------------------------------
-# EDITING ROUTES
-# -----------------------------------------------------------
-@app.post("/video/{video_id}/edit")
-async def edit_video(
-    video_id: int,
-    title: Optional[str] = Form(None),
-    match_id: Optional[int] = Form(None),
-    thumbnail: Optional[UploadFile] = File(None)
-):
-    conn = db()
-    cur = conn.cursor()
-
-    # Fetch existing video
-    cur.execute("SELECT * FROM video WHERE video_id = %s", (video_id,))
-    video = cur.fetchone()
-    if not video:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Video not found")
-
-    # Start with current values
-    thumb_url = video["thumbnail"]
-
-    # Handle thumbnail replacement
-    if thumbnail:
-        thumb_url = upload_file(thumbnail, THUMBNAIL_DIR)
-
-    cur.execute("""
-        UPDATE video
-        SET
-            title = COALESCE(%s, title),
-            thumbnail = %s,
-            match_id = %s
-        WHERE video_id = %s
-    """, (
-        title,
-        thumb_url,
-        match_id,
-        video_id,
-    ))
-
-    conn.commit()
-    conn.close()
-
-    # Return updated result
-    return get_video(video_id)
-
-
-@app.post("/match/{match_id}/edit")
-async def edit_match(
-    match_id: int,
-    title: Optional[str] = Form(None),
-    style: Optional[str] = Form(None),
-    white: Optional[int] = Form(None),
-    black: Optional[int] = Form(None),
-    result: Optional[str] = Form(None),
-    date: Optional[datetime] = Form(None),
-    duration: Optional[int] = Form(None),
-    description: Optional[str] = Form(None),
-    video: Optional[UploadFile] = File(None),
-    sgf: Optional[UploadFile] = File(None),
-    video_id: Optional[str] = Form(None),
-    remove_video: Optional[str] = Form(None),
-    remove_sgf: Optional[str] = Form(None)
-):
-    conn = db()
-    cur = conn.cursor()
-    
-    # Load match
-    cur.execute("SELECT * FROM match WHERE match_id = %s", (match_id,))
-    match = cur.fetchone()
-    if not match:
-        conn.close()
-        raise HTTPException(404, "Match not found")
-
-    old_video_id = match.get("video_id")
-
-    # Update simple text fields
-    cur.execute("""
-        UPDATE match SET
-            title = COALESCE(%s, title),
-            style = COALESCE(%s, style),
-            white_id = COALESCE(%s, white_id),
-            black_id = COALESCE(%s, black_id),
-            result = COALESCE(%s, result),
-            date = COALESCE(%s, date),
-            duration = COALESCE(%s, duration),
-            description = COALESCE(%s, description)
-        WHERE match_id = %s
-    """, (title, style, white, black, result, date, duration, description, match_id))
-
-    # SGF HANDLING
-    sgf_path = match["sgf"]
-
-    if sgf:  # replace SGF
-        sgf_path = upload_file(sgf, THUMBNAIL_DIR)
-
-    elif remove_sgf == "true" and sgf_path:
-        # delete old file
-        p = PathLib(sgf_path)
-        if p.exists():
-            p.unlink()
-        sgf_path = None
-
-    # save sgf path
-    cur.execute("UPDATE match SET sgf = %s WHERE match_id = %s", (sgf_path, match_id))
-
-    # VIDEO HANDLING
-    
-    # CASE A — remove video
-    if remove_video == "true":
-        if old_video_id:
-            cur.execute("UPDATE video SET match_id = NULL WHERE video_id = %s", (old_video_id,))
-        cur.execute("UPDATE match SET video_id = NULL WHERE match_id = %s", (match_id,))
-
-    # CASE B — NEW VIDEO UPLOAD
-    elif video:  
-        video_url = upload_file(video, VIDEO_DIR)
-
-        cur.execute("""
-            INSERT INTO video (title, path, url, thumbnail)
-            VALUES (%s, %s, %s, %s)
-            RETURNING video_id
-        """, (title, video_url, video_url, None))
-
-        new_video_id = cur.fetchone()["video_id"]
-
-        cur.execute("UPDATE match SET video_id = %s WHERE match_id = %s",
-                    (new_video_id, match_id))
-
-    # CASE C — EXISTING VIDEO SELECTED
-    elif video_id and video_id != "" and video_id != str(old_video_id):
-        cur.execute("UPDATE match SET video_id = %s WHERE match_id = %s",
-                    (video_id, match_id))
-
-    conn.commit()
-    conn.close()
-    return get_match(match_id)
-
-
-@app.post("/player/{player_id}/edit")
-def edit_player(
-    player_id: int,
-    firstname: Optional[str] = Form(None),
-    lastname: Optional[str] = Form(None),
-    level: Optional[str] = Form(None)
-):
-    conn = db()
-    cur = conn.cursor()
-
-    # Check exists
-    cur.execute("SELECT * FROM player WHERE player_id = %s", (player_id,))
-    player = cur.fetchone()
-    if not player:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Player not found")
-
-    cur.execute("""
-        UPDATE player
-        SET firstname = COALESCE(%s, firstname),
-            lastname = COALESCE(%s, lastname),
-            level = %s
-        WHERE player_id = %s
-    """, (firstname, lastname, level, player_id))
-
-    conn.commit()
-    conn.close()
-
-    return get_player(player_id)
-
 
 # -----------------------------------------------------------
 # EDITING ROUTES
@@ -807,10 +712,6 @@ def edit_video(
     # --- Handle thumbnail replacement ---
     if thumbnail:
         thumb_url = upload_file(thumbnail, THUMBNAIL_DIR)
-
-    # --- match_id can be nullable ---
-    # match_id == None → remove association
-    # match_id given → set new relation
 
     cur.execute("""
         UPDATE video
@@ -843,8 +744,6 @@ def edit_match(
     date: Optional[datetime] = Form(None),
     duration: Optional[int] = Form(None),
     description: Optional[str] = Form(None),
-
-    # NEW CLEAN INPUTS
     video: Optional[UploadFile] = File(None),
     sgf: Optional[UploadFile] = File(None),
     video_id: Optional[str] = Form(None),  # match selects an existing video
@@ -861,7 +760,10 @@ def edit_match(
     if not match:
         raise HTTPException(404, "Match not found")
 
-    old_video_id = match["video_id"]
+    # Get old video id if any
+    cur.execute("SELECT video_id FROM video WHERE match_id = %s", (match_id,))
+    video_row = cur.fetchone()
+    old_video_id = video_row["video_id"] if video_row else None
 
     # ------------------------------------------------------
     # 2. Update simple text fields
@@ -905,7 +807,6 @@ def edit_match(
     if remove_video == "true":
         if old_video_id:
             cur.execute("UPDATE video SET match_id = NULL WHERE video_id = %s", (old_video_id,))
-        cur.execute("UPDATE match SET video_id = NULL WHERE match_id = %s", (match_id,))
 
     # CASE B — NEW VIDEO UPLOAD
     if video:  
@@ -921,11 +822,8 @@ def edit_match(
         # Remove old association if any
         if old_video_id:
             cur.execute("UPDATE video SET match_id = NULL WHERE video_id = %s", (old_video_id,))
-            cur.execute("UPDATE match SET video_id = NULL WHERE match_id = %s", (match_id,))
 
         # Link new video to match
-        cur.execute("UPDATE match SET video_id = %s WHERE match_id = %s",
-                    (new_video_id, match_id))
         cur.execute("UPDATE video SET match_id = %s WHERE video_id = %s",
                     (match_id, new_video_id))
 
@@ -934,10 +832,7 @@ def edit_match(
         # Remove old association if any
         if old_video_id:
             cur.execute("UPDATE video SET match_id = NULL WHERE video_id = %s", (old_video_id,))
-            cur.execute("UPDATE match SET video_id = NULL WHERE match_id = %s", (match_id,))
         # Link new video to match
-        cur.execute("UPDATE match SET video_id = %s WHERE match_id = %s",
-                    (video_id, match_id))
         cur.execute("UPDATE video SET match_id = %s WHERE video_id = %s",
                     (match_id, video_id))
 
@@ -985,68 +880,44 @@ def edit_player(
 
 @app.delete("/video/{video_id}/delete")
 def delete_video(video_id: int):
-    conn = None
-    try:
-        conn = db()
-        cur = conn.cursor()
+    conn = db()
+    cur = conn.cursor()
 
-        # Check if video exists
-        cur.execute("SELECT * FROM video WHERE video_id = %s", (video_id,))
-        video = cur.fetchone()
-        if not video:
-            raise HTTPException(status_code=404, detail="Video not found")
+    # Check exists
+    cur.execute("SELECT * FROM video WHERE video_id = %s", (video_id,))
+    video = cur.fetchone()
+    if not video:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Video not found")
 
-        # Remove reference from match table (match.video_id)
-        cur.execute("UPDATE match SET video_id = NULL WHERE video_id = %s", (video_id,))       
-        cur.execute("DELETE FROM video WHERE video_id = %s", (video_id,))
-        conn.commit()
-        
-        return {"message": "Video deleted", "video_id": video_id}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")
-    finally:
-        if conn:
-            conn.close()
+    # Delete video record
+    cur.execute("DELETE FROM video WHERE video_id = %s", (video_id,))
+
+    conn.commit()
+    conn.close()
+    return {"message": "Video deleted"}
 
 @app.delete("/match/{match_id}/delete")
 def delete_match(match_id: int):
-    conn = None
-    try:
-        conn = db()
-        cur = conn.cursor()
+    conn = db()
+    cur = conn.cursor()
 
-        # Check if match exists
-        cur.execute("SELECT * FROM match WHERE match_id = %s", (match_id,))
-        match = cur.fetchone()
-        
-        if not match:
-            raise HTTPException(status_code=404, detail="Match not found")
+    # Check exists
+    cur.execute("SELECT * FROM match WHERE match_id = %s", (match_id,))
+    match = cur.fetchone()
+    if not match:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Match not found")
 
-        # Remove reference from video table (video.match_id)
-        cur.execute("UPDATE video SET match_id = NULL WHERE match_id = %s", (match_id,))       
-        # Now delete the match
-        cur.execute("DELETE FROM match WHERE match_id = %s", (match_id,))
-        conn.commit()        
-        return {"message": "Match deleted", "match_id": match_id}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")
-    finally:
-        if conn:
-            conn.close()
+    # Remove association from video if any
+    cur.execute("UPDATE video SET match_id = NULL WHERE match_id = %s", (match_id,))
+
+    # Delete match record
+    cur.execute("DELETE FROM match WHERE match_id = %s", (match_id,))
+
+    conn.commit()
+    conn.close()
+    return {"message": "Match deleted"}
 
 @app.delete("/player/{player_id}/delete")
 def delete_player(player_id: int):
@@ -1073,6 +944,74 @@ def delete_player(player_id: int):
     conn.commit()
     conn.close()
     return {"message": "Player deleted"}
+
+# -----------------------------------------------------------
+# LIVESTREAMING ROUTES
+# -----------------------------------------------------------
+
+@app.post("/start_stream")
+def start_stream(
+    title: str = Form(...),
+    style: Optional[str] = Form(...),
+    description: Optional[str] = Form(None),
+    white: int = Form(...),
+    black: int = Form(...),
+    url: str = Form(...)
+):
+    conn = db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO match (title, style, white_id, black_id, description, date)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING match_id
+    """, (title, style, white, black, description, datetime.now()))
+    match_id = cur.fetchone()["match_id"]
+    cur.execute("""
+        INSERT INTO stream (url, match_id)
+        VALUES (%s, %s)
+    """, (url, match_id))
+    conn.commit()
+    conn.close()
+    return {"message": "Stream started", "match_id": match_id}
+
+@app.get("/streams")
+def list_streams():
+    conn = db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT 
+            s.stream_id, s.url,
+            m.title AS title
+        FROM stream s
+        LEFT JOIN match m ON s.match_id = m.match_id
+    """)
+    streams = cur.fetchall()
+    conn.close()
+    return {"streams": streams, "count": len(streams)}
+
+@app.get("/stream/{stream_id}")
+def get_stream(stream_id: int):
+    conn = db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT 
+            s.stream_id, s.url,
+            m.title AS title,
+            w.firstname || ' ' || w.lastname AS white, w.player_id AS white_id,
+            b.firstname || ' ' || b.lastname AS black, b.player_id AS black_id,
+            m.style, m.description, m.date
+        FROM stream s
+        LEFT JOIN match m ON s.match_id = m.match_id
+        LEFT JOIN player w ON m.white_id = w.player_id
+        LEFT JOIN player b ON m.black_id = b.player_id
+        WHERE s.stream_id = %s
+    """, (stream_id,))
+    stream = cur.fetchone()
+    conn.close()
+
+    if not stream:
+        raise HTTPException(status_code=404, detail="Stream not found")
+    return stream
 
 
 @app.post("/video/{video_id}/convert-to-sgf")

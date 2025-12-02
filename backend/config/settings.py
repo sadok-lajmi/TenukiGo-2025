@@ -21,6 +21,8 @@ os.makedirs(VIDEO_DIR, exist_ok=True)
 os.makedirs(THUMBNAIL_DIR, exist_ok=True)
 os.makedirs(SGF_DIR, exist_ok=True)
 
+
+
 # -------------------------------
 # DATABASE CONFIG
 # -------------------------------

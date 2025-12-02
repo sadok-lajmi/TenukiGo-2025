@@ -33,7 +33,7 @@ export default function EditVideoPage() {
 
   return (
     <div className="wrapper-md upload-page">
-      <h1>Edit Video</h1>
+      <h1>Modifiez le joueur</h1>
       <VideoForm mode="edit" initialData={initialData} />
     </div>
   );

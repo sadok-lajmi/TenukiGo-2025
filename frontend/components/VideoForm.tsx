@@ -104,7 +104,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   }
 
   if (mode === "create" && !video.file && !formData.title) {
-    setError("Please select a video file and enter a title.");
+    setError("Veuillez fournir un titre et une vidéo.");
     return;
   }
 
@@ -112,7 +112,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   form.append("title", formData.title);
   if (formData.matchId) form.append("match_id", formData.matchId);
 
-  if (video.file) form.append("video", video.file);
+  if (video.file) form.append("file", video.file);
   if (thumbnail.file) form.append("thumbnail", thumbnail.file);
 
   const url =
@@ -134,7 +134,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     console.log("Response JSON:", res);
 
     if (!response.ok) {
-      setError(res.error || "Upload failed.");
+      setError(res.error || "Échec du téléchargement.");
       return;
     }
 
@@ -143,7 +143,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     router.push(`/video/${videoId}`);
   } catch (err) {
     console.error("Upload error:", err);
-    setError("Upload failed (network error).");
+    setError("Échec du téléchargement (erreur réseau).");
   }
 };
 
@@ -155,7 +155,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     >
       <FormField
         id="title"
-        label="Title"
+        label="Titre"
         value={formData.title}
         onChange={handleInputChange}
         placeholder="Enter video title"
@@ -163,7 +163,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       <FormField
         id="matchId"
-        label="Match"
+        label="Partie"
         as="search"
         value={formData.matchId}
         onChange={handleInputChange}
@@ -175,7 +175,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       {mode === "create" && (
         <FileInput
           id="video"
-          label="Video *"
+          label="Vidéo *"
           accept="video/*"
           file={video.file}
           previewUrl={video.previewUrl}
