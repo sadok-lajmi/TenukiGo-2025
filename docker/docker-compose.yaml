@@ -62,6 +62,18 @@ services:
       - RTSP_STREAM_URL=rtsp://mediamtx:8554
       - TF_ENABLE_ONEDNN_OPTS=0
 
+  # --- Module photo/completion ---
+  photo:
+    build: ../modules/photo
+    container_name: tenuki-photo
+    command: python api.py
+    volumes:
+      - ../modules/photo:/app
+    ports:
+      - "5001:5001"
+    environment:
+      - TF_ENABLE_ONEDNN_OPTS=0
+
   # --- Module de Streaming (MediaMTX) ---
   mediamtx:
     image: bluenviron/mediamtx:latest
