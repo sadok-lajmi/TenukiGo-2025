@@ -39,9 +39,13 @@ services:
     volumes:
       - ../frontend:/app
       - /app/node_modules
+      - /app/.next              # Préserve le cache de build Next.js (IMPORTANT pour la vitesse)
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
       - NEXT_PUBLIC_PASSWORD
+      # --- AJOUTS POUR LE HOT RELOAD ---
+      - WATCHPACK_POLLING=true      # Force Webpack à utiliser le polling
+      - CHOKIDAR_USEPOLLING=true    # Force Chokidar (watcher de fichiers) à utiliser le polling
 
   # --- Module analyse ---
   analyse:
