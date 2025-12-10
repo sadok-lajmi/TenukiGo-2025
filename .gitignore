@@ -83,6 +83,9 @@ backend/*.py[cod]
 # Upload folder
 backend/uploads/
 
+# Recordings folder
+modules/diffusion/recordings/
+
 # Environment files
 backend/.env
 backend/venv/

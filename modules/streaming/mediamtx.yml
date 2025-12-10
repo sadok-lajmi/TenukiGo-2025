@@ -9,6 +9,8 @@ rtmpAddress: :1935
 hls: yes
 hlsAddress: :8080
 
+rtsp: yes
+rtspAddress: :8554
 
 webrtc: yes
 webrtcAddress: :8889

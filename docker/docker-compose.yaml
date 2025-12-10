@@ -26,6 +26,7 @@ services:
     environment:
       - DB_URL=postgresql://go_user:secret@db:5432/go_db
       - ANALYSE_SERVICE_URL=http://analyse:5000 # URL interne Docker
+      - MEDIAMTX_API_URL=http://mediamtx:9997
       - CLUB_PASSWORD
     depends_on:
       - db
@@ -58,7 +59,24 @@ services:
     ports:
       - "5000:5000"
     environment:
+      - RTSP_STREAM_URL=rtsp://mediamtx:8554
       - TF_ENABLE_ONEDNN_OPTS=0
+
+  # --- Module de Streaming (MediaMTX) ---
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: tenuki-mediamtx
+    restart: unless-stopped
+    ports:
+      - "1935:1935"   # RTMP (Entrée)
+      - "8080:8080"   # HLS (Sortie Web)
+      - "8889:8889"   # WebRTC (Sortie Web faible latence)
+      - "9997:9997"   # API (Gestion)
+      - "8554:8554"   # RTSP (Entrée/Sortie pour l'analyseur)
+    volumes:
+      - ../modules/streaming/mediamtx.yml:/mediamtx.yml:ro
+      # Enregistrements : Stockés dans modules/diffusion/recordings
+      - ../modules/streaming/recordings:/project_recordings
 
 volumes:
   tenuki-pgdata:
