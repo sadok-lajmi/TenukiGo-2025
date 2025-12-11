@@ -160,7 +160,7 @@ return (
           href={`${process.env.NEXT_PUBLIC_API_URL}${video.sgf}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
-          Importer le SGF 
+          Exporter le SGF 
         </Link>
       )}
       {/* SGF Viewer if the sgf exists */}

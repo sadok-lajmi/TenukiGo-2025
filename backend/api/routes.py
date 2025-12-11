@@ -943,6 +943,9 @@ def get_stream(stream_id: int):
         raise HTTPException(status_code=404, detail="Stream not found")
     return stream
 
+# -----------------------------------------------------------
+# ANALYSE MODULE INTEGRATION
+# -----------------------------------------------------------
 
 @app.post("/video/{video_id}/convert-to-sgf")
 def generate_sgf_from_video(video_id: int):
@@ -983,3 +986,23 @@ def generate_sgf_from_video(video_id: int):
     except requests.RequestException as e:
         conn.close()
         raise HTTPException(status_code=500, detail=f"Analyse module error: {str(e)}")
+
+# -----------------------------------------------------------
+# PHOTO MODULE INTEGRATION
+# -----------------------------------------------------------
+@app.post("/photo")
+def complete_between_photos(
+    image1: UploadFile = File(...),
+    image2: UploadFile = File(...)
+):
+    """Endpoint to send front and back photos to the Photo module for processing"""
+    try:
+        files = {
+            'intial_state': (image1.filename, image1.file, image1.content_type),
+            'final_state': (image2.filename, image2.file, image2.content_type)
+        }
+        response = requests.post("http://photo:5001/complete", files=files, timeout=300)
+        result = response.json()
+        return result
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Photo module error: {str(result['error'])}")
