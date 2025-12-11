@@ -4,7 +4,6 @@ from fastapi.concurrency import run_in_threadpool
 from websockets.ConnectionManager import manager
 from utils.db_services import get_sgf_path
 from utils.file_storage import modify_file_content
-from config.settings import SGF_DIR
 
 router = APIRouter()
 
