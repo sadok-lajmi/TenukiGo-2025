@@ -70,9 +70,8 @@ services:
     ports:
       - "1935:1935"   # RTMP (Entrée)
       - "8080:8080"   # HLS (Sortie Web)
-      - "8889:8889"   # WebRTC (Sortie Web faible latence)
       - "9997:9997"   # API (Gestion)
-      - "8554:8554"   # RTSP (Entrée/Sortie pour l'analyseur)
+      - "8554:8554"   # RTSP (Sortie pour l'analyseur)
     volumes:
       - ../modules/streaming/mediamtx.yml:/mediamtx.yml:ro
       # Enregistrements : Stockés dans modules/diffusion/recordings
