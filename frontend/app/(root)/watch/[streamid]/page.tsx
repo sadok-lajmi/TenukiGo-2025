@@ -4,8 +4,11 @@ import VideoPlayer from "@/components/VideoPlayer";
 import Link from "next/dist/client/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 
-const hlsUrl = "http://localhost:8080/live/streamkey/index.m3u8";
+let socket: any;
+
+const hlsUrl = "http://localhost:8080/live/streamkey/index.m3u8"; // default URL of the HLS stream
 
 interface StreamDetails {
     stream_id: string;
@@ -15,7 +18,7 @@ interface StreamDetails {
 
 const Page = () => {
     const [stream, setStream] = useState<StreamDetails>(null as unknown as StreamDetails);
-    const [match, setMatch] = useState<{title: string, date: string, black: string, white: string, style: string, description: string}>({title: "", date: "", black: "", white: "", style: "", description: ""});
+    const [match, setMatch] = useState<{id: string, title: string, date: string, black: string, white: string, style: string, description: string}>({id: "", title: "", date: "", black: "", white: "", style: "", description: ""});
     const [whiteId, setWhiteId] = useState<string>("");
     const [blackId, setBlackId] = useState<string>("");
     const [sgfUrl, setSgfUrl] = useState<string>("");
@@ -35,6 +38,7 @@ const Page = () => {
                     });
                     // Fetch more match info if needed
                     setMatch({
+                        id: data.match_id || "",
                         title: data.title || "",
                         date: data.date || Date.now().toString().slice(0,10),
                         black: data.black || "",
@@ -49,6 +53,16 @@ const Page = () => {
         };
         fetchStreamData();
     }, [streamId]);
+
+    useEffect(() => {
+    socket = io(`ws://backend:8000/ws/match/${match.id}`);
+
+    socket.on("update", (sgf: string) => {
+      setSgfUrl(sgf);
+    });
+
+    return () => socket.disconnect();
+    }, [match.id]);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-10 gap-8 w-full max-w-7xl mx-auto p-4 md:items-center">

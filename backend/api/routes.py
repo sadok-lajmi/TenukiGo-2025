@@ -926,7 +926,7 @@ def get_stream(stream_id: int):
     cur = conn.cursor()
     cur.execute("""
         SELECT 
-            s.stream_id, s.url,
+            s.stream_id, s.url, s.match_id,
             m.title AS title,
             w.firstname || ' ' || w.lastname AS white, w.player_id AS white_id,
             b.firstname || ' ' || b.lastname AS black, b.player_id AS black_id,

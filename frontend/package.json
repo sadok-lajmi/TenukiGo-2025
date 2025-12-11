@@ -1,5 +1,5 @@
 {
-  "name": "ce-next-interface",  
+  "name": "ce-next-interface",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,7 +15,8 @@
     "next": "15.5.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "recharts": "^3.4.1"
+    "recharts": "^3.4.1",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
