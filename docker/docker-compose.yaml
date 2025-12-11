@@ -28,7 +28,7 @@ services:
       - ANALYSIS_SERVICE_URL=http://analyse:5000 # URL interne Docker
       - MEDIAMTX_API_URL=http://mediamtx:9997
       - MEDIAMTX_RTSP_URL=rtsp://mediamtx:8554
-      - WS_STREAMING_URL="ws://backend:8000/ws/streaming_feed"
+      - WS_STREAMING_URL="ws://backend:8000/ws/match"
     depends_on:
       - db
 
