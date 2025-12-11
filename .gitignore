@@ -91,3 +91,12 @@ backend/.env
 backend/venv/
 modules/analyse/.env
 modules/analyse/venv/
+modules/photo/.env
+modules/photo/venv/
+
+# Docker volumes
+docker/volumes/
+
+# Python bytecode and cache
+modules/photo/__pycache__/
+modules/photo/*.py[cod]
