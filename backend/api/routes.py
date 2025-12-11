@@ -1,5 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Form, UploadFile, File
-from fastapi.concurrency import run_in_threadpool
+from fastapi import FastAPI, HTTPException, Form, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware 
 from fastapi.staticfiles import StaticFiles
 from typing import Optional
@@ -11,14 +10,14 @@ import requests
 from websockets.ConnectionManager import ConnectionManager
 from utils.db_services import db
 from utils.file_storage import upload_file, upload_file_from_content
-from utils.path_utils import clean_path_for_url
 from config.settings import (
     UPLOAD_DIR, 
     VIDEO_DIR, 
     THUMBNAIL_DIR, 
     SGF_DIR, 
     ANALYSIS_SERVICE_URL,
-    WS_STREAMING_URL
+    WS_STREAMING_URL,
+    MEDIAMTX_RTSP_URL
 )
 
 app = FastAPI(title="Go Game API")
@@ -41,146 +40,6 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 # Manager for WebSocket connections
 manager = ConnectionManager()
 
-# ======================
-# DATABASE CLEANUP ROUTES
-# ======================
-
-@app.get("/debug-urls")
-def debug_urls():
-    """Debug endpoint to see all URLs in database"""
-    conn = db()
-    cur = conn.cursor()
-    
-    # Check videos
-    cur.execute("SELECT video_id, title, path, url, thumbnail FROM video ORDER BY video_id DESC LIMIT 10")
-    videos = cur.fetchall()
-    
-    # Check matches
-    cur.execute("SELECT match_id, title, sgf FROM match WHERE sgf IS NOT NULL ORDER BY match_id DESC LIMIT 10")
-    matches = cur.fetchall()
-    
-    conn.close()
-    
-    return {
-        "videos": videos,
-        "matches": matches,
-        "note": "Check if paths contain backslashes or absolute paths like C:\\"
-    }
-
-
-@app.post("/cleanup-all-urls")
-def cleanup_all_urls():
-    """Comprehensive cleanup of ALL URLs in the database"""
-    conn = db()
-    cur = conn.cursor()
-    
-    stats = {
-        "video_thumbnails": 0,
-        "video_urls": 0,
-        "match_sgf": 0,
-        "video_paths": 0
-    }
-    
-    try:
-        print("\n" + "=" * 50)
-        print("🧹 STARTING COMPREHENSIVE URL CLEANUP")
-        print("=" * 50)
-        
-        # 1. Clean video thumbnails
-        cur.execute("SELECT video_id, thumbnail FROM video WHERE thumbnail IS NOT NULL")
-        videos = cur.fetchall()
-        
-        for video in videos:
-            old_thumbnail = video['thumbnail']
-            new_thumbnail = clean_path_for_url(old_thumbnail)
-            
-            if new_thumbnail and new_thumbnail != old_thumbnail:
-                cur.execute(
-                    "UPDATE video SET thumbnail = %s WHERE video_id = %s",
-                    (new_thumbnail, video['video_id'])
-                )
-                stats["video_thumbnails"] += 1
-                print(f"✓ Video {video['video_id']} thumbnail: {old_thumbnail} -> {new_thumbnail}")
-        
-        # 2. Clean video URLs
-        cur.execute("SELECT video_id, url FROM video WHERE url IS NOT NULL")
-        videos_url = cur.fetchall()
-        
-        for video in videos_url:
-            old_url = video['url']
-            new_url = clean_path_for_url(old_url)
-            
-            if new_url and new_url != old_url:
-                cur.execute(
-                    "UPDATE video SET url = %s WHERE video_id = %s",
-                    (new_url, video['video_id'])
-                )
-                stats["video_urls"] += 1
-                print(f"✓ Video {video['video_id']} url: {old_url} -> {new_url}")
-        
-        # 3. Clean video paths (convert to relative paths)
-        cur.execute("SELECT video_id, path FROM video WHERE path IS NOT NULL")
-        video_paths = cur.fetchall()
-        
-        for video in video_paths:
-            old_path = video['path']
-            # Extract just the filename for the path column too
-            if old_path and ('\\' in old_path or '/' in old_path):
-                filename = old_path.replace('\\', '/').split('/')[-1]
-                new_path = f"uploads/videos/{filename}"
-                if new_path != old_path:
-                    cur.execute(
-                        "UPDATE video SET path = %s WHERE video_id = %s",
-                        (new_path, video['video_id'])
-                    )
-                    stats["video_paths"] += 1
-                    print(f"✓ Video {video['video_id']} path: {old_path} -> {new_path}")
-        
-        # 4. Clean match SGF paths
-        cur.execute("SELECT match_id, sgf FROM match WHERE sgf IS NOT NULL")
-        matches = cur.fetchall()
-        
-        for match in matches:
-            old_sgf = match['sgf']
-            if old_sgf and ('\\' in old_sgf or '/' in old_sgf):
-                filename = old_sgf.replace('\\', '/').split('/')[-1]
-                new_sgf = f"uploads/sgf/{filename}"
-                if new_sgf != old_sgf:
-                    cur.execute(
-                        "UPDATE match SET sgf = %s WHERE match_id = %s",
-                        (new_sgf, match['match_id'])
-                    )
-                    stats["match_sgf"] += 1
-                    print(f"✓ Match {match['match_id']} sgf: {old_sgf} -> {new_sgf}")
-        
-        conn.commit()
-        print("\n" + "=" * 50)
-        print("✅ CLEANUP COMPLETED")
-        print(f"   Video thumbnails: {stats['video_thumbnails']}")
-        print(f"   Video URLs: {stats['video_urls']}")
-        print(f"   Video paths: {stats['video_paths']}")
-        print(f"   Match SGF: {stats['match_sgf']}")
-        print("=" * 50 + "\n")
-        
-        return {
-            "message": "Comprehensive URL cleanup completed",
-            "stats": stats
-        }
-    
-    except Exception as e:
-        conn.rollback()
-        print(f"❌ Cleanup failed: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")
-    finally:
-        conn.close()
-
-
-@app.post("/cleanup-thumbnail-urls")
-def cleanup_thumbnail_urls():
-    """Clean up all thumbnail URLs in the database (legacy endpoint)"""
-    return cleanup_all_urls()
 
 # ======================
 # LIST ROUTES
@@ -791,6 +650,8 @@ def start_stream(
     url: str = Form(...)
 ):
     sgf_url = SGF_DIR + f"/{int(datetime.now().timestamp())}.sgf"
+    rtsp_url = MEDIAMTX_RTSP_URL + url.removeprefix("http://mediamtx:8080").removesuffix("/index.m3u8")
+
     conn = db()
     cur = conn.cursor()
     cur.execute("""
@@ -808,7 +669,7 @@ def start_stream(
 
     try:
         requests.post(ANALYSIS_SERVICE_URL + "/stream/start", 
-                      json={"rtsp_url": url, "match_id": match_id, "ws_url": WS_STREAMING_URL + f"/{match_id}"}, 
+                      json={"rtsp_url": rtsp_url, "match_id": match_id, "ws_url": WS_STREAMING_URL + f"/{match_id}"}, 
                       timeout=10)
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Failed to start stream analysis: {str(e)}")
@@ -875,25 +736,34 @@ def generate_sgf_from_video(video_id: int):
     
     # Call Analyse module API
     try:
-        response = requests.post(ANALYSIS_SERVICE_URL + "/process_video", 
+        requests.post(ANALYSIS_SERVICE_URL + "/video/process",
                                  json={"video_id": video_id, "filename": os.path.basename(video_url)},
                                  timeout=300)
-        sgf_content: str = response.json().get("sgf")
         
-        if not sgf_content:
-            raise HTTPException(status_code=500, detail="SGF generation failed")
-        
-        # Save SGF to file storage
-        _, sgf_url = upload_file_from_content(f"video_{video_id}.sgf", sgf_content.encode('utf-8'), SGF_DIR)
-        
-        # Update database if video is linked to a match
-        if video['match_id']:
-            cur.execute("UPDATE match SET sgf = %s WHERE match_id = %s", (sgf_url, video['match_id']))
-            conn.commit()
-        
-        conn.close()
-        return {"message": "SGF generated and saved", "sgf": sgf_url}
+        return {"message": "Analysis succesfully launched"}
     
     except requests.RequestException as e:
         conn.close()
         raise HTTPException(status_code=500, detail=f"Analyse module error: {str(e)}")
+    
+@app.post("/video/{video_id}/analysis-complete")
+def video_analysis_complete(video_id: int, sgf: str):
+    """Endpoint called by Analysis module when video analysis is complete"""
+    conn = db()
+    cur = conn.cursor()
+    
+    # Fetch video details
+    cur.execute("SELECT * FROM video WHERE video_id = %s", (video_id,))
+    video = cur.fetchone()
+    if not video:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Save SGF to file storage
+    _, sgf_url = upload_file_from_content(f"video_{video_id}.sgf", sgf.encode('utf-8'), SGF_DIR)
+    
+    # Add sgf to database in video table
+    cur.execute("UPDATE video SET sgf = %s WHERE video_id = %s", (sgf_url, video_id))
+    
+    conn.close()
+    return {"message": "SGF saved"}
