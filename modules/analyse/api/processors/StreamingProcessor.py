@@ -83,7 +83,6 @@ class StreamingProcessor:
                         logger.info(f"♟️ Nouveau coup détecté ! Envoi au backend...")
                         message = {
                             "type": "sgf_update",
-                            "match_id": self.match_id,
                             "sgf": self.go_game.get_sgf()
                         }
                         await websocket.send(json.dumps(message))
@@ -122,6 +121,13 @@ class StreamingProcessor:
                         except Exception as fallback_error:
                             logger.error(f"Fallback also failed: {fallback_error}")
                             final_sgf = None
+                
+                logger.info(f"Fin du match ! Envoi du sgf final au backend...")
+                message = {
+                    "type": "game_end",
+                    "sgf": final_sgf if final_sgf else self.go_game.get_sgf()
+                }
+                await websocket.send(json.dumps(message))
 
                 break # Clean exit from the persistent connection loop
 
