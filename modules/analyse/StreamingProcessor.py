@@ -17,20 +17,19 @@ from config.settings import (
     KERAS_PATH
 )
 
-# Configuration des logs
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("StreamingPipeline")
+logger = logging.getLogger("StreamingProcessor")
 
 class StreamingProcessor:
-    def __init__(self,  match_id: int, rtsp_url: str, backend_ws_url: str):
+    def __init__(self,  match_id: int, rtsp_url: str, ws_url: str):
         self.match_id = match_id
         self.rtsp_url = rtsp_url
-        self.ws_url = backend_ws_url
+        self.ws_url = ws_url
         self.is_running = False
         self.go_board: GoBoard
         self.go_game: GoGame
         self.last_sgf = ""
         self.process_interval = ANALYSIS_INTERVAL
+        self.task = None # Placeholder for the asyncio Task
         
     async def run(self):
         """Main processing loop for streaming analysis."""
@@ -91,7 +90,7 @@ class StreamingProcessor:
                         await websocket.send(json.dumps(message))
                         self.last_sgf = self.go_game.get_sgf()
 
-                    # Pause pour ne pas saturer le CPU
+                    # Breack not to overload the CPU
                     await asyncio.sleep(self.process_interval)
                 
                 cap.release()
@@ -125,7 +124,7 @@ class StreamingProcessor:
                             logger.error(f"Fallback also failed: {fallback_error}")
                             final_sgf = None
 
-                break # Sortie propre si is_running passe à False
+                break # Clean exit from the persistent connection loop
 
             except websockets.ConnectionClosed:
                 logger.warning("Connexion WS perdue, tentative de reconnexion dans 5s...")
