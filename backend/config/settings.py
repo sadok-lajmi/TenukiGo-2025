@@ -29,11 +29,6 @@ os.makedirs(SGF_DIR, exist_ok=True)
 DB_URL = os.getenv("DB_URL")
 
 # -------------------------------
-# APP CONFIG
-# -------------------------------
-CLUB_PASSWORD = os.getenv("CLUB_PASSWORD")
-
-# -------------------------------
 # ANALYSE MODULE CONFIG
 # -------------------------------
 ANALYSE_SERVICE_URL = os.getenv("ANALYSE_SERVICE_URL")
