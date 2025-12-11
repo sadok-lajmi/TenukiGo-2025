@@ -4,6 +4,7 @@ import { useParams } from "next/navigation"
 import Link from "next/dist/client/link"
 import DeletePopUp from "@/components/DeletePopUp"
 import GoSgfViewer from "@/components/GoSgfViewer"
+import { set } from "better-auth"
 
 interface VideoDetails {
 id: string
@@ -27,6 +28,7 @@ match?: {
 
 export default function VideoDetailsPage() {
 const [error, setError] = useState<string | null>(null);
+const [converting, setConverting] = useState<boolean>(false);
 
 // Fetch video details from API here and update state
 const [video, setVideo] = useState<VideoDetails>(null as unknown as VideoDetails);
@@ -72,16 +74,20 @@ useEffect(() => {
   fetchMoreData();
 }, [videoId]);
 
-if (!video) {
-  return (
-    <main className="wrapper page flex justify-center items-center py-20">
-      <p className="text-gray-500">Loading video…</p>
-    </main>
-  );
-}
+// Load converting state from localStorage when page loads
+  useEffect(() => {
+    const saved = localStorage.getItem(`converting_${videoId}`);
+    if (saved) setConverting(JSON.parse(saved));
+  }, [videoId]);
+
+// Save converting state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(`converting_${videoId}`, JSON.stringify(converting));
+  }, [converting, videoId]);
 
 // handle conversion to sgf
 const handleConvertToSgf = async () => {
+  setConverting(true);
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/video/${videoId}/convert-to-sgf`, {
       method: 'POST',
@@ -94,12 +100,22 @@ const handleConvertToSgf = async () => {
         sgf: data.sgf, // Assuming the API returns the SGF file path in 'sgf'
       }));
     } else {
-      setError('Failed to convert video to SGF');
+      setError('Erreur lors de la conversion de la vidéo en SGF ou la conversion prends du temps.. Veuillez revenir à cette page plus tard.');
     }
   } catch (error) {
-    setError('Error converting video to SGF');
+    setError('Erreur lors de la conversion de la vidéo en SGF');
   }
 };
+
+
+if (!video) {
+  return (
+    <main className="wrapper page flex justify-center items-center py-20">
+      <p className="text-gray-500">Loading video…</p>
+    </main>
+  );
+}
+
 
 return (
 
@@ -129,7 +145,13 @@ return (
         <h1 className="text-xl font-semibold text-dark-100">{video.title}</h1>
         <p className="text-sm text-gray-100">Postée le : {video.uploadDate}</p>
       </div>
-        { !(video.sgf) && <button onClick={handleConvertToSgf} className="px-3 py-2 bg-yellow-700 text-white text-sm rounded-full w-fit ">Convertir en SGF</button>}
+        { !video.sgf && (
+          converting ? (
+            <p className="text-sm text-gray-100">Conversion en cours...</p>
+          ) : (
+            <button onClick={handleConvertToSgf} className="px-3 py-2 bg-yellow-700 text-white text-sm rounded-full w-fit ">Convertir en SGF</button>
+          )
+        )}
       </div>
       {error && <p className="text-red-500 text-sm">{error}</p>}
       {/* SGF File (of the video if it exists) */}

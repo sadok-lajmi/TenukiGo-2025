@@ -620,7 +620,8 @@ async def edit_video(
     video_id: int,
     title: Optional[str] = Form(None),
     match_id: Optional[int] = Form(None),
-    thumbnail: Optional[UploadFile] = File(None)
+    thumbnail: Optional[UploadFile] = File(None),
+    remove_sgf: Optional[bool] = Form(None)
 ):
     conn = db()
     cur = conn.cursor()
@@ -652,6 +653,9 @@ async def edit_video(
         match_id,
         video_id,
     ))
+
+    if remove_sgf:
+        cur.execute("UPDATE video SET sgf = NULL WHERE video_id = %s", (video_id,))
 
     conn.commit()
     conn.close()
@@ -969,10 +973,9 @@ def generate_sgf_from_video(video_id: int):
         # Save SGF to file
         _, sgf_url = upload_file_from_content("video_%s.sgf".format(video_id), sgf_content.encode('utf-8'), SGF_DIR)
         
-        # Update database if video is linked to a match
-        if video['match_id']:
-            cur.execute("UPDATE match SET sgf = %s WHERE match_id = %s", (sgf_url, video['match_id']))
-            conn.commit()
+        # Update video record with SGF URL
+        cur.execute("UPDATE video SET sgf = %s WHERE video_id = %s", (sgf_url, video_id))
+        conn.commit()
         
         conn.close()
         return {"message": "SGF generated and saved", "sgf": sgf_url}
