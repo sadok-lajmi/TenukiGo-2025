@@ -10,7 +10,7 @@ PORT = 5000
 # -------------------------------
 # ANALYSIS CONFIG
 # -------------------------------
-ANALYSIS_INTERVAL = 1  # seconds
+ANALYSIS_INTERVAL = 0.5  # seconds
 MAX_INIT_FRAMES = 300
 
 # -------------------------------
@@ -20,6 +20,12 @@ YOLO_PATH = os.path.join("models", "model.pt")
 KERAS_PATH = os.path.join("models", "modelCNN.keras")
 UPLOAD_DIR = "uploads" # Correspond au montage Docker
 VIDEO_DIR = os.path.join(UPLOAD_DIR, "videos")
+
+# -------------------------------
+# BACKEND CONFIG
+# -------------------------------
+# Internal URL to call back the backend (docker network)
+BACKEND_CALLBACK_URL = "http://backend:8000/analysis-complete"
 
 # -------------------------------
 # LOGGING SETUP 
