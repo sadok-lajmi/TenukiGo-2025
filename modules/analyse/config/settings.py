@@ -25,7 +25,7 @@ VIDEO_DIR = os.path.join(UPLOAD_DIR, "videos")
 # BACKEND CONFIG
 # -------------------------------
 # Internal URL to call back the backend (docker network)
-BACKEND_CALLBACK_URL = os.getenv("BACKEND_CALLBACK_URL")
+BACKEND_CALLBACK_URL = os.getenv("BACKEND_URL") + "/video/video_id" + "/analysis-complete"
 
 # -------------------------------
 # LOGGING SETUP 

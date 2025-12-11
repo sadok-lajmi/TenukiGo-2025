@@ -21,7 +21,7 @@ def run_video_analysis_task(video_id: int, filename: str):
     processor = VideoProcessor(
         video_id=video_id,
         video_path=video_full_path,
-        callback_url=BACKEND_CALLBACK_URL
+        callback_url=BACKEND_CALLBACK_URL.replace("video_id", str(video_id))
     )
     
     # This is a blocking call (it runs cv2 loop), 
