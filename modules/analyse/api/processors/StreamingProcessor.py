@@ -10,7 +10,7 @@ from logique.GoBoard import GoBoard
 from logique.utils.model_utils import load_corrector_model
 from logique.corrector_noAI import corrector_no_ai
 from logique.utils.sgf_utils import to_sgf
-from video_processing_pipeline import initialize_board # temporary import
+from utils import initialize_board
 from config.settings import (
     ANALYSIS_INTERVAL,
     YOLO_PATH,
@@ -28,7 +28,6 @@ class StreamingProcessor:
         self.go_board: GoBoard
         self.go_game: GoGame
         self.last_sgf = ""
-        self.process_interval = ANALYSIS_INTERVAL
         self.task = None # Placeholder for the asyncio Task
         
     async def run(self):
@@ -91,7 +90,7 @@ class StreamingProcessor:
                         self.last_sgf = self.go_game.get_sgf()
 
                     # Breack not to overload the CPU
-                    await asyncio.sleep(self.process_interval)
+                    await asyncio.sleep(ANALYSIS_INTERVAL)
                 
                 cap.release()
                 cv2.destroyAllWindows()

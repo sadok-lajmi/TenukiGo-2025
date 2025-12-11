@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import asyncio
 
-from StreamingProcessor import StreamingProcessor
+from processors.StreamingProcessor import StreamingProcessor
 
 router = APIRouter()
 
@@ -64,7 +64,7 @@ def stop_stream(match_id: int):
     # 3. Supprimer la référence
     del ACTIVE_PROCESSORS[match_id]
 
-    return {"status": "stream processing stopped", "match_id": match_id}
+    return {"status": "stream processing stopped"}
 
 @router.get("/stream/status")
 def get_status():
