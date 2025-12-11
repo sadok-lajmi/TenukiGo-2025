@@ -12,7 +12,7 @@ import requests
 from api.ConnectionManager import ConnectionManager
 from database.services import process_and_save_game, db
 from api.utils import upload_file, upload_file_from_content
-from config.settings import CLUB_PASSWORD, UPLOAD_DIR, VIDEO_DIR, THUMBNAIL_DIR, SGF_DIR, ANALYSE_SERVICE_URL
+from config.settings import UPLOAD_DIR, VIDEO_DIR, THUMBNAIL_DIR, SGF_DIR, ANALYSE_SERVICE_URL
 
 app = FastAPI(title="Go Game API")
 
@@ -92,24 +92,19 @@ async def websocket_spectator_endpoint(websocket: WebSocket):
 
 
 # ------------------------------------------------
-# WEBSOCKET: CAMERA FEED (STUB)
+# WEBSOCKET: STREAMING FEED
 # ------------------------------------------------
-@app.websocket("/ws/camera_feed")
-async def websocket_camera_endpoint(websocket: WebSocket):
+@app.websocket("/ws/streaming_feed")
+async def websocket_streaming_endpoint(websocket: WebSocket):
     """
-    Stub endpoint to receive camera data via WebSocket.
-    Expected JSON payload from camera; uses CLUB_PASSWORD for basic auth.
+    Endpoint to receive sgf data from streaming analysis via WebSocket.
+    Expected JSON payload from streaming module.
     """
     await websocket.accept()
-    print("Camera connection (stub) accepted.")
+    print("Connection accepted.")
     try:
         while True:
             data = await websocket.receive_json()
-
-            if data.get("password") != CLUB_PASSWORD:
-                await websocket.send_json({"status": "error", "message": "Invalid password"})
-                await websocket.close()
-                break
 
             # 1. Save to DB (run in threadpool to avoid blocking)
             try:
@@ -125,7 +120,7 @@ async def websocket_camera_endpoint(websocket: WebSocket):
                 await websocket.send_json({"status": "error", "message": f"Database error: {e}"})
 
     except WebSocketDisconnect:
-        print("Camera connection (stub) closed.")
+        print("Connection closed.")
 
 
 # ======================
