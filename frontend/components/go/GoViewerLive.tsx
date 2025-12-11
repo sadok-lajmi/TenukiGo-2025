@@ -7,12 +7,12 @@ import GoControls from '@/components/go/GoControls';
 
 const DEFAULT_SGF_URL = '/sgf/example.sgf';
 
-export default function GoViewerLive() {
+export default function GoViewerLive({ sgfUrl = DEFAULT_SGF_URL }) {
   // --- HOOKS ---
   const {
     isLoading, moves, currentMoveIndex, currentBoard, lastMove,
     nextMove, prevMove, goToStart, goToEnd
-  } = useGoGame(DEFAULT_SGF_URL);
+  } = useGoGame(sgfUrl);
 
   if (isLoading) {
     return <div className="p-8 text-center">Chargement de la partie...</div>;

@@ -1,6 +1,7 @@
 import FileInput from '@/components/FileInput';
 import { useRef, useState } from 'react';
 import GoSgfViewer from './GoSgfViewer';
+import Link from 'next/dist/client/link';
 
 export default function Completion() {
 const [image1, setImage1] = useState({
@@ -14,6 +15,10 @@ const [image2, setImage2] = useState({
     previewUrl: "",
     inputRef: useRef<HTMLInputElement>(null),
     });
+
+const [initialState, setInitialState] = useState<string>('');
+const [finalState, setFinalState] = useState<string>('');
+
 const [sgfUrl, setSgfUrl] = useState<string>('');
 
 const handleFileChange = (
@@ -41,6 +46,15 @@ const handleResetFile = (state: any, setter: Function) => {
       <FileInput id="image1" label="Image du départ" accept="image/*" file={image1.file} previewUrl={image1.previewUrl} inputRef={image1.inputRef} onChange={(e) => handleFileChange(setImage1, e)} onReset={() => handleResetFile(image1, setImage1)} type="image" />
       <FileInput id="image2" label="Image de fin" accept="image/*" file={image2.file} previewUrl={image2.previewUrl} inputRef={image2.inputRef} onChange={(e) => handleFileChange(setImage2, e)} onReset={() => handleResetFile(image2, setImage2)} type="image" />
       <GoSgfViewer upload={false} />
+      {sgfUrl && (
+        <div className="mt-4 w-full max-w-3xl">
+        <Link
+          href={`${process.env.NEXT_PUBLIC_API_URL}${sgfUrl}`}
+          className="block text-blue-500 underline hover:text-blue-600 font-medium"
+        >
+          Exporter le SGF 
+        </Link>
+        </div>)}
     </div>
   );
 }

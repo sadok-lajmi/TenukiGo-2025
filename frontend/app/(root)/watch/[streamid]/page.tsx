@@ -18,6 +18,7 @@ const Page = () => {
     const [match, setMatch] = useState<{title: string, date: string, black: string, white: string, style: string, description: string}>({title: "", date: "", black: "", white: "", style: "", description: ""});
     const [whiteId, setWhiteId] = useState<string>("");
     const [blackId, setBlackId] = useState<string>("");
+    const [sgfUrl, setSgfUrl] = useState<string>("");
     const params = useParams()
     const streamId = params.streamid
 
@@ -60,7 +61,7 @@ const Page = () => {
 
             {/* Conteneur Go (30%) */}
             <div className="md:col-span-3">
-                <GoViewerLive />
+                <GoViewerLive sgfUrl={sgfUrl} />
             </div>
 
             {/* Match Info Section */}
