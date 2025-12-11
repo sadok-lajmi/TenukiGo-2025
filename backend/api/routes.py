@@ -5,14 +5,21 @@ from fastapi.staticfiles import StaticFiles
 from typing import Optional
 from datetime import datetime
 from pathlib import Path
-import json
 import os
 import requests
 
-from api.ConnectionManager import ConnectionManager
-from database.services import process_and_save_game, db
-from api.utils import upload_file, upload_file_from_content
-from config.settings import UPLOAD_DIR, VIDEO_DIR, THUMBNAIL_DIR, SGF_DIR, ANALYSE_SERVICE_URL
+from websockets.ConnectionManager import ConnectionManager
+from utils.db_services import db
+from utils.file_storage import upload_file, upload_file_from_content
+from utils.path_utils import clean_path_for_url
+from config.settings import (
+    UPLOAD_DIR, 
+    VIDEO_DIR, 
+    THUMBNAIL_DIR, 
+    SGF_DIR, 
+    ANALYSIS_SERVICE_URL,
+    WS_STREAMING_URL
+)
 
 app = FastAPI(title="Go Game API")
 
@@ -33,95 +40,6 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # Manager for WebSocket connections
 manager = ConnectionManager()
-
-# ======================
-# UTILITY FUNCTIONS
-# ======================
-
-def clean_path_for_url(file_path: str) -> str:
-    """Convert file system path to web URL path"""
-    if not file_path:
-        return None  # Retourne None au lieu d'une chaîne vide
-    
-    # Si c'est déjà une URL correcte, la retourner
-    if file_path.startswith('/uploads/') or file_path.startswith('http'):
-        return file_path
-    
-    # Convertir les backslashes en forward slashes
-    cleaned = file_path.replace('\\', '/')
-    
-    # Extraire juste le nom de fichier
-    if '/' in cleaned:
-        filename = cleaned.split('/')[-1]
-    else:
-        filename = cleaned
-    
-    # Déterminer le bon sous-dossier basé sur l'extension ou le contenu du chemin
-    ext = filename.lower().split('.')[-1] if '.' in filename else ''
-    
-    if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']:
-        return f"/uploads/thumbnails/{filename}"
-    elif ext in ['mp4', 'avi', 'mov', 'mkv', 'webm']:
-        return f"/uploads/videos/{filename}"
-    elif ext in ['sgf']:
-        return f"/uploads/sgf/{filename}"
-    elif 'thumbnail' in file_path.lower():
-        return f"/uploads/thumbnails/{filename}"
-    elif 'video' in file_path.lower():
-        return f"/uploads/videos/{filename}"
-    elif 'sgf' in file_path.lower():
-        return f"/uploads/sgf/{filename}"
-    else:
-        return f"/uploads/{filename}"
-# ------------------------------
-# WEBSOCKET: SPECTATOR FEED
-# ------------------------------
-@app.websocket("/ws/spectator_feed")
-async def websocket_spectator_endpoint(websocket: WebSocket):
-    """
-    WebSocket endpoint for spectators.
-    Keeps a connection open so spectators can receive real-time updates.
-    """
-    await manager.connect(websocket)
-    try:
-        while True:
-            # keep connection alive / wait for ping messages from client
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-
-
-# ------------------------------------------------
-# WEBSOCKET: STREAMING FEED
-# ------------------------------------------------
-@app.websocket("/ws/streaming_feed")
-async def websocket_streaming_endpoint(websocket: WebSocket):
-    """
-    Endpoint to receive sgf data from streaming analysis via WebSocket.
-    Expected JSON payload from streaming module.
-    """
-    await websocket.accept()
-    print("Connection accepted.")
-    try:
-        while True:
-            data = await websocket.receive_json()
-
-            # 1. Save to DB (run in threadpool to avoid blocking)
-            try:
-                result_data = await run_in_threadpool(process_and_save_game, data)
-
-                # 2. Broadcast result to spectators
-                await manager.broadcast(json.dumps(result_data))
-
-                # 3. Acknowledge the camera
-                await websocket.send_json({"status": "success", "message": "Data received and broadcasted"})
-
-            except Exception as e:
-                await websocket.send_json({"status": "error", "message": f"Database error: {e}"})
-
-    except WebSocketDisconnect:
-        print("Connection closed.")
-
 
 # ======================
 # DATABASE CLEANUP ROUTES
@@ -376,8 +294,6 @@ def get_match(match_id: int):
 
     return match
 
-
-
 @app.get("/player/{player_id}")
 def get_player(player_id: int):
     conn = db()
@@ -416,9 +332,6 @@ def get_player(player_id: int):
 # ======================
 # CREATE / UPLOAD ROUTES
 # ======================
-# -----------------------------------------------------------
-# CREATE / UPLOAD ROUTES
-# -----------------------------------------------------------
 
 @app.post("/create_player")
 def create_player(
@@ -439,7 +352,6 @@ def create_player(
     conn.commit()
     conn.close()
     return {"message": "Player created", "player_id": player_id}
-
 
 @app.post("/upload_video")
 async def upload_video(
@@ -497,7 +409,6 @@ async def upload_video(
         "video_url": video_url,
         "thumbnail_url": thumb_url
     }
-
 
 @app.post("/create_match")
 async def create_match(
@@ -879,13 +790,14 @@ def start_stream(
     black: int = Form(...),
     url: str = Form(...)
 ):
+    sgf_url = SGF_DIR + f"/{int(datetime.now().timestamp())}.sgf"
     conn = db()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO match (title, style, white_id, black_id, description, date)
+        INSERT INTO match (title, style, white_id, black_id, description, date, sgf)
         VALUES (%s, %s, %s, %s, %s, %s)
         RETURNING match_id
-    """, (title, style, white, black, description, datetime.now()))
+    """, (title, style, white, black, description, datetime.now(), sgf_url))
     match_id = cur.fetchone()["match_id"]
     cur.execute("""
         INSERT INTO stream (url, match_id)
@@ -893,6 +805,14 @@ def start_stream(
     """, (url, match_id))
     conn.commit()
     conn.close()
+
+    try:
+        requests.post(ANALYSIS_SERVICE_URL + "/stream/start", 
+                      json={"rtsp_url": url, "match_id": match_id, "ws_url": WS_STREAMING_URL + f"/{match_id}"}, 
+                      timeout=10)
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Failed to start stream analysis: {str(e)}")
+
     return {"message": "Stream started", "match_id": match_id}
 
 @app.get("/streams")
@@ -955,14 +875,16 @@ def generate_sgf_from_video(video_id: int):
     
     # Call Analyse module API
     try:
-        response = requests.post("http://analyse:5000/process", json={"filename": os.path.basename(video_url)}, timeout=300)
+        response = requests.post(ANALYSIS_SERVICE_URL + "/process_video", 
+                                 json={"video_id": video_id, "filename": os.path.basename(video_url)},
+                                 timeout=300)
         sgf_content: str = response.json().get("sgf")
         
         if not sgf_content:
             raise HTTPException(status_code=500, detail="SGF generation failed")
         
-        # Save SGF to file
-        _, sgf_url = upload_file_from_content("video_%s.sgf".format(video_id), sgf_content.encode('utf-8'), SGF_DIR)
+        # Save SGF to file storage
+        _, sgf_url = upload_file_from_content(f"video_{video_id}.sgf", sgf_content.encode('utf-8'), SGF_DIR)
         
         # Update database if video is linked to a match
         if video['match_id']:
