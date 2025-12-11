@@ -25,9 +25,10 @@ services:
       - "8000:8000"
     environment:
       - DB_URL=postgresql://go_user:secret@db:5432/go_db
-      - ANALYSE_SERVICE_URL=http://analyse:5000 # URL interne Docker
+      - ANALYSIS_SERVICE_URL=http://analyse:5000 # URL interne Docker
       - MEDIAMTX_API_URL=http://mediamtx:9997
-      - CLUB_PASSWORD
+      - MEDIAMTX_RTSP_URL=rtsp://mediamtx:8554
+      - WS_STREAMING_URL="ws://backend:8000/ws/streaming_feed"
     depends_on:
       - db
 
@@ -42,24 +43,24 @@ services:
       - /app/node_modules
       - /app/.next              # Préserve le cache de build Next.js (IMPORTANT pour la vitesse)
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://backend:8000
       - NEXT_PUBLIC_PASSWORD
       # --- AJOUTS POUR LE HOT RELOAD ---
       - WATCHPACK_POLLING=true      # Force Webpack à utiliser le polling
       - CHOKIDAR_USEPOLLING=true    # Force Chokidar (watcher de fichiers) à utiliser le polling
 
-  # --- Module analyse ---
-  analyse:
-    build: ../modules/analyse
-    container_name: tenuki-analyse
+  # --- Module d'analyse ---
+  analysis:
+    build: ../modules/analysis
+    container_name: tenuki-analysis
     command: python api.py
     volumes:
-      - ../modules/analyse:/app
+      - ../modules/analysis:/app
       - uploads_data:/app/uploads # Montage du même volume pour accéder aux fichiers uploadés
     ports:
       - "5000:5000"
     environment:
-      - RTSP_STREAM_URL=rtsp://mediamtx:8554
+      - BACKEND_CALLBACK_URL=http://backend:8000/analysis-complete
       - TF_ENABLE_ONEDNN_OPTS=0
 
   # --- Module de Streaming (MediaMTX) ---
