@@ -111,7 +111,7 @@ const handleConvertToSgf = async () => {
 if (!video) {
   return (
     <main className="wrapper page flex justify-center items-center py-20">
-      <p className="text-gray-500">Loading video…</p>
+      <p className="text-gray-500">Chargement de la vidéo…</p>
     </main>
   );
 }
