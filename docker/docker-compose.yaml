@@ -53,7 +53,7 @@ services:
   analysis:
     build: ../modules/analysis
     container_name: tenuki-analysis
-    command: python api.py
+    command: python main.py
     volumes:
       - ../modules/analysis:/app
       - uploads_data:/app/uploads # Montage du même volume pour accéder aux fichiers uploadés
@@ -61,6 +61,18 @@ services:
       - "5000:5000"
     environment:
       - BACKEND_URL=http://backend:8000
+      - TF_ENABLE_ONEDNN_OPTS=0
+
+  # --- Module photo/completion ---
+  photo:
+    build: ../modules/photo
+    container_name: tenuki-photo
+    command: python api.py
+    volumes:
+      - ../modules/photo:/app
+    ports:
+      - "5001:5001"
+    environment:
       - TF_ENABLE_ONEDNN_OPTS=0
 
   # --- Module de Streaming (MediaMTX) ---

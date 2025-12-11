@@ -148,7 +148,7 @@ export default function MatchDetailsPage() {
               href={`${process.env.NEXT_PUBLIC_API_URL}${match.videosgf}`}
               className="block text-blue-500 underline hover:text-blue-600 font-medium"
             >
-              Importer le SGF
+              Exporter le SGF
             </Link>
           )}
         </section>

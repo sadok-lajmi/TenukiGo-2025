@@ -385,7 +385,8 @@ async def edit_video(
     video_id: int,
     title: Optional[str] = Form(None),
     match_id: Optional[int] = Form(None),
-    thumbnail: Optional[UploadFile] = File(None)
+    thumbnail: Optional[UploadFile] = File(None),
+    remove_sgf: Optional[bool] = Form(None)
 ):
     conn = db()
     cur = conn.cursor()
@@ -417,6 +418,13 @@ async def edit_video(
         match_id,
         video_id,
     ))
+
+    if remove_sgf:
+        cur.execute("UPDATE video SET sgf = NULL WHERE video_id = %s", (video_id,))
+        # delete the SGF file from storage
+        p = Path(video["sgf"])
+        if p.exists():
+            p.unlink()
 
     conn.commit()
     conn.close()
@@ -697,7 +705,7 @@ def get_stream(stream_id: int):
     cur = conn.cursor()
     cur.execute("""
         SELECT 
-            s.stream_id, s.url,
+            s.stream_id, s.url, s.match_id,
             m.title AS title,
             w.firstname || ' ' || w.lastname AS white, w.player_id AS white_id,
             b.firstname || ' ' || b.lastname AS black, b.player_id AS black_id,
@@ -715,6 +723,9 @@ def get_stream(stream_id: int):
         raise HTTPException(status_code=404, detail="Stream not found")
     return stream
 
+# -----------------------------------------------------------
+# ANALYSIS MODULE INTEGRATION
+# -----------------------------------------------------------
 
 @app.post("/video/{video_id}/convert-to-sgf")
 def generate_sgf_from_video(video_id: int):
@@ -767,3 +778,24 @@ def video_analysis_complete(video_id: int, sgf: str):
     
     conn.close()
     return {"message": "SGF saved"}
+
+# -----------------------------------------------------------
+# PHOTO MODULE INTEGRATION
+# -----------------------------------------------------------
+
+@app.post("/photo")
+def complete_between_photos(
+    image1: UploadFile = File(...),
+    image2: UploadFile = File(...)
+):
+    """Endpoint to send front and back photos to the Photo module for processing"""
+    try:
+        files = {
+            'intial_state': (image1.filename, image1.file, image1.content_type),
+            'final_state': (image2.filename, image2.file, image2.content_type)
+        }
+        response = requests.post("http://photo:5001/complete", files=files, timeout=300)
+        result = response.json()
+        return result
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Photo module error: {str(result['error'])}")
