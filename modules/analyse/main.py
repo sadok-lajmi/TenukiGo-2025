@@ -36,4 +36,4 @@ def health_check():
     return {"status": "running", "module": "analyse"}
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host=HOST, port=PORT, reload=True)
+    uvicorn.run("main:app", host=HOST, port=PORT, reload=True)
