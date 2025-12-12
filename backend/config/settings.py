@@ -41,3 +41,4 @@ WS_STREAMING_URL = os.getenv("WS_STREAMING_URL")
 # -------------------------------
 MEDIAMTX_API_URL = os.getenv("MEDIAMTX_API_URL")
 MEDIAMTX_RTSP_URL = os.getenv("MEDIAMTX_RTSP_URL")
+MEDIAMTX_HLS_URL = os.getenv("MEDIAMTX_HLS_URL")
