@@ -71,7 +71,7 @@ const Page = () => {
     dataToSend.append('description', formData.description);
     dataToSend.append('url', streamUrl);
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/start_stream`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stream/start`, {
             method: 'POST',
             body: dataToSend,
         });

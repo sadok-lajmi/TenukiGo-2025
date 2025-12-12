@@ -119,7 +119,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   const url =
     mode === "create"
-      ? `${process.env.NEXT_PUBLIC_API_URL}/upload_video`
+      ? `${process.env.NEXT_PUBLIC_API_URL}/video/upload`
       : `${process.env.NEXT_PUBLIC_API_URL}/video/${initialData?.id}/edit`;
 
   console.log("Uploading to URL:", url);
