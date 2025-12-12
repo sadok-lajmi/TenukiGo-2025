@@ -10,7 +10,8 @@ from config.settings import (
     VIDEO_DIR,
     THUMBNAIL_DIR,
     SGF_DIR,
-    ANALYSIS_SERVICE_URL
+    ANALYSIS_SERVICE_URL,
+    ANALYSIS_CALLBACK_URL
 )
 
 router = APIRouter()
@@ -208,7 +209,10 @@ def generate_sgf_from_video(video_id: int):
     # Call Analysis module API
     try:
         requests.post(ANALYSIS_SERVICE_URL + "/video/process",
-                                 json={"video_id": video_id, "filename": os.path.basename(video_url)},
+                                 json={"video_id": video_id,
+                                       "filename": os.path.basename(video_url),
+                                       "callback_url": ANALYSIS_CALLBACK_URL.replace("video_id", str(video_id))
+                                       },
                                  timeout=300)
         
         return {"message": "Analysis succesfully launched"}

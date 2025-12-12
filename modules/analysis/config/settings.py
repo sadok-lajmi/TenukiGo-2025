@@ -28,11 +28,6 @@ VIDEO_DIR = os.path.join(UPLOAD_DIR, "videos")
 os.makedirs(VIDEO_DIR, exist_ok=True)
 
 # -------------------------------
-# BACKEND CONFIG
-# -------------------------------
-BACKEND_CALLBACK_URL = os.getenv("BACKEND_URL")
-
-# -------------------------------
 # LOGGING SETUP 
 # -------------------------------
 logging.basicConfig(

@@ -246,12 +246,17 @@
           "filename": {
             "type": "string",
             "title": "Filename"
+          },
+          "callback_url": {
+            "type": "string",
+            "title": "Callback Url"
           }
         },
         "type": "object",
         "required": [
           "video_id",
-          "filename"
+          "filename",
+          "callback_url"
         ],
         "title": "VideoAnalysisRequest"
       }

@@ -33,6 +33,7 @@ DB_URL = os.getenv("DB_URL")
 # ANALYSIS MODULE CONFIG
 # -------------------------------
 ANALYSIS_SERVICE_URL = os.getenv("ANALYSIS_SERVICE_URL")
+ANALYSIS_CALLBACK_URL = os.getenv("ANALYSIS_CALLBACK_URL")
 
 # -------------------------------
 # PHOTO MODULE CONFIG   
