@@ -13,7 +13,7 @@ PORT = 5000
 # -------------------------------
 # ANALYSIS CONFIG
 # -------------------------------
-ANALYSIS_INTERVAL = 0.5  # seconds
+ANALYSIS_INTERVAL = 0.1  # seconds
 MAX_INIT_FRAMES = 300
 
 # -------------------------------
