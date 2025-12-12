@@ -30,6 +30,7 @@ services:
       - "8000:8000"
     environment:
       - ANALYSIS_SERVICE_URL=http://analysis:5000
+      - ANALYSIS_CALLBACK_URL=http://backend:8000/video/video_id/analysis-complete
       - PHOTO_SERVICE_URL=http://photo:5001
       - MEDIAMTX_API_URL=http://mediamtx:9997
       - MEDIAMTX_RTSP_URL=rtsp://mediamtx:8554
