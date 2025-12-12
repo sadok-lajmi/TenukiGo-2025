@@ -1,5 +1,9 @@
 # 1. Utiliser une image Node.js officielle légère (Alpine)
-FROM node:18-alpine
+FROM node:22-alpine
+
+# [OPTIMISATION] Installation de libc6-compat
+# Nécessaire pour Next.js/SWC sur Alpine (évite des bugs de build silencieux ou crashs)
+RUN apk add --no-cache libc6-compat
 
 # 2. Définir le dossier de travail dans le conteneur
 WORKDIR /app
@@ -9,7 +13,6 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 
 # 4. Installer les dépendances
-# L'option --legacy-peer-deps peut aider si vous avez des conflits de versions
 RUN npm install
 
 # 5. Copier le reste du code source du frontend
