@@ -3,3 +3,4 @@ uvicorn[standard]       # Le serveur ASGI pour faire tourner FastAPI
 psycopg2-binary         # Le pilote (driver) pour la base de données PostgreSQL
 python-multipart        # Nécessaire pour que FastAPI gère les 'UploadFile' et 'Form'
 requests                # Pour faire des requêtes HTTP
+python-dotenv           # Pour charger les variables d'environnement depuis un fichier .env

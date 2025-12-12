@@ -9,3 +9,4 @@ fastapi
 tensorflow
 sente # Problème d'installation, nécessité d'installation manuelle
 websockets
+python-dotenv
