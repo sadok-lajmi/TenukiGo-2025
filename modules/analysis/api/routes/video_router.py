@@ -3,25 +3,24 @@ from pydantic import BaseModel
 import os
 
 from api.processors.VideoProcessor import VideoProcessor
-from config.settings import UPLOAD_DIR, BACKEND_CALLBACK_URL
+from config.settings import VIDEO_DIR
 
 router = APIRouter()
 
 class VideoAnalysisRequest(BaseModel):
     video_id: int
     filename: str
+    callback_url: str
 
-def run_video_analysis_task(video_id: int, filename: str):
+def run_video_analysis_task(video_id: int, video_path: str, callback_url: str):
     """
     Wrapper function to instantiate and run the processor.
     This runs in the background.
-    """
-    video_full_path = os.path.join(UPLOAD_DIR, filename)
-    
+    """  
     processor = VideoProcessor(
         video_id=video_id,
-        video_path=video_full_path,
-        callback_url=BACKEND_CALLBACK_URL.replace("video_id", str(video_id))
+        video_path=video_path,
+        callback_url=callback_url
     )
     
     # This is a blocking call (it runs cv2 loop), 
@@ -34,13 +33,13 @@ def process_video_file(request: VideoAnalysisRequest, background_tasks: Backgrou
     Endpoint to trigger analysis of an uploaded video file.
     Returns immediately, processing happens in background.
     """
-    file_path = os.path.join(UPLOAD_DIR, request.filename)
+    file_path = os.path.join(VIDEO_DIR, request.filename)
     
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail=f"File not found: {request.filename}")
 
     # Add the heavy task to background queue
-    background_tasks.add_task(run_video_analysis_task, request.video_id, request.filename)
+    background_tasks.add_task(run_video_analysis_task, request.video_id, file_path, request.callback_url)
 
     return {
         "status": "processing_started", 
