@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware 
 from fastapi.staticfiles import StaticFiles
 import uvicorn
@@ -44,6 +45,21 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 def health_check():
     """Simple health check endpoint."""
     return {"status": "Backend running"}
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="TenukiGo-2025 Backend API",
+        version="1.0",
+        summary="TenukiGo OpenAPI Specifications",
+        description="Academic project consisting of a platform made for broadcasting and visualizing Go games for the Tenuki Go club in Brest, France.",
+        routes=app.routes,
+    )
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 if __name__ == "__main__":
     uvicorn.run(
