@@ -51,7 +51,7 @@ const handleResetFile = (state: any, setter: Function) => {
           formData.append('image1', image1.file as Blob);
           formData.append('image2', image2.file as Blob);
 
-          const response = await fetch('/api/photo', {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/photo`, {
             method: 'POST',
             body: formData,
           });
