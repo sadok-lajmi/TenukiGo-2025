@@ -24,13 +24,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DB_URL=postgresql://go_user:secret@db:5432/go_db
-      - ANALYSIS_SERVICE_URL=http://analyse:5000 # URL interne Docker
+      - ANALYSIS_SERVICE_URL=http://analysis:5000
       - PHOTO_SERVICE_URL=http://photo:5001
       - MEDIAMTX_API_URL=http://mediamtx:9997
       - MEDIAMTX_RTSP_URL=rtsp://mediamtx:8554
       - MEDIAMTX_HLS_URL=http://mediamtx:8080
-      - WS_STREAMING_URL="ws://backend:8000/ws/match"
     depends_on:
       - db
 
@@ -45,11 +43,11 @@ services:
       - /app/node_modules
       - /app/.next              # Préserve le cache de build Next.js (IMPORTANT pour la vitesse)
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
       - NEXT_PUBLIC_PASSWORD
-      # --- AJOUTS POUR LE HOT RELOAD ---
-      - WATCHPACK_POLLING=true      # Force Webpack à utiliser le polling
-      - CHOKIDAR_USEPOLLING=true    # Force Chokidar (watcher de fichiers) à utiliser le polling
+      # --- HOT RELOAD ---
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
 
   # --- Module d'analyse ---
   analysis:
@@ -61,9 +59,6 @@ services:
       - uploads_data:/app/uploads # Montage du même volume pour accéder aux fichiers uploadés
     ports:
       - "5000:5000"
-    environment:
-      - BACKEND_URL=http://backend:8000
-      - TF_ENABLE_ONEDNN_OPTS=0
 
   # --- Module photo/completion ---
   photo:
@@ -75,8 +70,6 @@ services:
       - uploads_data:/app/uploads
     ports:
       - "5001:5001"
-    environment:
-      - TF_ENABLE_ONEDNN_OPTS=0
 
   # --- Module de Streaming (MediaMTX) ---
   mediamtx:

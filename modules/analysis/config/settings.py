@@ -1,5 +1,8 @@
 import logging
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # -------------------------------
 # MODULE CONFIG
@@ -24,8 +27,7 @@ VIDEO_DIR = os.path.join(UPLOAD_DIR, "videos")
 # -------------------------------
 # BACKEND CONFIG
 # -------------------------------
-# Internal URL to call back the backend (docker network)
-BACKEND_CALLBACK_URL = os.getenv("BACKEND_URL") + "/video/video_id" + "/analysis-complete"
+BACKEND_CALLBACK_URL = os.getenv("BACKEND_URL")
 
 # -------------------------------
 # LOGGING SETUP 
