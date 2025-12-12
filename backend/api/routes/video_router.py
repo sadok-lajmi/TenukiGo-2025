@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from pydantic import BaseModel
 from typing import Optional
 from pathlib import Path
 import requests
@@ -15,6 +16,12 @@ from config.settings import (
 )
 
 router = APIRouter()
+
+class AnalysisCallback(BaseModel):
+    video_id: int
+    status: str  # "success" ou "error"
+    sgf: Optional[str] = None
+    error: Optional[str] = None
 
 @router.get("/videos")
 def list_videos():
@@ -222,8 +229,14 @@ def generate_sgf_from_video(video_id: int):
         raise HTTPException(status_code=500, detail=f"Analyse module error: {str(e)}")
     
 @router.post("/video/{video_id}/analysis-complete")
-def video_analysis_complete(video_id: int, sgf: str):
-    """Endpoint called by Analysis module when video analysis is complete"""
+def video_analysis_complete(video_id: int, payload: AnalysisCallback):
+    """
+    Endpoint called by Analysis module when video analysis is complete.
+    Deals with both success and error cases.
+    1. On success, saves the SGF to file storage and updates the video record
+    2. On error, logs the error (for now, just raises an HTTPException)
+    3. On invalid payload, raises HTTPException
+    """
     conn = db()
     cur = conn.cursor()
     
@@ -234,11 +247,34 @@ def video_analysis_complete(video_id: int, sgf: str):
         conn.close()
         raise HTTPException(status_code=404, detail="Video not found")
     
-    # Save SGF to file storage
-    _, sgf_url = upload_file_from_content(f"video_{video_id}.sgf", sgf.encode('utf-8'), SGF_DIR)
+    # Case 1 : success
+    if payload.status == "success" and payload.sgf:
+        try:
+            # Save SGF to file storage
+            _, sgf_url = upload_file_from_content(
+                f"video_{video_id}.sgf", 
+                payload.sgf.encode('utf-8'), 
+                SGF_DIR
+            )
+            
+            # Update video record
+            cur.execute("UPDATE video SET sgf = %s WHERE video_id = %s", (sgf_url, video_id))
+            conn.commit()
+            conn.close()
+            return {"message": "SGF saved successfully"}
+            
+        except Exception as e:
+            conn.close()
+            raise HTTPException(status_code=500, detail=f"Error saving SGF: {str(e)}")
     
-    # Add sgf to database in video table
-    cur.execute("UPDATE video SET sgf = %s WHERE video_id = %s", (sgf_url, video_id))
+    # Case 2 : error
+    elif payload.status == "error":
+        print(f"Analysis failed for video {video_id}: {payload.error}")
+        conn.commit()
+        conn.close()
+        return {"message": "Error received and logged"}
     
-    conn.close()
-    return {"message": "SGF saved"}
+    # Case 3 : invalid status
+    else:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Invalid payload: missing SGF for success status")

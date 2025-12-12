@@ -4,3 +4,4 @@ psycopg2-binary>=2.9.9    # Driver PostgreSQL (La version 2.9.9+ supporte offici
 python-multipart>=0.0.9   # Nécessaire pour l'upload (UploadFile)
 requests>=2.31.0          # Requêtes HTTP (Version sécurisée récente)
 python-dotenv>=1.0.1      # Gestion des variables d'environnement
+pydantic>=2.6.0           # Validation des données (Version 2.x pour compatibilité avec FastAPI)
