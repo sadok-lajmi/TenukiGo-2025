@@ -87,7 +87,7 @@ services:
       - "9997:9997"   # API (Gestion)
       - "8554:8554"   # RTSP (Sortie pour l'analyseur)
     volumes:
-      - ../modules/streaming/mediamtx.yml:/mediamtx.yml:ro
+      - mediamtx/mediamtx.yml:/mediamtx.yml:ro
       # Enregistrements : Stockés dans modules/diffusion/recordings
       - storage:/tenuki_storage
 
