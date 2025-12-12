@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir pybind11 meson ninja && \
 COPY . .
 
 # Création du dossier uploads
-RUN mkdir -p /app/uploads
+RUN mkdir -p /app/uploads /app/uploads/videos
 
 # Lancement du service
 CMD ["python", "main.py"]
