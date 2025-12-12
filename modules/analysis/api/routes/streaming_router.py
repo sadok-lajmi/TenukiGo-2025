@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import asyncio
 
-from processors.StreamingProcessor import StreamingProcessor
+from api.processors.StreamingProcessor import StreamingProcessor
 
 router = APIRouter()
 

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 import os
 
-from processors.VideoProcessor import VideoProcessor
+from api.processors.VideoProcessor import VideoProcessor
 from config.settings import UPLOAD_DIR, BACKEND_CALLBACK_URL
 
 router = APIRouter()
