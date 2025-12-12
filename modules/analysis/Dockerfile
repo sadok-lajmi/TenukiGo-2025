@@ -24,4 +24,4 @@ COPY . .
 RUN mkdir -p /app/uploads
 
 # Lancement du service
-CMD ["python", "video_processor.py"]
+CMD ["python", "main.py"]
