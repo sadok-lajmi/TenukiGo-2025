@@ -3,6 +3,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware 
 from fastapi.staticfiles import StaticFiles
 import uvicorn
+import json
 
 from config.settings import (
     HOST, 
@@ -60,6 +61,9 @@ def custom_openapi():
     return app.openapi_schema
 
 app.openapi = custom_openapi
+
+with open("openapi.json", "w") as f:
+    json.dump(app.openapi(), f, indent=2)
 
 if __name__ == "__main__":
     uvicorn.run(
