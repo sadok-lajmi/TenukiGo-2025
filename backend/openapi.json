@@ -241,7 +241,7 @@
           "Video"
         ],
         "summary": "Video Analysis Complete",
-        "description": "Endpoint called by Analysis module when video analysis is complete",
+        "description": "Endpoint called by Analysis module when video analysis is complete.\nDeals with both success and error cases.\n1. On success, saves the SGF to file storage and updates the video record\n2. On error, logs the error (for now, just raises an HTTPException)\n3. On invalid payload, raises HTTPException",
         "operationId": "video_analysis_complete_video__video_id__analysis_complete_post",
         "parameters": [
           {
@@ -252,17 +252,18 @@
               "type": "integer",
               "title": "Video Id"
             }
-          },
-          {
-            "name": "sgf",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Sgf"
-            }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisCallback"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -817,6 +818,46 @@
   },
   "components": {
     "schemas": {
+      "AnalysisCallback": {
+        "properties": {
+          "video_id": {
+            "type": "integer",
+            "title": "Video Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "sgf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sgf"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "video_id",
+          "status"
+        ],
+        "title": "AnalysisCallback"
+      },
       "Body_complete_between_photos_photo_post": {
         "properties": {
           "image1": {
