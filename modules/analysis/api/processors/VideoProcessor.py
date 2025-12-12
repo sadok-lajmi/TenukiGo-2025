@@ -9,7 +9,7 @@ from logique.GoBoard import GoBoard
 from logique.utils.model_utils import load_corrector_model
 from logique.corrector_noAI import corrector_no_ai
 from logique.utils.sgf_utils import to_sgf
-from api.utils import initialize_board
+from api.utils.initialize_board import initialize_board
 from config.settings import (
     ANALYSIS_INTERVAL, 
     YOLO_PATH, 
