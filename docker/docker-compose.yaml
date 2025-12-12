@@ -26,6 +26,7 @@ services:
     environment:
       - DB_URL=postgresql://go_user:secret@db:5432/go_db
       - ANALYSIS_SERVICE_URL=http://analyse:5000 # URL interne Docker
+      - PHOTO_SERVICE_URL=http://photo:5001
       - MEDIAMTX_API_URL=http://mediamtx:9997
       - MEDIAMTX_RTSP_URL=rtsp://mediamtx:8554
       - MEDIAMTX_HLS_URL=http://mediamtx:8080

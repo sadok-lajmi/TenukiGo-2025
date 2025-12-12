@@ -16,10 +16,8 @@ const [image2, setImage2] = useState({
     inputRef: useRef<HTMLInputElement>(null),
     });
 
-const [initialState, setInitialState] = useState<string>('');
-const [finalState, setFinalState] = useState<string>('');
-
 const [sgfUrl, setSgfUrl] = useState<string>('');
+const [error, setError] = useState<string>('');
 
 const handleFileChange = (
 setter: Function,
@@ -45,7 +43,34 @@ const handleResetFile = (state: any, setter: Function) => {
       </header>
       <FileInput id="image1" label="Image du départ" accept="image/*" file={image1.file} previewUrl={image1.previewUrl} inputRef={image1.inputRef} onChange={(e) => handleFileChange(setImage1, e)} onReset={() => handleResetFile(image1, setImage1)} type="image" />
       <FileInput id="image2" label="Image de fin" accept="image/*" file={image2.file} previewUrl={image2.previewUrl} inputRef={image2.inputRef} onChange={(e) => handleFileChange(setImage2, e)} onReset={() => handleResetFile(image2, setImage2)} type="image" />
-      <GoSgfViewer upload={false} />
+      <button
+        className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+        disabled={!image1.file || !image2.file}
+        onClick={async () => {
+          const formData = new FormData();
+          formData.append('image1', image1.file as Blob);
+          formData.append('image2', image2.file as Blob);
+
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/photo`, {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setSgfUrl(data.sgf_url);
+          } else {
+            setError('Erreur lors de la complétion entre les photos..');
+          }
+        }}
+      >
+        Compléter entre les photos
+      </button>
+
+      {error && <p className="mt-4 text-red-600">{error}</p>}
+
+      <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_API_URL}${sgfUrl}`} upload={false} />
+
       {sgfUrl && (
         <div className="mt-4 w-full max-w-3xl">
         <Link

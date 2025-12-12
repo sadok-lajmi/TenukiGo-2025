@@ -57,7 +57,7 @@ curl -X POST \
 {
   "success": true,
   "sgf_content": "(;FF[4]...)",
-  "sgf_url": "/sgf/file/a1b2c3d4.sgf",
+  "sgf_url": "/sgf_files/a1b2c3d4.sgf",
   "sgf_filename": "game_a1b2c3d4.sgf",
   "completion_result": {...}
 }

@@ -406,7 +406,7 @@ def process_two_photos():
             with open(sgf_path, 'w', encoding='utf-8') as f:
                 f.write(sgf_content)
             
-            sgf_url = f"/sgf/file/{filename}"
+            sgf_url = f"/sgf_files/{filename}"
             
         except Exception as e:
             app.logger.error(f"Failed to save SGF file: {e}")
