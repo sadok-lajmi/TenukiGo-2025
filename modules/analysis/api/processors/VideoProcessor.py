@@ -28,6 +28,7 @@ class VideoProcessor:
         Initialize the VideoProcessor.
 
         Args:
+            video_id (int): Unique identifier for the video/game.
             video_path (str): Path to the video file.
             callback_url (str, optional): URL to notify completion. Defaults to None.
         """
@@ -42,7 +43,7 @@ class VideoProcessor:
         Main execution method.
         Opens video, initializes board, processes frames, and generates SGF.
         """
-        logger.info(f"Starting processing for match {self.match_id} on video: {self.video_path}")
+        logger.info(f"Starting processing on video: {self.video_path}")
 
         if not os.path.exists(self.video_path):
             logger.error(f"Video file not found: {self.video_path}")
@@ -91,7 +92,7 @@ class VideoProcessor:
         finally:
             cap.release()
             cv2.destroyAllWindows()
-            logger.info(f"Processing finished for match {self.match_id}")
+            logger.info(f"Processing finished")
 
     def _process_frames(self, cap: cv2.VideoCapture):
         """Reads video frames and updates game state."""
