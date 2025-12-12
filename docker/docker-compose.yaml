@@ -70,6 +70,7 @@ services:
     command: python api.py
     volumes:
       - ../modules/photo:/app
+      - uploads_data:/app/uploads
     ports:
       - "5001:5001"
     environment:
