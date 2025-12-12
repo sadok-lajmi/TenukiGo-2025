@@ -1,0 +1,260 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "TenukiGo-2025 Analysis Module API",
+    "summary": "TenukiGo OpenAPI Specifications",
+    "description": "Module dedicated to video analysis for the TenukiGo platform, providing real-time and post-match analysis features.",
+    "version": "1.0"
+  },
+  "paths": {
+    "/stream/start": {
+      "post": {
+        "tags": [
+          "Live Streaming Analysis"
+        ],
+        "summary": "Start Stream",
+        "description": "D\u00e9marre le traitement d'un flux live.\nGarantit qu'un seul processeur tourne par match_id.",
+        "operationId": "start_stream_stream_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcessStreamingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream/stop": {
+      "post": {
+        "tags": [
+          "Live Streaming Analysis"
+        ],
+        "summary": "Stop Stream",
+        "description": "Arr\u00eate proprement le processeur de streaming.",
+        "operationId": "stop_stream_stream_stop_post",
+        "parameters": [
+          {
+            "name": "match_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Match Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream/status": {
+      "get": {
+        "tags": [
+          "Live Streaming Analysis"
+        ],
+        "summary": "Get Status",
+        "description": "Retourne la liste des streams actifs pour le debug",
+        "operationId": "get_status_stream_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/process": {
+      "post": {
+        "tags": [
+          "Video Analysis"
+        ],
+        "summary": "Process Video File",
+        "description": "Endpoint to trigger analysis of an uploaded video file.\nReturns immediately, processing happens in background.",
+        "operationId": "process_video_file_video_process_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VideoAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Simple health check endpoint.",
+        "operationId": "health_check__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ProcessStreamingRequest": {
+        "properties": {
+          "match_id": {
+            "type": "integer",
+            "title": "Match Id"
+          },
+          "rtsp_url": {
+            "type": "string",
+            "title": "Rtsp Url"
+          },
+          "ws_url": {
+            "type": "string",
+            "title": "Ws Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "match_id",
+          "rtsp_url",
+          "ws_url"
+        ],
+        "title": "ProcessStreamingRequest"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VideoAnalysisRequest": {
+        "properties": {
+          "video_id": {
+            "type": "integer",
+            "title": "Video Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          }
+        },
+        "type": "object",
+        "required": [
+          "video_id",
+          "filename"
+        ],
+        "title": "VideoAnalysisRequest"
+      }
+    }
+  }
+}
