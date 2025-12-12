@@ -12,10 +12,6 @@ hlsAddress: :8080
 rtsp: yes
 rtspAddress: :8554
 
-webrtc: yes
-webrtcAddress: :8889
-webrtcICEServers2: []
-
 paths:
   all:
     source: publisher

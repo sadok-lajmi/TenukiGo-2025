@@ -101,6 +101,36 @@ export default function GoPlayable() {
                         compact={true}
                     />
 
+                    {/* Affichage du contenu du nouveau sgf en cours */}
+                    <div className="flex gap-4">
+                    <div className="flex-1 bg-white p-4 rounded-xl shadow-sm border border-neutral-100">
+                        <h3 className="font-medium text-neutral-700 mb-2">Coups joués :</h3>
+                        {moves.length === 0 ? (
+                            <p className="text-sm text-neutral-500">Aucun coup joué pour l'instant.</p>
+                        ) : (
+                            <ol className="list-decimal list-inside max-h-48 overflow-y-auto">
+                                {moves.slice(0, currentMoveIndex).map((move, index) => (
+                                    <li key={index} className="text-sm text-neutral-700">
+                                        {move.player === 'B' ? 'Noir' : 'Blanc'}: {move.isPass ? 'Passe' : `(${move.x + 1}, ${move.y + 1})`}
+                                    </li>
+                                ))}
+                            </ol>
+                        )}
+                    </div>
+                    <div className="flex-1 bg-white p-4 rounded-xl shadow-sm border border-neutral-100">
+                        <h3 className="font-medium text-neutral-700 mb-2">SGF :</h3>
+                        {moves.length === 0 ? (
+                            <p className="text-sm text-neutral-500">Aucun coup joué pour l'instant.</p>
+                        ) : (
+                            <textarea
+                                readOnly
+                                value={`(;GM[1]FF[4]CA[UTF-8]SZ[19];${moves.map(move => move.isPass ? `${move.player}[]` : `${move.player}[${String.fromCharCode(97 + move.x)}${String.fromCharCode(97 + move.y)}]`).join(';')})`}
+                                className="w-full h-48 p-2 border border-neutral-200 rounded-md text-sm font-mono text-neutral-800 bg-neutral-50 resize-none"
+                            />
+                        )}
+                    </div>
+                    </div>
+
                     {/* Actions Spécifiques au jeu */}
                     <div className="bg-white p-4 rounded-xl shadow-md flex flex-col gap-2">
                         <button

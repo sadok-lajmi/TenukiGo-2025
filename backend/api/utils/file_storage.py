@@ -17,3 +17,8 @@ def upload_file_from_content(filename: str, content: str, directory: str) -> str
     with open(file_path, "wb") as f:
         f.write(content)
     return file_path, "/" + file_path
+
+def modify_file_content(file_path: str, new_content: str) -> str:
+    """Modify the content of an existing file."""
+    with open(file_path, "wb") as f:
+        f.write(new_content)

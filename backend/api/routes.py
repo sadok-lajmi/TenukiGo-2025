@@ -1,18 +1,24 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Form, UploadFile, File
-from fastapi.concurrency import run_in_threadpool
+from fastapi import FastAPI, HTTPException, Form, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware 
 from fastapi.staticfiles import StaticFiles
 from typing import Optional
 from datetime import datetime
 from pathlib import Path
-import json
 import os
 import requests
 
-from api.ConnectionManager import ConnectionManager
-from database.services import process_and_save_game, db
-from api.utils import upload_file, upload_file_from_content
-from config.settings import CLUB_PASSWORD, UPLOAD_DIR, VIDEO_DIR, THUMBNAIL_DIR, SGF_DIR, ANALYSE_SERVICE_URL
+from websockets.ConnectionManager import ConnectionManager
+from utils.db_services import db
+from utils.file_storage import upload_file, upload_file_from_content
+from config.settings import (
+    UPLOAD_DIR, 
+    VIDEO_DIR, 
+    THUMBNAIL_DIR, 
+    SGF_DIR, 
+    ANALYSIS_SERVICE_URL,
+    WS_STREAMING_URL,
+    MEDIAMTX_RTSP_URL
+)
 
 app = FastAPI(title="Go Game API")
 
@@ -34,240 +40,6 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 # Manager for WebSocket connections
 manager = ConnectionManager()
 
-# ======================
-# UTILITY FUNCTIONS
-# ======================
-
-def clean_path_for_url(file_path: str) -> str:
-    """Convert file system path to web URL path"""
-    if not file_path:
-        return None  # Retourne None au lieu d'une chaîne vide
-    
-    # Si c'est déjà une URL correcte, la retourner
-    if file_path.startswith('/uploads/') or file_path.startswith('http'):
-        return file_path
-    
-    # Convertir les backslashes en forward slashes
-    cleaned = file_path.replace('\\', '/')
-    
-    # Extraire juste le nom de fichier
-    if '/' in cleaned:
-        filename = cleaned.split('/')[-1]
-    else:
-        filename = cleaned
-    
-    # Déterminer le bon sous-dossier basé sur l'extension ou le contenu du chemin
-    ext = filename.lower().split('.')[-1] if '.' in filename else ''
-    
-    if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']:
-        return f"/uploads/thumbnails/{filename}"
-    elif ext in ['mp4', 'avi', 'mov', 'mkv', 'webm']:
-        return f"/uploads/videos/{filename}"
-    elif ext in ['sgf']:
-        return f"/uploads/sgf/{filename}"
-    elif 'thumbnail' in file_path.lower():
-        return f"/uploads/thumbnails/{filename}"
-    elif 'video' in file_path.lower():
-        return f"/uploads/videos/{filename}"
-    elif 'sgf' in file_path.lower():
-        return f"/uploads/sgf/{filename}"
-    else:
-        return f"/uploads/{filename}"
-# ------------------------------
-# WEBSOCKET: SPECTATOR FEED
-# ------------------------------
-@app.websocket("/ws/spectator_feed")
-async def websocket_spectator_endpoint(websocket: WebSocket):
-    """
-    WebSocket endpoint for spectators.
-    Keeps a connection open so spectators can receive real-time updates.
-    """
-    await manager.connect(websocket)
-    try:
-        while True:
-            # keep connection alive / wait for ping messages from client
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-
-
-# ------------------------------------------------
-# WEBSOCKET: CAMERA FEED (STUB)
-# ------------------------------------------------
-@app.websocket("/ws/camera_feed")
-async def websocket_camera_endpoint(websocket: WebSocket):
-    """
-    Stub endpoint to receive camera data via WebSocket.
-    Expected JSON payload from camera; uses CLUB_PASSWORD for basic auth.
-    """
-    await websocket.accept()
-    print("Camera connection (stub) accepted.")
-    try:
-        while True:
-            data = await websocket.receive_json()
-
-            if data.get("password") != CLUB_PASSWORD:
-                await websocket.send_json({"status": "error", "message": "Invalid password"})
-                await websocket.close()
-                break
-
-            # 1. Save to DB (run in threadpool to avoid blocking)
-            try:
-                result_data = await run_in_threadpool(process_and_save_game, data)
-
-                # 2. Broadcast result to spectators
-                await manager.broadcast(json.dumps(result_data))
-
-                # 3. Acknowledge the camera
-                await websocket.send_json({"status": "success", "message": "Data received and broadcasted"})
-
-            except Exception as e:
-                await websocket.send_json({"status": "error", "message": f"Database error: {e}"})
-
-    except WebSocketDisconnect:
-        print("Camera connection (stub) closed.")
-
-
-# ======================
-# DATABASE CLEANUP ROUTES
-# ======================
-
-@app.get("/debug-urls")
-def debug_urls():
-    """Debug endpoint to see all URLs in database"""
-    conn = db()
-    cur = conn.cursor()
-    
-    # Check videos
-    cur.execute("SELECT video_id, title, path, url, thumbnail FROM video ORDER BY video_id DESC LIMIT 10")
-    videos = cur.fetchall()
-    
-    # Check matches
-    cur.execute("SELECT match_id, title, sgf FROM match WHERE sgf IS NOT NULL ORDER BY match_id DESC LIMIT 10")
-    matches = cur.fetchall()
-    
-    conn.close()
-    
-    return {
-        "videos": videos,
-        "matches": matches,
-        "note": "Check if paths contain backslashes or absolute paths like C:\\"
-    }
-
-
-@app.post("/cleanup-all-urls")
-def cleanup_all_urls():
-    """Comprehensive cleanup of ALL URLs in the database"""
-    conn = db()
-    cur = conn.cursor()
-    
-    stats = {
-        "video_thumbnails": 0,
-        "video_urls": 0,
-        "match_sgf": 0,
-        "video_paths": 0
-    }
-    
-    try:
-        print("\n" + "=" * 50)
-        print("🧹 STARTING COMPREHENSIVE URL CLEANUP")
-        print("=" * 50)
-        
-        # 1. Clean video thumbnails
-        cur.execute("SELECT video_id, thumbnail FROM video WHERE thumbnail IS NOT NULL")
-        videos = cur.fetchall()
-        
-        for video in videos:
-            old_thumbnail = video['thumbnail']
-            new_thumbnail = clean_path_for_url(old_thumbnail)
-            
-            if new_thumbnail and new_thumbnail != old_thumbnail:
-                cur.execute(
-                    "UPDATE video SET thumbnail = %s WHERE video_id = %s",
-                    (new_thumbnail, video['video_id'])
-                )
-                stats["video_thumbnails"] += 1
-                print(f"✓ Video {video['video_id']} thumbnail: {old_thumbnail} -> {new_thumbnail}")
-        
-        # 2. Clean video URLs
-        cur.execute("SELECT video_id, url FROM video WHERE url IS NOT NULL")
-        videos_url = cur.fetchall()
-        
-        for video in videos_url:
-            old_url = video['url']
-            new_url = clean_path_for_url(old_url)
-            
-            if new_url and new_url != old_url:
-                cur.execute(
-                    "UPDATE video SET url = %s WHERE video_id = %s",
-                    (new_url, video['video_id'])
-                )
-                stats["video_urls"] += 1
-                print(f"✓ Video {video['video_id']} url: {old_url} -> {new_url}")
-        
-        # 3. Clean video paths (convert to relative paths)
-        cur.execute("SELECT video_id, path FROM video WHERE path IS NOT NULL")
-        video_paths = cur.fetchall()
-        
-        for video in video_paths:
-            old_path = video['path']
-            # Extract just the filename for the path column too
-            if old_path and ('\\' in old_path or '/' in old_path):
-                filename = old_path.replace('\\', '/').split('/')[-1]
-                new_path = f"uploads/videos/{filename}"
-                if new_path != old_path:
-                    cur.execute(
-                        "UPDATE video SET path = %s WHERE video_id = %s",
-                        (new_path, video['video_id'])
-                    )
-                    stats["video_paths"] += 1
-                    print(f"✓ Video {video['video_id']} path: {old_path} -> {new_path}")
-        
-        # 4. Clean match SGF paths
-        cur.execute("SELECT match_id, sgf FROM match WHERE sgf IS NOT NULL")
-        matches = cur.fetchall()
-        
-        for match in matches:
-            old_sgf = match['sgf']
-            if old_sgf and ('\\' in old_sgf or '/' in old_sgf):
-                filename = old_sgf.replace('\\', '/').split('/')[-1]
-                new_sgf = f"uploads/sgf/{filename}"
-                if new_sgf != old_sgf:
-                    cur.execute(
-                        "UPDATE match SET sgf = %s WHERE match_id = %s",
-                        (new_sgf, match['match_id'])
-                    )
-                    stats["match_sgf"] += 1
-                    print(f"✓ Match {match['match_id']} sgf: {old_sgf} -> {new_sgf}")
-        
-        conn.commit()
-        print("\n" + "=" * 50)
-        print("✅ CLEANUP COMPLETED")
-        print(f"   Video thumbnails: {stats['video_thumbnails']}")
-        print(f"   Video URLs: {stats['video_urls']}")
-        print(f"   Video paths: {stats['video_paths']}")
-        print(f"   Match SGF: {stats['match_sgf']}")
-        print("=" * 50 + "\n")
-        
-        return {
-            "message": "Comprehensive URL cleanup completed",
-            "stats": stats
-        }
-    
-    except Exception as e:
-        conn.rollback()
-        print(f"❌ Cleanup failed: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")
-    finally:
-        conn.close()
-
-
-@app.post("/cleanup-thumbnail-urls")
-def cleanup_thumbnail_urls():
-    """Clean up all thumbnail URLs in the database (legacy endpoint)"""
-    return cleanup_all_urls()
 
 # ======================
 # LIST ROUTES
@@ -381,8 +153,6 @@ def get_match(match_id: int):
 
     return match
 
-
-
 @app.get("/player/{player_id}")
 def get_player(player_id: int):
     conn = db()
@@ -421,9 +191,6 @@ def get_player(player_id: int):
 # ======================
 # CREATE / UPLOAD ROUTES
 # ======================
-# -----------------------------------------------------------
-# CREATE / UPLOAD ROUTES
-# -----------------------------------------------------------
 
 @app.post("/create_player")
 def create_player(
@@ -444,7 +211,6 @@ def create_player(
     conn.commit()
     conn.close()
     return {"message": "Player created", "player_id": player_id}
-
 
 @app.post("/upload_video")
 async def upload_video(
@@ -502,7 +268,6 @@ async def upload_video(
         "video_url": video_url,
         "thumbnail_url": thumb_url
     }
-
 
 @app.post("/create_match")
 async def create_match(
@@ -620,7 +385,8 @@ async def edit_video(
     video_id: int,
     title: Optional[str] = Form(None),
     match_id: Optional[int] = Form(None),
-    thumbnail: Optional[UploadFile] = File(None)
+    thumbnail: Optional[UploadFile] = File(None),
+    remove_sgf: Optional[bool] = Form(None)
 ):
     conn = db()
     cur = conn.cursor()
@@ -652,6 +418,13 @@ async def edit_video(
         match_id,
         video_id,
     ))
+
+    if remove_sgf:
+        cur.execute("UPDATE video SET sgf = NULL WHERE video_id = %s", (video_id,))
+        # delete the SGF file from storage
+        p = Path(video["sgf"])
+        if p.exists():
+            p.unlink()
 
     conn.commit()
     conn.close()
@@ -884,13 +657,16 @@ def start_stream(
     black: int = Form(...),
     url: str = Form(...)
 ):
+    sgf_url = SGF_DIR + f"/{int(datetime.now().timestamp())}.sgf"
+    rtsp_url = MEDIAMTX_RTSP_URL + url.removeprefix("http://mediamtx:8080").removesuffix("/index.m3u8")
+
     conn = db()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO match (title, style, white_id, black_id, description, date)
+        INSERT INTO match (title, style, white_id, black_id, description, date, sgf)
         VALUES (%s, %s, %s, %s, %s, %s)
         RETURNING match_id
-    """, (title, style, white, black, description, datetime.now()))
+    """, (title, style, white, black, description, datetime.now(), sgf_url))
     match_id = cur.fetchone()["match_id"]
     cur.execute("""
         INSERT INTO stream (url, match_id)
@@ -898,6 +674,14 @@ def start_stream(
     """, (url, match_id))
     conn.commit()
     conn.close()
+
+    try:
+        requests.post(ANALYSIS_SERVICE_URL + "/stream/start", 
+                      json={"rtsp_url": rtsp_url, "match_id": match_id, "ws_url": WS_STREAMING_URL + f"/{match_id}"}, 
+                      timeout=10)
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Failed to start stream analysis: {str(e)}")
+
     return {"message": "Stream started", "match_id": match_id}
 
 @app.get("/streams")
@@ -921,7 +705,7 @@ def get_stream(stream_id: int):
     cur = conn.cursor()
     cur.execute("""
         SELECT 
-            s.stream_id, s.url,
+            s.stream_id, s.url, s.match_id,
             m.title AS title,
             w.firstname || ' ' || w.lastname AS white, w.player_id AS white_id,
             b.firstname || ' ' || b.lastname AS black, b.player_id AS black_id,
@@ -939,6 +723,9 @@ def get_stream(stream_id: int):
         raise HTTPException(status_code=404, detail="Stream not found")
     return stream
 
+# -----------------------------------------------------------
+# ANALYSIS MODULE INTEGRATION
+# -----------------------------------------------------------
 
 @app.post("/video/{video_id}/convert-to-sgf")
 def generate_sgf_from_video(video_id: int):
@@ -960,23 +747,55 @@ def generate_sgf_from_video(video_id: int):
     
     # Call Analyse module API
     try:
-        response = requests.post("http://analyse:5000/process", json={"filename": os.path.basename(video_url)}, timeout=300)
-        sgf_content: str = response.json().get("sgf")
+        requests.post(ANALYSIS_SERVICE_URL + "/video/process",
+                                 json={"video_id": video_id, "filename": os.path.basename(video_url)},
+                                 timeout=300)
         
-        if not sgf_content:
-            raise HTTPException(status_code=500, detail="SGF generation failed")
-        
-        # Save SGF to file
-        _, sgf_url = upload_file_from_content("video_%s.sgf".format(video_id), sgf_content.encode('utf-8'), SGF_DIR)
-        
-        # Update database if video is linked to a match
-        if video['match_id']:
-            cur.execute("UPDATE match SET sgf = %s WHERE match_id = %s", (sgf_url, video['match_id']))
-            conn.commit()
-        
-        conn.close()
-        return {"message": "SGF generated and saved", "sgf": sgf_url}
+        return {"message": "Analysis succesfully launched"}
     
     except requests.RequestException as e:
         conn.close()
         raise HTTPException(status_code=500, detail=f"Analyse module error: {str(e)}")
+    
+@app.post("/video/{video_id}/analysis-complete")
+def video_analysis_complete(video_id: int, sgf: str):
+    """Endpoint called by Analysis module when video analysis is complete"""
+    conn = db()
+    cur = conn.cursor()
+    
+    # Fetch video details
+    cur.execute("SELECT * FROM video WHERE video_id = %s", (video_id,))
+    video = cur.fetchone()
+    if not video:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Save SGF to file storage
+    _, sgf_url = upload_file_from_content(f"video_{video_id}.sgf", sgf.encode('utf-8'), SGF_DIR)
+    
+    # Add sgf to database in video table
+    cur.execute("UPDATE video SET sgf = %s WHERE video_id = %s", (sgf_url, video_id))
+    
+    conn.close()
+    return {"message": "SGF saved"}
+
+# -----------------------------------------------------------
+# PHOTO MODULE INTEGRATION
+# -----------------------------------------------------------
+
+@app.post("/photo")
+def complete_between_photos(
+    image1: UploadFile = File(...),
+    image2: UploadFile = File(...)
+):
+    """Endpoint to send front and back photos to the Photo module for processing"""
+    try:
+        files = {
+            'intial_state': (image1.filename, image1.file, image1.content_type),
+            'final_state': (image2.filename, image2.file, image2.content_type)
+        }
+        response = requests.post("http://photo:5001/complete", files=files, timeout=300)
+        result = response.json()
+        return result
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Photo module error: {str(result['error'])}")

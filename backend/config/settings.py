@@ -1,7 +1,7 @@
 import os
 
 # -------------------------------
-# API CONFIG
+# BACKEND CONFIG
 # -------------------------------
 HOST = "0.0.0.0"
 PORT = 8000
@@ -21,19 +21,23 @@ os.makedirs(VIDEO_DIR, exist_ok=True)
 os.makedirs(THUMBNAIL_DIR, exist_ok=True)
 os.makedirs(SGF_DIR, exist_ok=True)
 
-
-
 # -------------------------------
 # DATABASE CONFIG
 # -------------------------------
 DB_URL = os.getenv("DB_URL")
 
 # -------------------------------
-# APP CONFIG
+# ANALYSIS MODULE CONFIG
 # -------------------------------
-CLUB_PASSWORD = os.getenv("CLUB_PASSWORD")
+ANALYSIS_SERVICE_URL = os.getenv("ANALYSIS_SERVICE_URL")
 
 # -------------------------------
-# ANALYSE MODULE CONFIG
+# WEBSOCKET STREAMING CONFIG
 # -------------------------------
-ANALYSE_SERVICE_URL = os.getenv("ANALYSE_SERVICE_URL")
+WS_STREAMING_URL = os.getenv("WS_STREAMING_URL")
+
+# -------------------------------
+# MEDIAMTX CONFIG
+# -------------------------------
+MEDIAMTX_API_URL = os.getenv("MEDIAMTX_API_URL")
+MEDIAMTX_RTSP_URL = os.getenv("MEDIAMTX_RTSP_URL")

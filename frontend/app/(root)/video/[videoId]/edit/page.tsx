@@ -9,6 +9,7 @@ type VideoData = {
   title: string;
   matchId: string;
   thumbnail: string;
+  sgf?: string;
 } | null;
 
 export default function EditVideoPage() {
@@ -24,6 +25,7 @@ export default function EditVideoPage() {
         title: data.title,
         matchId: data.match_id?.toString(),
         thumbnail: data.thumbnail,
+        sgf: data.video_sgf,
       });
     };
     load();
