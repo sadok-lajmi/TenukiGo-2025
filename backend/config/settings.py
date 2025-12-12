@@ -32,6 +32,11 @@ DB_URL = os.getenv("DB_URL")
 ANALYSIS_SERVICE_URL = os.getenv("ANALYSIS_SERVICE_URL")
 
 # -------------------------------
+# PHOTO MODULE CONFIG   
+# -------------------------------
+PHOTO_SERVICE_URL = os.getenv("PHOTO_SERVICE_URL")
+
+# -------------------------------
 # WEBSOCKET STREAMING CONFIG
 # -------------------------------
 WS_STREAMING_URL = os.getenv("WS_STREAMING_URL")

@@ -16,6 +16,7 @@ from config.settings import (
     THUMBNAIL_DIR, 
     SGF_DIR, 
     ANALYSIS_SERVICE_URL,
+    PHOTO_SERVICE_URL,
     WS_STREAMING_URL,
     MEDIAMTX_RTSP_URL
 )
@@ -791,10 +792,14 @@ def complete_between_photos(
     """Endpoint to send front and back photos to the Photo module for processing"""
     try:
         files = {
-            'intial_state': (image1.filename, image1.file, image1.content_type),
-            'final_state': (image2.filename, image2.file, image2.content_type)
+            'file1': image1.file,
+            'file2': image2.file
         }
-        response = requests.post("http://photo:5001/complete", files=files, timeout=300)
+        data = {
+            'use_ai': 'true',
+            'metadata': '{"player_black":"Joueur 1","player_white":"Joueur 2"}'
+        }
+        response = requests.post(PHOTO_SERVICE_URL + "/photo/process_two", files=files, data=data, timeout=300)
         result = response.json()
         return result
     except requests.RequestException as e:
