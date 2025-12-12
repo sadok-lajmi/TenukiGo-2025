@@ -3,8 +3,8 @@ from typing import Optional
 from pathlib import Path
 from datetime import datetime
 
-from utils.db_services import db
-from utils.file_storage import upload_file
+from api.utils.db_services import db
+from api.utils.file_storage import upload_file
 from config.settings import (
     VIDEO_DIR,
     THUMBNAIL_DIR,

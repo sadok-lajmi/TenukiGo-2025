@@ -1,9 +1,9 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.concurrency import run_in_threadpool
 
-from websockets.ConnectionManager import manager
-from utils.db_services import get_sgf_path
-from utils.file_storage import modify_file_content
+from api.websockets.ConnectionManager import manager
+from api.utils.db_services import get_sgf_path
+from api.utils.file_storage import modify_file_content
 
 router = APIRouter()
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Form
 from typing import Optional
 
-from utils.db_services import db
+from api.utils.db_services import db
 
 router = APIRouter()
 
