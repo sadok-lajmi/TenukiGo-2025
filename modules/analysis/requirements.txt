@@ -13,7 +13,3 @@ python-dotenv>=1.0.1
 python-multipart>=0.0.9 # Requis pour l'upload de fichiers
 websockets>=12.0
 pydantic>=2.6.0
-
-# Outils de build pour sente (au cas où)
-meson
-ninja

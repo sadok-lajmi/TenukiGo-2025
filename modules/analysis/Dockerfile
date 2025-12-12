@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Installation des outils de build Python
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel pybind11 meson ninja
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel pybind11 meson ninja numpy
 
 # 3. INSTALLATION MANUELLE DE SENTE (Avec Patchs)
 # On clone, on patch, on installe, puis on nettoie.
@@ -27,7 +27,7 @@ RUN git clone https://github.com/atw1020/sente.git sente-src && \
     sed -i '1i #include <algorithm>' src/Utils/Tree.h && \
     sed -i '1i #include <algorithm>' src/Utils/SGF/SGFNode.cpp && \
     # Installation
-    pip install . && \
+    pip install --no-build-isolation . && \
     # Nettoyage
     cd .. && \
     rm -rf sente-src
