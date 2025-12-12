@@ -70,7 +70,7 @@ def start_stream(
     cur = conn.cursor()
     cur.execute("""
         INSERT INTO match (title, style, white_id, black_id, description, date, sgf)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
         RETURNING match_id
     """, (title, style, white, black, description, datetime.now(), sgf_url))
     match_id = cur.fetchone()["match_id"]
