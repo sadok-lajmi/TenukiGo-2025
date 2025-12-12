@@ -40,7 +40,7 @@ app.include_router(stream_router, tags=["Stream"])
 app.include_router(photo_router, tags=["Photo"])
 
 # Mount static files for serving uploads
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+app.mount("/storage", StaticFiles(directory=UPLOAD_DIR), name="storage")
 
 @app.get("/")
 def health_check():

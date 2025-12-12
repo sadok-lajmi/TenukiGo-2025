@@ -24,7 +24,7 @@ COPY . ./backend
 ENV PYTHONPATH=/app
 
 # Création du dossier pour les uploads partagés
-RUN mkdir -p /app/uploads/sgf_files /app/uploads/videos /app/uploads/thumbnails 
+RUN mkdir -p /app/storage/sgf_files /app/storage/videos /app/storage/thumbnails 
 
 # Exposer le port de l'API
 EXPOSE 8000

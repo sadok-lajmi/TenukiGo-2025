@@ -1,7 +1,7 @@
 services:
   # --- Base de données ---
   db:
-    image: postgres:16
+    image: postgres:17-alpine
     container_name: tenuki-postgres
     environment:
       POSTGRES_USER: go_user
@@ -12,6 +12,11 @@ services:
     volumes:
       - ../database/schema.sql:/docker-entrypoint-initdb.d/init.sql
       - tenuki-pgdata:/var/lib/postgresql/data
+    healthcheck: # Pour que le backend attende vraiment que la DB soit prête
+      test: ["CMD-SHELL", "pg_isready -U go_user -d go_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # --- Backend ---
   backend:
@@ -20,7 +25,7 @@ services:
     command: python main.py
     volumes:
       - ../backend:/app
-      - uploads_data:/app/uploads # Montage du volume pour les fichiers uploadés
+      - storage:/app/storage # Montage du volume pour les fichiers uploadés
     ports:
       - "8000:8000"
     environment:
@@ -30,7 +35,8 @@ services:
       - MEDIAMTX_RTSP_URL=rtsp://mediamtx:8554
       - MEDIAMTX_HLS_URL=http://mediamtx:8080
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   # --- Frontend ---
   frontend:
@@ -41,11 +47,10 @@ services:
     volumes:
       - ../frontend:/app
       - /app/node_modules
-      - /app/.next              # Préserve le cache de build Next.js (IMPORTANT pour la vitesse)
+      - /app/.next # Préserve le cache de build Next.js (IMPORTANT pour la vitesse)
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
       - NEXT_PUBLIC_PASSWORD
-      # --- HOT RELOAD ---
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
 
@@ -56,7 +61,7 @@ services:
     command: python main.py
     volumes:
       - ../modules/analysis:/app
-      - uploads_data:/app/uploads # Montage du même volume pour accéder aux fichiers uploadés
+      - storage:/app/storage # Montage du même volume pour accéder aux fichiers uploadés
     ports:
       - "5000:5000"
 
@@ -67,7 +72,7 @@ services:
     command: python api.py
     volumes:
       - ../modules/photo:/app
-      - uploads_data:/app/uploads
+      - storage:/app/storage
     ports:
       - "5001:5001"
 
@@ -84,8 +89,8 @@ services:
     volumes:
       - ../modules/streaming/mediamtx.yml:/mediamtx.yml:ro
       # Enregistrements : Stockés dans modules/diffusion/recordings
-      - ../modules/streaming/recordings:/project_recordings
+      - storage:/tenuki_storage
 
 volumes:
   tenuki-pgdata:
-  uploads_data: # Volume nommé pour partager les fichiers
+  storage: # Volume nommé pour partager les fichiers

@@ -41,7 +41,7 @@ COPY . .
 ENV PYTHONPATH=/app
 
 # Création des dossiers nécessaires
-RUN mkdir -p /app/uploads/videos 
+RUN mkdir -p /app/storage/videos 
 
 # Lancement du service
 CMD ["python", "main.py"]
