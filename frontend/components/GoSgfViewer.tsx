@@ -314,7 +314,7 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
       <div className="flex flex-col items-center justify-center min-h-[400px] w-full bg-neutral-100 rounded-xl p-8 text-red-600">
         <p className="font-bold mb-2">Erreur</p>
         <p>{error}</p>
-        <p className="text-sm text-neutral-500 mt-4">Vérifiez que le fichier <code>public/sgf/example.sgf</code> existe.</p>
+        <p className="text-sm text-neutral-500 mt-4">Vérifiez que le fichier <code>{sgfUrl}</code> existe.</p>
       </div>
     );
   }
