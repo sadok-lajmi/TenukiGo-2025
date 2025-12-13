@@ -47,8 +47,7 @@ services:
       - /app/node_modules
       - /app/.next # Préserve le cache de build Next.js (IMPORTANT pour la vitesse)
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
-      - NEXT_PUBLIC_PASSWORD
+      - NEXT_PUBLIC_DOCKER_STORAGE_URL=http://backend:8000/storage/
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
 
