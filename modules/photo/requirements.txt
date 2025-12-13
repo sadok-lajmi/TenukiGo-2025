@@ -1,0 +1,7 @@
+Flask==2.3.3
+numpy==1.24.3
+tensorflow
+ultralytics>=8.0.0
+opencv-python-headless
+Pillow>=9.0.0
+Werkzeug>=2.3.0

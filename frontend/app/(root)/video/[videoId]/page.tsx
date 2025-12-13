@@ -4,6 +4,7 @@ import { useParams } from "next/navigation"
 import Link from "next/dist/client/link"
 import DeletePopUp from "@/components/DeletePopUp"
 import GoSgfViewer from "@/components/GoSgfViewer"
+import { set } from "better-auth"
 
 interface VideoDetails {
 id: string
@@ -27,6 +28,7 @@ match?: {
 
 export default function VideoDetailsPage() {
 const [error, setError] = useState<string | null>(null);
+const [converting, setConverting] = useState<boolean>(false);
 
 // Fetch video details from API here and update state
 const [video, setVideo] = useState<VideoDetails>(null as unknown as VideoDetails);
@@ -72,18 +74,22 @@ useEffect(() => {
   fetchMoreData();
 }, [videoId]);
 
-if (!video) {
-  return (
-    <main className="wrapper page flex justify-center items-center py-20">
-      <p className="text-gray-500">Loading video…</p>
-    </main>
-  );
-}
+// Load converting state from localStorage when page loads
+  useEffect(() => {
+    const saved = localStorage.getItem(`converting_${videoId}`);
+    if (saved) setConverting(JSON.parse(saved));
+  }, [videoId]);
+
+// Save converting state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(`converting_${videoId}`, JSON.stringify(converting));
+  }, [converting, videoId]);
 
 // handle conversion to sgf
 const handleConvertToSgf = async () => {
+  setConverting(true);
   try {
-    const response = await fetch("http://127.0.0.1:8001/process?filename=test.mp4", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/video/${videoId}/convert-to-sgf`, {
       method: 'POST',
     });
     if (response.ok) {
@@ -94,12 +100,22 @@ const handleConvertToSgf = async () => {
         sgf: data.sgf, // Assuming the API returns the SGF file path in 'sgf'
       }));
     } else {
-      setError('Failed to convert video to SGF');
+      setError('Erreur lors de la conversion de la vidéo en SGF ou la conversion prends du temps.. Veuillez revenir à cette page plus tard.');
     }
   } catch (error) {
-    setError('Error converting video to SGF');
+    setError('Erreur lors de la conversion de la vidéo en SGF');
   }
 };
+
+
+if (!video) {
+  return (
+    <main className="wrapper page flex justify-center items-center py-20">
+      <p className="text-gray-500">Chargement de la vidéo…</p>
+    </main>
+  );
+}
+
 
 return (
 
@@ -115,9 +131,9 @@ return (
     <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
       <div className="w-full rounded-xl overflow-hidden bg-black">
         <video
-          src={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${video.videoUrl}`}
+          src={`${process.env.NEXT_PUBLIC_API_URL}${video.videoUrl}`}
           controls
-          poster={video.thumbnail ? `${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${video.thumbnail}` : undefined}
+          poster={video.thumbnail ? `${process.env.NEXT_PUBLIC_API_URL}${video.thumbnail}` : undefined}
           width="100%"
           height="100%"
         />
@@ -129,21 +145,27 @@ return (
         <h1 className="text-xl font-semibold text-dark-100">{video.title}</h1>
         <p className="text-sm text-gray-100">Postée le : {video.uploadDate}</p>
       </div>
-        { !(video.sgf) && <button onClick={handleConvertToSgf} className="px-3 py-2 bg-yellow-700 text-white text-sm rounded-full w-fit ">Convertir en SGF</button>}
+        { !video.sgf && (
+          converting ? (
+            <p className="text-sm text-gray-100">Conversion en cours...</p>
+          ) : (
+            <button onClick={handleConvertToSgf} className="px-3 py-2 bg-yellow-700 text-white text-sm rounded-full w-fit ">Convertir en SGF</button>
+          )
+        )}
       </div>
       {error && <p className="text-red-500 text-sm">{error}</p>}
       {/* SGF File (of the video if it exists) */}
       {video?.sgf && (
         <Link
-          href={`${process.env.NEXT_PUBLIC_UPLOADS_URL}${video.sgf}`}
+          href={`${process.env.NEXT_PUBLIC_API_URL}${video.sgf}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
-          Importer le SGF 
+          Exporter le SGF 
         </Link>
       )}
       {/* SGF Viewer if the sgf exists */}
       {video?.sgf && (
-        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL}${video.sgf}`} />
+        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_API_URL}${video.sgf}`} />
       )}
     </section>
 
@@ -197,7 +219,7 @@ return (
         {/* SGF File (if exists) */}
         {match?.sgf && (
           <Link
-            href={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgf}`}
+            href={`${process.env.NEXT_PUBLIC_API_URL}${match.sgf}`}
             className="block text-blue-500 underline hover:text-blue-600 font-medium"
           >
             Importer le SGF
@@ -205,7 +227,7 @@ return (
         )}
         {/* SGF Viewer if the sgf exists */}
         {(match?.sgf && !(video?.sgf)) && (
-          <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${match.sgf}`} />
+          <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_API_URL}${match.sgf}`} />
         )}
       </section>
     ) : (

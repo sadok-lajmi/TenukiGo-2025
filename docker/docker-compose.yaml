@@ -1,7 +1,7 @@
 services:
   # --- Base de données ---
   db:
-    image: postgres:16
+    image: postgres:17-alpine
     container_name: tenuki-postgres
     environment:
       POSTGRES_USER: go_user
@@ -12,22 +12,29 @@ services:
     volumes:
       - ../database/schema.sql:/docker-entrypoint-initdb.d/init.sql
       - tenuki-pgdata:/var/lib/postgresql/data
+    healthcheck: # Pour que le backend attende vraiment que la DB soit prête
+      test: ["CMD-SHELL", "pg_isready -U go_user -d go_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # --- Backend ---
   backend:
     build: ../backend
     container_name: tenuki-backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: python main.py
     volumes:
       - ../backend:/app
-      - uploads_data:/app/uploads # Montage du volume pour les fichiers uploadés
+      - storage:/app/storage # Montage du volume pour les fichiers uploadés
     ports:
       - "8000:8000"
     environment:
-      DB_URL: postgresql://go_user:secret@db:5432/go_db
-      ANALYSE_SERVICE_URL: http://analyse:5000 # URL interne Docker
+      - ANALYSIS_SERVICE_URL=http://analysis:5000
+      - ANALYSIS_CALLBACK_URL=http://backend:8000/video/video_id/analysis-complete
+      - PHOTO_SERVICE_URL=http://photo:5001
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   # --- Frontend ---
   frontend:
@@ -38,20 +45,50 @@ services:
     volumes:
       - ../frontend:/app
       - /app/node_modules
+      - /app/.next # Préserve le cache de build Next.js (IMPORTANT pour la vitesse)
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_PASSWORD
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
 
-  # --- Module analyse ---
-  analyse:
-    build: ../modules/analyse
-    container_name: tenuki-analyse
-    command: uvicorn api:app --host 0.0.0.0 --port 5000
+  # --- Module d'analyse ---
+  analysis:
+    build: ../modules/analysis
+    container_name: tenuki-analysis
+    command: python main.py
     volumes:
-      - ../modules/analyse:/app
-      - uploads_data:/app/uploads # Montage du même volume pour accéder aux fichiers uploadés
+      - ../modules/analysis:/app
+      - storage:/app/storage # Montage du même volume pour accéder aux fichiers uploadés
     ports:
       - "5000:5000"
 
+  # --- Module photo/completion ---
+  photo:
+    build: ../modules/photo
+    container_name: tenuki-photo
+    command: python api.py
+    volumes:
+      - ../modules/photo:/app
+      - storage:/app/storage
+    ports:
+      - "5001:5001"
+
+  # --- Module de Streaming (MediaMTX) ---
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: tenuki-mediamtx
+    restart: unless-stopped
+    ports:
+      - "1935:1935"   # RTMP (Entrée)
+      - "8080:8080"   # HLS (Sortie Web)
+      - "9997:9997"   # API (Gestion)
+      - "8554:8554"   # RTSP (Sortie pour l'analyseur)
+    volumes:
+      - ./mediamtx/mediamtx.yml:/mediamtx.yml:ro
+      # Enregistrements : Stockés dans modules/diffusion/recordings
+      - storage:/tenuki_storage
+
 volumes:
   tenuki-pgdata:
-  uploads_data: # Volume nommé pour partager les fichiers
+  storage: # Volume nommé pour partager les fichiers

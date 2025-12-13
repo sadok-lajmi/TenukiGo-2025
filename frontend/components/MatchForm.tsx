@@ -185,7 +185,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
 
     const url =
       mode === "create"
-        ? `${process.env.NEXT_PUBLIC_API_URL}/create_match`
+        ? `${process.env.NEXT_PUBLIC_API_URL}/match/create`
         : `${process.env.NEXT_PUBLIC_API_URL}/match/${initialData?.matchId}/edit`;
 
     const response = await fetch(url, {

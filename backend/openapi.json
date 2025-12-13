@@ -1,0 +1,1413 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "TenukiGo-2025 Backend API",
+    "summary": "TenukiGo OpenAPI Specifications",
+    "description": "Academic project consisting of a platform made for broadcasting and visualizing Go games for the Tenuki Go club in Brest, France.",
+    "version": "1.0"
+  },
+  "paths": {
+    "/videos": {
+      "get": {
+        "tags": [
+          "Video"
+        ],
+        "summary": "List Videos",
+        "operationId": "list_videos_videos_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/{video_id}": {
+      "get": {
+        "tags": [
+          "Video"
+        ],
+        "summary": "Get Video",
+        "operationId": "get_video_video__video_id__get",
+        "parameters": [
+          {
+            "name": "video_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Video Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/{video_id}/edit": {
+      "post": {
+        "tags": [
+          "Video"
+        ],
+        "summary": "Edit Video",
+        "operationId": "edit_video_video__video_id__edit_post",
+        "parameters": [
+          {
+            "name": "video_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Video Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_edit_video_video__video_id__edit_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/{video_id}/delete": {
+      "delete": {
+        "tags": [
+          "Video"
+        ],
+        "summary": "Delete Video",
+        "operationId": "delete_video_video__video_id__delete_delete",
+        "parameters": [
+          {
+            "name": "video_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Video Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/upload": {
+      "post": {
+        "tags": [
+          "Video"
+        ],
+        "summary": "Upload Video",
+        "operationId": "upload_video_video_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_video_video_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/{video_id}/convert-to-sgf": {
+      "post": {
+        "tags": [
+          "Video"
+        ],
+        "summary": "Generate Sgf From Video",
+        "description": "Generate SGF from an uploaded video using the Analysis module",
+        "operationId": "generate_sgf_from_video_video__video_id__convert_to_sgf_post",
+        "parameters": [
+          {
+            "name": "video_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Video Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/{video_id}/analysis-complete": {
+      "post": {
+        "tags": [
+          "Video"
+        ],
+        "summary": "Video Analysis Complete",
+        "description": "Endpoint called by Analysis module when video analysis is complete.\nDeals with both success and error cases.\n1. On success, saves the SGF to file storage and updates the video record\n2. On error, logs the error (for now, just raises an HTTPException)\n3. On invalid payload, raises HTTPException",
+        "operationId": "video_analysis_complete_video__video_id__analysis_complete_post",
+        "parameters": [
+          {
+            "name": "video_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Video Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisCallback"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matches": {
+      "get": {
+        "tags": [
+          "Match"
+        ],
+        "summary": "List Matches",
+        "operationId": "list_matches_matches_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/match/{match_id}": {
+      "get": {
+        "tags": [
+          "Match"
+        ],
+        "summary": "Get Match",
+        "operationId": "get_match_match__match_id__get",
+        "parameters": [
+          {
+            "name": "match_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Match Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/match/create": {
+      "post": {
+        "tags": [
+          "Match"
+        ],
+        "summary": "Create Match",
+        "operationId": "create_match_match_create_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_match_match_create_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/match/{match_id}/edit": {
+      "post": {
+        "tags": [
+          "Match"
+        ],
+        "summary": "Edit Match",
+        "operationId": "edit_match_match__match_id__edit_post",
+        "parameters": [
+          {
+            "name": "match_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Match Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_edit_match_match__match_id__edit_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/match/{match_id}/delete": {
+      "delete": {
+        "tags": [
+          "Match"
+        ],
+        "summary": "Delete Match",
+        "operationId": "delete_match_match__match_id__delete_delete",
+        "parameters": [
+          {
+            "name": "match_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Match Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/players": {
+      "get": {
+        "tags": [
+          "Player"
+        ],
+        "summary": "List Players",
+        "operationId": "list_players_players_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/player/{player_id}": {
+      "get": {
+        "tags": [
+          "Player"
+        ],
+        "summary": "Get Player",
+        "operationId": "get_player_player__player_id__get",
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/player/create": {
+      "post": {
+        "tags": [
+          "Player"
+        ],
+        "summary": "Create Player",
+        "operationId": "create_player_player_create_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_player_player_create_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/player/{player_id}/edit": {
+      "post": {
+        "tags": [
+          "Player"
+        ],
+        "summary": "Edit Player",
+        "operationId": "edit_player_player__player_id__edit_post",
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Player Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_edit_player_player__player_id__edit_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/player/{player_id}/delete": {
+      "delete": {
+        "tags": [
+          "Player"
+        ],
+        "summary": "Delete Player",
+        "operationId": "delete_player_player__player_id__delete_delete",
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/streams": {
+      "get": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "List Streams",
+        "operationId": "list_streams_streams_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream/{stream_id}": {
+      "get": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Get Stream",
+        "operationId": "get_stream_stream__stream_id__get",
+        "parameters": [
+          {
+            "name": "stream_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Stream Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream/start": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Start Stream",
+        "operationId": "start_stream_stream_start_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_start_stream_stream_start_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/photo": {
+      "post": {
+        "tags": [
+          "Photo"
+        ],
+        "summary": "Complete Between Photos",
+        "description": "Endpoint to send front and back photos to the Photo module for processing",
+        "operationId": "complete_between_photos_photo_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_complete_between_photos_photo_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Simple health check endpoint.",
+        "operationId": "health_check__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnalysisCallback": {
+        "properties": {
+          "video_id": {
+            "type": "integer",
+            "title": "Video Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "sgf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sgf"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "video_id",
+          "status"
+        ],
+        "title": "AnalysisCallback"
+      },
+      "Body_complete_between_photos_photo_post": {
+        "properties": {
+          "image1": {
+            "type": "string",
+            "format": "binary",
+            "title": "Image1"
+          },
+          "image2": {
+            "type": "string",
+            "format": "binary",
+            "title": "Image2"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image1",
+          "image2"
+        ],
+        "title": "Body_complete_between_photos_photo_post"
+      },
+      "Body_create_match_match_create_post": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "style": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Style"
+          },
+          "white": {
+            "type": "integer",
+            "title": "White"
+          },
+          "black": {
+            "type": "integer",
+            "title": "Black"
+          },
+          "result": {
+            "type": "string",
+            "title": "Result"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "duration": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "video": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video"
+          },
+          "video_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video Id"
+          },
+          "thumbnail": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail"
+          },
+          "sgf": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sgf"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "white",
+          "black",
+          "result"
+        ],
+        "title": "Body_create_match_match_create_post"
+      },
+      "Body_create_player_player_create_post": {
+        "properties": {
+          "firstname": {
+            "type": "string",
+            "title": "Firstname"
+          },
+          "lastname": {
+            "type": "string",
+            "title": "Lastname"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "firstname",
+          "lastname"
+        ],
+        "title": "Body_create_player_player_create_post"
+      },
+      "Body_edit_match_match__match_id__edit_post": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "style": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Style"
+          },
+          "white": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "White"
+          },
+          "black": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Black"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "duration": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "video": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video"
+          },
+          "sgf": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sgf"
+          },
+          "video_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video Id"
+          },
+          "remove_video": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remove Video"
+          },
+          "remove_sgf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remove Sgf"
+          }
+        },
+        "type": "object",
+        "title": "Body_edit_match_match__match_id__edit_post"
+      },
+      "Body_edit_player_player__player_id__edit_post": {
+        "properties": {
+          "firstname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Firstname"
+          },
+          "lastname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastname"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          }
+        },
+        "type": "object",
+        "title": "Body_edit_player_player__player_id__edit_post"
+      },
+      "Body_edit_video_video__video_id__edit_post": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Id"
+          },
+          "thumbnail": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail"
+          },
+          "remove_sgf": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remove Sgf"
+          }
+        },
+        "type": "object",
+        "title": "Body_edit_video_video__video_id__edit_post"
+      },
+      "Body_start_stream_stream_start_post": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "style": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Style"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "white": {
+            "type": "integer",
+            "title": "White"
+          },
+          "black": {
+            "type": "integer",
+            "title": "Black"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "style",
+          "white",
+          "black",
+          "url"
+        ],
+        "title": "Body_start_stream_stream_start_post"
+      },
+      "Body_upload_video_video_upload_post": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          },
+          "thumbnail": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail"
+          },
+          "match_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "file"
+        ],
+        "title": "Body_upload_video_video_upload_post"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

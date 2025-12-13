@@ -56,7 +56,7 @@ export default function PlayerForm({ mode, initialData }: PlayerFormProps) {
         dataToSend.append('lastname', formData.lastname);
         dataToSend.append('level', formData.level);
 
-        const url = mode === 'create' ? `${process.env.NEXT_PUBLIC_API_URL}/create_player` : `${process.env.NEXT_PUBLIC_API_URL}/player/${initialData?.id}/edit`;
+        const url = mode === 'create' ? `${process.env.NEXT_PUBLIC_API_URL}/player/create` : `${process.env.NEXT_PUBLIC_API_URL}/player/${initialData?.id}/edit`;
 
         const response = await fetch(url, {
             method: 'POST',

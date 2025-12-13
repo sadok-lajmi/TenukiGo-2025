@@ -14,6 +14,7 @@ interface VideoFormProps {
     title: string;
     matchId?: string;
     thumbnail?: string;
+    sgf?: string;
   };
 }
 
@@ -94,7 +95,7 @@ export default function VideoForm({ mode, initialData }: VideoFormProps) {
   };
 
   // SUBMIT ------------------------------------------
-
+const [removeSgf, setRemoveSgf] = useState<boolean>(false);
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   // Validate password
@@ -114,10 +115,11 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   if (video.file) form.append("file", video.file);
   if (thumbnail.file) form.append("thumbnail", thumbnail.file);
+  if (mode === "edit" && removeSgf) form.append("remove_sgf", "true");
 
   const url =
     mode === "create"
-      ? `${process.env.NEXT_PUBLIC_API_URL}/upload_video`
+      ? `${process.env.NEXT_PUBLIC_API_URL}/video/upload`
       : `${process.env.NEXT_PUBLIC_API_URL}/video/${initialData?.id}/edit`;
 
   console.log("Uploading to URL:", url);
@@ -197,6 +199,17 @@ const handleSubmit = async (e: React.FormEvent) => {
         onReset={() => handleResetFile(thumbnail, setThumbnail)}
         type="image"
       />
+
+      {/* Remove sgf checkbox: only in edit mode */}
+      {mode === "edit" && initialData?.sgf && (
+        <div className="flex flex-col gap-2 text-sm">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={removeSgf} onChange={(e) => {
+              setRemoveSgf(e.target.checked); }} />
+            Supprimer le sgf actuel
+          </label>
+        </div>
+      )}
 
       {/* Password */}
       <div className="flex justify-center mt-4 gap-2">

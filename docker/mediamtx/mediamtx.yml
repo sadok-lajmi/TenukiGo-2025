@@ -9,10 +9,8 @@ rtmpAddress: :1935
 hls: yes
 hlsAddress: :8080
 
-
-webrtc: yes
-webrtcAddress: :8889
-webrtcICEServers2: []
+rtsp: yes
+rtspAddress: :8554
 
 paths:
   all:
@@ -21,5 +19,5 @@ paths:
     # Chemin DANS le conteneur où MediaMTX va écrire les fichiers.
     # %path sera remplacé par 'all'.
     # %Y%m%d_%H%M%S assure un nom de fichier unique par session.
-    recordPath: /project_recordings/%path/%Y%m%d_%H%M%S
+    recordPath: /tenuki_storage/videos/%path/%Y%m%d_%H%M%S
     recordFormat: fmp4
