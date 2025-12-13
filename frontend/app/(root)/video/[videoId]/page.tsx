@@ -1,17 +1,17 @@
 "use client"
+
 import { useState, useEffect, use } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/dist/client/link"
 import DeletePopUp from "@/components/DeletePopUp"
 import GoSgfViewer from "@/components/GoSgfViewer"
-import { set } from "better-auth"
 
 interface VideoDetails {
 id: string
 title: string
 duration: string
 uploadDate: string
-videoUrl: string
+videoPath: string
 thumbnail?: string
 sgf?: string
 match?: {
@@ -46,7 +46,7 @@ useEffect(() => {
         title: data["title"],
         duration: data["duration"],
         uploadDate: data["date_upload"],
-        videoUrl: data["url"],
+        videoPath: data["path"],
         thumbnail: data["thumbnail"],
         sgf: data["video_sgf"],
         match: data["match_id"] ? {
@@ -131,9 +131,9 @@ return (
     <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
       <div className="w-full rounded-xl overflow-hidden bg-black">
         <video
-          src={`${process.env.NEXT_PUBLIC_API_URL}${video.videoUrl}`}
+          src={`${process.env.NEXT_PUBLIC_STORAGE_URL}${video.videoPath}`}
           controls
-          poster={video.thumbnail ? `${process.env.NEXT_PUBLIC_API_URL}${video.thumbnail}` : undefined}
+          poster={video.thumbnail ? `${process.env.NEXT_PUBLIC_STORAGE_URL}${video.thumbnail}` : undefined}
           width="100%"
           height="100%"
         />
@@ -157,7 +157,7 @@ return (
       {/* SGF File (of the video if it exists) */}
       {video?.sgf && (
         <Link
-          href={`${process.env.NEXT_PUBLIC_API_URL}${video.sgf}`}
+          href={`${process.env.NEXT_PUBLIC_STORAGE_URL}${video.sgf}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
           Exporter le SGF 
@@ -165,7 +165,7 @@ return (
       )}
       {/* SGF Viewer if the sgf exists */}
       {video?.sgf && (
-        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_API_URL}${video.sgf}`} />
+        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${video.sgf}`} />
       )}
     </section>
 
@@ -219,7 +219,7 @@ return (
         {/* SGF File (if exists) */}
         {match?.sgf && (
           <Link
-            href={`${process.env.NEXT_PUBLIC_API_URL}${match.sgf}`}
+            href={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.sgf}`}
             className="block text-blue-500 underline hover:text-blue-600 font-medium"
           >
             Importer le SGF
@@ -227,7 +227,7 @@ return (
         )}
         {/* SGF Viewer if the sgf exists */}
         {(match?.sgf && !(video?.sgf)) && (
-          <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_API_URL}${match.sgf}`} />
+          <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.sgf}`} />
         )}
       </section>
     ) : (
