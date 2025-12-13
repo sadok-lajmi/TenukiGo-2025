@@ -1,13 +1,15 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 from pathlib import Path
 import requests
 import os
 
 from api.utils.db_services import db
-from api.utils.file_storage import upload_file, upload_file_from_content
+from api.utils.file_storage import save_file, save_file_from_content
 from config.settings import (
+    STORAGE_DIR,
     VIDEO_DIR,
     THUMBNAIL_DIR,
     SGF_DIR,
@@ -29,7 +31,7 @@ def list_videos():
     cur = conn.cursor()
     cur.execute("""
         SELECT 
-            v.video_id, v.title, v.path, v.url, v.thumbnail,
+            v.video_id, v.title, v.path, v.thumbnail,
             v.date_upload, v.duration, v.match_id, m.date AS match_date
         FROM video v
         LEFT JOIN match m ON v.match_id = m.match_id
@@ -46,7 +48,7 @@ def get_video(video_id: int):
     cur = conn.cursor()
     cur.execute("""
         SELECT 
-            v.video_id, v.title, v.path, v.url, v.thumbnail,
+            v.video_id, v.title, v.path, v.thumbnail,
             v.date_upload, v.duration, v.sgf AS video_sgf,
             m.match_id, m.style, m.result, m.description,
             m.date AS match_date,
@@ -86,12 +88,16 @@ async def edit_video(
         raise HTTPException(status_code=404, detail="Video not found")
 
     # Start with current values
-    thumb_url = video["thumbnail"]
+    thumb_path = video["thumbnail"]
 
     # --- Handle thumbnail replacement ---
-    if thumbnail:
-        _, thumb_url = await upload_file(thumbnail, THUMBNAIL_DIR)
-
+    try:
+        if thumbnail:
+            thumb_path = await save_file(thumbnail, THUMBNAIL_DIR)
+    except Exception as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail=f"Thumbnail upload failed: {str(e)}")
+    
     cur.execute("""
         UPDATE video
         SET
@@ -101,7 +107,7 @@ async def edit_video(
         WHERE video_id = %s
     """, (
         title,
-        thumb_url,
+        thumb_path,
         match_id,
         video_id,
     ))
@@ -141,27 +147,18 @@ def delete_video(video_id: int):
 @router.post("/video/upload")
 async def upload_video(
     title: str = Form(...),
-    file: UploadFile = File(...),  # Compatible avec le nom de champ 'file' attendu par le frontend
+    file: UploadFile = File(...),
     thumbnail: Optional[UploadFile] = File(None),
-    match_id: Optional[str] = Form(None)  # Compatible avec le nom de champ 'match_id'
-):
-    # 1. Traitement du match_id pour assurer qu'il est un entier ou None
-    match_id_int = None
-    if match_id and match_id.strip() and match_id.lower() != "none":
-        try:
-            match_id_int = int(match_id)
-        except ValueError:
-            # En cas de valeur invalide (e.g., texte), on l'ignore silencieusement
-            pass
-    
+    match_id: Optional[int] = Form(None)
+):  
     try:
-        # 2. Sauvegarde du fichier vidéo (Utilisation de la fonction utilitaire asynchrone)
-        video_path, video_url = await upload_file(file, VIDEO_DIR)
+        # 2. Save video file
+        video_path= await save_file(file, VIDEO_DIR)
 
-        # 3. Sauvegarde de la miniature
-        thumb_url = None
+        # 3. Save thumbnail if any
+        thumb_path = None
         if thumbnail:
-            _, thumb_url = await upload_file(thumbnail, THUMBNAIL_DIR)
+            thumb_path = await save_file(thumbnail, THUMBNAIL_DIR)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
@@ -171,15 +168,15 @@ async def upload_video(
     cur = conn.cursor()
     
     cur.execute("""
-        INSERT INTO video (title, path, url, thumbnail, match_id)
+        INSERT INTO video (title, path, thumbnail, date_upload, match_id)
         VALUES (%s, %s, %s, %s, %s)
         RETURNING video_id
     """, (
         title,
         video_path,
-        video_url,
-        thumb_url,
-        match_id_int
+        thumb_path,
+        datetime.now(),
+        match_id
     ))
     
     result = cur.fetchone()
@@ -191,8 +188,8 @@ async def upload_video(
         "success": True,
         "message": "Video uploaded successfully",
         "video_id": video_id,
-        "video_url": video_url,
-        "thumbnail_url": thumb_url
+        "video_path": video_path,
+        "thumbnail_path": thumb_path
     }
 
 @router.post("/video/{video_id}/convert-to-sgf")
@@ -208,16 +205,16 @@ def generate_sgf_from_video(video_id: int):
         conn.close()
         raise HTTPException(status_code=404, detail="Video not found")
     
-    video_url = video['url']
-    if not video_url:
+    video_path = video['path']
+    if not video_path:
         conn.close()
-        raise HTTPException(status_code=400, detail="Video URL is missing")
+        raise HTTPException(status_code=400, detail="Video path is missing")
     
     # Call Analysis module API
     try:
         requests.post(ANALYSIS_SERVICE_URL + "/video/process",
                                  json={"video_id": video_id,
-                                       "filename": os.path.basename(video_url),
+                                       "video_path": os.path.join(STORAGE_DIR, video_path),
                                        "callback_url": ANALYSIS_CALLBACK_URL.replace("video_id", str(video_id))
                                        },
                                  timeout=300)
@@ -251,14 +248,14 @@ def video_analysis_complete(video_id: int, payload: AnalysisCallback):
     if payload.status == "success" and payload.sgf:
         try:
             # Save SGF to file storage
-            _, sgf_url = upload_file_from_content(
+            sgf_path = save_file_from_content(
                 f"video_{video_id}.sgf", 
                 payload.sgf.encode('utf-8'), 
                 SGF_DIR
             )
             
             # Update video record
-            cur.execute("UPDATE video SET sgf = %s WHERE video_id = %s", (sgf_url, video_id))
+            cur.execute("UPDATE video SET sgf = %s WHERE video_id = %s", (sgf_path, video_id))
             conn.commit()
             conn.close()
             return {"message": "SGF saved successfully"}

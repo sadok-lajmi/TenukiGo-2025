@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 
 from api.utils.db_services import db
-from api.utils.file_storage import upload_file
+from api.utils.file_storage import save_file
 from config.settings import (
     VIDEO_DIR,
     THUMBNAIL_DIR,
@@ -44,7 +44,7 @@ def get_match(match_id: int):
             m.match_id, m.title, m.result, m.style,
             m.white_id AS white, m.black_id AS black,
             m.duration, m.date,
-            v.video_id, v.url AS video, v.thumbnail, v.sgf AS video_sgf,
+            v.video_id, v.path AS video, v.thumbnail, v.sgf AS video_sgf,
             m.sgf
         FROM match m
         LEFT JOIN video v ON m.match_id = v.match_id
@@ -76,32 +76,32 @@ async def create_match(
     conn = db()
     cur = conn.cursor()
 
-    sgf_url = None
+    sgf_path = None
     if sgf:
-        # Use the utility to save the SGF file
-        _, sgf_url = await upload_file(sgf, SGF_DIR)
+        sgf_path = await save_file(sgf, SGF_DIR)
 
     # Insert Match record first
     cur.execute("""
         INSERT INTO match (title, style, white_id, black_id, result, date, duration, description, sgf)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING match_id
-    """, (title, style, white, black, result, date, duration, description, sgf_url)) # sgf_url is a str
+    """, (title, style, white, black, result, date, duration, description, sgf_path))
     match_id = cur.fetchone()["match_id"]
 
     if video:
-        # Save video and get URLs
-        video_path, video_url = await upload_file(video, VIDEO_DIR)
+        # Save video
+        video_path = await save_file(video, VIDEO_DIR)
 
-        thumb_url = None
+        # Save thumbnail if any
+        thumb_path = None
         if thumbnail:
-            _, thumb_url = await upload_file(thumbnail, THUMBNAIL_DIR)
+            thumb_path = await save_file(thumbnail, THUMBNAIL_DIR)
         
         # Insert Video record
         cur.execute("""
-            INSERT INTO video (title, path, url, thumbnail, match_id)
+            INSERT INTO video (title, url, thumbnail, date_upload, match_id)
             VALUES (%s, %s, %s, %s, %s)
-        """, (title, video_path, video_url, thumb_url, match_id))
+        """, (title, video_path, thumb_path, datetime.now(), match_id))
         
     elif video_id:
         cur.execute("UPDATE video SET match_id = %s WHERE video_id = %s", (match_id, video_id))
@@ -164,7 +164,7 @@ async def edit_match(
     sgf_path = match["sgf"]
 
     if sgf:  # replace SGF
-        _, sgf_path = await upload_file(sgf, SGF_DIR)
+        sgf_path = await save_file(sgf, SGF_DIR)
 
     elif remove_sgf == "true" and sgf_path:
         # delete old file
@@ -187,13 +187,13 @@ async def edit_match(
 
     # CASE B — NEW VIDEO UPLOAD
     if video:  
-        video_path, video_url = await upload_file(video, VIDEO_DIR)
+        video_path = await save_file(video, VIDEO_DIR)
 
         cur.execute("""
-            INSERT INTO video (title, path, url, thumbnail)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO video (title, path, date_upload)
+            VALUES (%s, %s, %s)
             RETURNING video_id
-        """, (title, video_path, video_url, None))
+        """, (title, video_path, datetime.now()))
 
         new_video_id = cur.fetchone()["video_id"]
         # Remove old association if any
