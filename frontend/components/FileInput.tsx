@@ -37,7 +37,7 @@ const FileInput = ({
         {type === "video" ? (
           <video src={previewUrl} controls />
         ) : type === "image" ? (
-          <Image src={previewUrl} alt={`Selected ${id}`} fill />
+          <img src={previewUrl} alt={`Selected ${id}`} />
         ) : (
           <Image src="/assets/icons/check.svg" alt="check icon" fill/>
         )}

@@ -36,7 +36,7 @@ export default function VideoForm({ mode, initialData }: VideoFormProps) {
   const [thumbnail, setThumbnail] = useState({
     file: null as File | null,
     previewUrl: initialData?.thumbnail
-      ? `${process.env.NEXT_PUBLIC_UPLOADS_URL}${initialData.thumbnail}`
+      ? `${process.env.NEXT_PUBLIC_STORAGE_URL}${initialData.thumbnail}`
       : "",
     inputRef: useRef<HTMLInputElement>(null),
   });
