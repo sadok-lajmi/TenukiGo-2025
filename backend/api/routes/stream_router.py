@@ -76,7 +76,9 @@ def start_stream(
     cur.execute("""
         INSERT INTO stream (url, match_id)
         VALUES (%s, %s)
+        RETURNING stream_id
     """, (url, match_id))
+    stream_id = cur.fetchone()["stream_id"]
     conn.commit()
     conn.close()
 
@@ -87,4 +89,4 @@ def start_stream(
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Failed to start stream analysis: {str(e)}")
 
-    return {"message": "Stream started", "match_id": match_id}
+    return {"message": "Stream started", "stream_id": stream_id}
