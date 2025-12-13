@@ -1,7 +1,8 @@
-Flask==2.3.3
-numpy==1.24.3
-tensorflow
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+pydantic>=2.6.0
+numpy>=1.24.0
+opencv-python>=4.8.0
 ultralytics>=8.0.0
-opencv-python-headless
-Pillow>=9.0.0
-Werkzeug>=2.3.0
+tensorflow>=2.13.0
