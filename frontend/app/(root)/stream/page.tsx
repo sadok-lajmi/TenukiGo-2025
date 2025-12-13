@@ -102,15 +102,15 @@ const Page = () => {
 
   return (
     <div className='wrapper-md stream-page'>
-      <h1>Live Stream</h1>
+      <h1>Lancez un LiveStream</h1>
       <form className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
         <h1 className='text-2xl font-semibold'>Match info</h1>
         <FormField 
           id='title'
-          label='Stream Title *'
+          label='Titre *'
           value={formData.title}
           onChange={handleInputChange}
-          placeholder='Enter the title of your stream'
+          placeholder='Entrez le titre de la partie diffusée'
         />
         <FormField 
           id='style'
@@ -127,21 +127,21 @@ const Page = () => {
         />
         <FormField 
           id='player_b'
-          label='Player for Black *'
+          label='Joueur (Noir) *'
           as = 'search'
           options={players}
           value={formData.player_b}
           onChange={handleInputChange}
-          placeholder='first and last name'
+          placeholder='prénom et nom'
         />
         <FormField 
           id='player_w'
-          label='Player for White *'
+          label='Joueur (Blanc) *'
           as ='search'
           options={players}
           value={formData.player_w}
           onChange={handleInputChange}
-          placeholder='first and last name'
+          placeholder='prénom et nom'
         />
         <FormField 
           id='description'
@@ -149,12 +149,12 @@ const Page = () => {
           value={formData.description}
           onChange={handleInputChange}
           as='textarea'
-          placeholder='Describe the streamed game'
+          placeholder='Décrivez la partie diffusée'
         />
       </form>
 
       <form className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
-        <h1 className='text-2xl font-semibold'>Stream Preview</h1>
+        <h1 className='text-2xl font-semibold'>Aperçu du Stream</h1>
         <div className="flex gap-2 items-end"> 
             <div className="flex-grow">
                 <FormField 

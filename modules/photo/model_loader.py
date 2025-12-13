@@ -9,6 +9,7 @@ import os
 import numpy as np
 from pathlib import Path
 from typing import Optional
+from settings import settings
 
 
 class AIModelLoader:
@@ -30,8 +31,14 @@ class AIModelLoader:
             Dictionary with loading status and info
         """
         if legacy_path is None:
-            # Default path to legacy model
-            legacy_path = "/home/pmar/Documents/Commande_Entreprise/Tenuki2025/Tenuki2025/src/modules/analyse/models/modelCNN.keras"
+            legacy_path = settings.LEGACY_MODEL_PATH
+            
+        if legacy_path is None:
+            return {
+                "success": False,
+                "message": "No legacy model path configured. Set LEGACY_MODEL_PATH environment variable.",
+                "model_loaded": False
+            }
         
         try:
             # Check if file exists

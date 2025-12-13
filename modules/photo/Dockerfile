@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code
 COPY . .
 
-# Create uploads directory with proper structure
-RUN mkdir -p /app/uploads/sgf /app/uploads/images
+# Create uploads directory
+RUN mkdir -p /app/uploads
 
 # Set volume for uploads (will be mounted by docker-compose)
 VOLUME ["/app/uploads"]
@@ -24,5 +24,5 @@ VOLUME ["/app/uploads"]
 # Expose port
 EXPOSE 5001
 
-# Run the application
-CMD ["python", "api.py"]
+# Run the FastAPI application with uvicorn
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "5001"]

@@ -115,7 +115,7 @@ async def edit_video(
     if remove_sgf:
         cur.execute("UPDATE video SET sgf = NULL WHERE video_id = %s", (video_id,))
         # delete the SGF file from storage
-        p = Path(video["sgf"])
+        p = Path(SGF_DIR) / Path(video["sgf"])
         if p.exists():
             p.unlink()
 
