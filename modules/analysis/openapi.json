@@ -243,9 +243,9 @@
             "type": "integer",
             "title": "Video Id"
           },
-          "filename": {
+          "video_path": {
             "type": "string",
-            "title": "Filename"
+            "title": "Video Path"
           },
           "callback_url": {
             "type": "string",
@@ -255,7 +255,7 @@
         "type": "object",
         "required": [
           "video_id",
-          "filename",
+          "video_path",
           "callback_url"
         ],
         "title": "VideoAnalysisRequest"
