@@ -24,7 +24,7 @@ export default function Page() {
         date: data.date,
         thumbnail: data.thumbnail,
         sgf: data.sgf,
-        videoUrl: data.video,
+        videoPath: data.video,
         videoId: data.video_id,
       });
     }

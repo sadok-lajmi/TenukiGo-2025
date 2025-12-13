@@ -3,6 +3,7 @@ import FormField from "@/components/FormField";
 import VideoPlayer from "@/components/VideoPlayer";
 import { ChangeEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { DEFAULT_HLS_URL } from "@/constants";
 
 const Page = () => {
   const [password, setPassword] = useState("");
@@ -148,9 +149,9 @@ const Page = () => {
           label='Stream URL'
           value={streamUrl}
           onChange={handleStreamUrlChange}
-          placeholder='Default stream URL : http://localhost:8080/live/streamkey/index.m3u8'
+          placeholder={`Default stream URL : ${DEFAULT_HLS_URL}`}
         />
-        <VideoPlayer url={streamUrl ? streamUrl : "http://localhost:8080/live/streamkey/index.m3u8"} />
+        <VideoPlayer url={streamUrl ? streamUrl : DEFAULT_HLS_URL} />
       </form>
       {error && <p className="text-red-500 mt-2">{error}</p>}
       <div className="flex justify-center mt-4 gap-2">   

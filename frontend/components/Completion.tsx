@@ -69,12 +69,12 @@ const handleResetFile = (state: any, setter: Function) => {
 
       {error && <p className="mt-4 text-red-600">{error}</p>}
 
-      <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_API_URL}${sgfUrl}`} upload={false} />
+      <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${sgfUrl}`} upload={false} />
 
       {sgfUrl && (
         <div className="mt-4 w-full max-w-3xl">
         <Link
-          href={`${process.env.NEXT_PUBLIC_API_URL}${sgfUrl}`}
+          href={`${process.env.NEXT_PUBLIC_STORAGE_URL}${sgfUrl}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
           Exporter le SGF 

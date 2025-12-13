@@ -1,11 +1,8 @@
 "use client";
 
-import GoViewerLive from "@/components/go/GoViewerLive";
 import VideoPlayer from "@/components/VideoPlayer";
 import Link from "next/link";
-import { useState, useEffect, use } from "react";
-
-const hlsUrl = "http://localhost:8080/live/streamkey/index.m3u8";
+import { useState, useEffect } from "react";
 
 const Page = () => {
 

@@ -3,9 +3,7 @@
 import Header from '@/components/Header'
 import VideoCard from '@/components/VideoCard'
 import DropdownList from '@/components/DropdownList'
-import {use, useEffect, useState} from 'react'
-import { set } from 'better-auth';
-
+import {useEffect, useState} from 'react'
 
 const Page = () => {
 
@@ -55,7 +53,7 @@ const Page = () => {
           <p>No videos found.</p>
         ) : (
           sortedVideos.map((video) => (
-            <VideoCard key={video['video_id']} id={video['video_id']} title={video['title']} thumbnail={`${process.env.NEXT_PUBLIC_UPLOADS_URL ?? ""}${video['thumbnail']}`} createdAt={new Date(video['date_upload'])} duration={video['duration']} />
+            <VideoCard key={video['video_id']} id={video['video_id']} title={video['title']} thumbnail={`${process.env.NEXT_PUBLIC_STORAGE_URL}${video['thumbnail']}`} createdAt={new Date(video['date_upload'])} duration={video['duration']} />
           ))
         )}
       </section>

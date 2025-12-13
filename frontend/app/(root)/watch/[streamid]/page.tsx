@@ -5,10 +5,9 @@ import Link from "next/dist/client/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import { DEFAULT_HLS_URL } from "@/constants";
 
 let socket: any;
-
-const hlsUrl = "http://localhost:8080/live/streamkey/index.m3u8"; // default URL of the HLS stream
 
 interface StreamDetails {
     stream_id: string;
@@ -69,7 +68,7 @@ const Page = () => {
             
             {/* Conteneur Vidéo (70%) */}
             <div className="md:col-span-7">
-                <VideoPlayer url={stream?.url ? stream.url : hlsUrl} />
+                <VideoPlayer url={stream?.url ? stream.url : DEFAULT_HLS_URL} />
                 <h1 className="text-xl font-semibold text-dark-100">{stream?.title}</h1>
             </div>
 
