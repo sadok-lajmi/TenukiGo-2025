@@ -7,7 +7,7 @@ const Page = () => {
         
     return (
         <div className="wrapper-md upload-page">
-            <h1>Upload a video</h1>
+            <h1>Ajouter une Vidéo</h1>
             <VideoForm mode="create" />
         </div>
     )

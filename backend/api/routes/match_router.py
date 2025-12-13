@@ -99,7 +99,7 @@ async def create_match(
         
         # Insert Video record
         cur.execute("""
-            INSERT INTO video (title, url, thumbnail, date_upload, match_id)
+            INSERT INTO video (title, path, thumbnail, date_upload, match_id)
             VALUES (%s, %s, %s, %s, %s)
         """, (title, video_path, thumb_path, datetime.now(), match_id))
         

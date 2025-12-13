@@ -6,7 +6,7 @@ const Page = () => {
     
     return (
       <div className="wrapper-md upload-page">
-        <h1>Upload Match</h1>
+        <h1>Ajouter une Partie</h1>
         <MatchForm mode="create" />
       </div>
     )
