@@ -89,7 +89,6 @@ const Page = () => {
                 ) : stream ? (
                     <>
                         <VideoPlayer url={stream.url} />
-                        <h1 className="text-xl font-semibold text-dark-100">{stream.title}</h1>
                     </>
                 ) : (
                     <div className="w-full aspect-video bg-gray-200 flex items-center justify-center">
@@ -104,10 +103,10 @@ const Page = () => {
             </div>
 
             {/* Match Info Section */}
-            <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
+            <section className="flex flex-col md:col-span-10 gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
 
                 <div className="flex justify-center">
-                <p className="font-semibold text-lg text-dark-100 text-yellow-700">{match.title}</p>
+                    <h1 className="text-2xl font-bold text-dark-100">{match.title}</h1>
                 </div>
 
                 {match.style && (
@@ -137,7 +136,7 @@ const Page = () => {
                 </div>
 
                 {match.description && (
-                <div className="pt-3 mt-2 border-t border-gray-20">
+                <div className="flex justify-between items-center border-t border-gray-20 pt-3 mt-2">
                     <p className="font-semibold text-dark-100 mb-1">Description:</p>
                     <p className="text-sm text-gray-100 leading-relaxed">{match.description}</p>
                 </div>
