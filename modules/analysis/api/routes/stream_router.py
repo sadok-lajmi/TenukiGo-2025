@@ -16,7 +16,7 @@ class ProcessStreamingRequest(BaseModel):
     ws_url: str # URL du WebSocket du Backend
 
 @router.post("/stream/start")
-def start_stream(request: ProcessStreamingRequest):
+async def start_stream(request: ProcessStreamingRequest):
     """
     Démarre le traitement d'un flux live.
     Garantit qu'un seul processeur tourne par match_id.
@@ -35,8 +35,7 @@ def start_stream(request: ProcessStreamingRequest):
     )
 
     # 2. Lancer la tâche de fond (dans la boucle d'événements FastAPI)
-    loop = asyncio.get_event_loop()
-    task = loop.create_task(processor.run())
+    task = asyncio.create_task(processor.run())
 
     # 3. Stocker l'instance du processeur ET la tâche pour l'annulation
     # On ajoute la référence de la tâche au processeur
@@ -46,7 +45,7 @@ def start_stream(request: ProcessStreamingRequest):
     return {"status": "stream processing started"}
 
 @router.post("/stream/stop")
-def stop_stream(match_id: int):
+async def stop_stream(match_id: int):
     """Arrête proprement le processeur de streaming."""
     if match_id not in ACTIVE_PROCESSORS:
         raise HTTPException(status_code=404, detail="Stream non trouvé.")
