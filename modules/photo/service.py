@@ -381,7 +381,7 @@ class PhotoAnalysisService:
     
     def fill_photo(self, image1_path: str, image2_path: str, 
                    use_ai: bool = True, metadata: Optional[Dict[str, str]] = None,
-                   save_file: bool = False, output_dir: str = "/app/uploads/sgf") -> str:
+                   save_file: bool = False, output_dir: Optional[str] = None) -> str:
         """
         Complete photo → SGF pipeline: process two photos and generate SGF.
         
@@ -435,6 +435,9 @@ class PhotoAnalysisService:
         # Save file if requested
         if save_file:
             import uuid
+            from settings import settings
+            if output_dir is None:
+                output_dir = settings.get_upload_folder()
             filename = f"game_{uuid.uuid4().hex[:8]}.sgf"
             os.makedirs(output_dir, exist_ok=True)
             file_path = os.path.join(output_dir, filename)
