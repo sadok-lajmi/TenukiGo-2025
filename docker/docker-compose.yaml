@@ -76,7 +76,7 @@ services:
 
   # --- Module de Streaming (MediaMTX) ---
   mediamtx:
-    image: bluenviron/mediamtx:latest
+    image: bluenviron/mediamtx:1.15.4
     container_name: tenuki-mediamtx
     restart: unless-stopped
     ports:
