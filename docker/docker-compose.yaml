@@ -29,6 +29,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - DB_URL=postgresql://go_user:secret@db:5432/go_db
       - ANALYSIS_SERVICE_URL=http://analysis:5000
       - ANALYSIS_CALLBACK_URL=http://backend:8000/video/video_id/analysis-complete
       - PHOTO_SERVICE_URL=http://photo:5001
