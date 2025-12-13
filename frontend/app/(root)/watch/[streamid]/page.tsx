@@ -1,13 +1,10 @@
 'use client';
+
 import GoViewerLive from "@/components/go/GoViewerLive";
 import VideoPlayer from "@/components/VideoPlayer";
 import Link from "next/dist/client/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
-import { DEFAULT_HLS_URL } from "@/constants";
-
-let socket: any;
 
 interface StreamDetails {
     stream_id: string;
@@ -16,7 +13,8 @@ interface StreamDetails {
 }
 
 const Page = () => {
-    const [stream, setStream] = useState<StreamDetails>(null as unknown as StreamDetails);
+    const [stream, setStream] = useState<StreamDetails | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [match, setMatch] = useState<{id: string, title: string, date: string, black: string, white: string, style: string, description: string}>({id: "", title: "", date: "", black: "", white: "", style: "", description: ""});
     const [whiteId, setWhiteId] = useState<string>("");
     const [blackId, setBlackId] = useState<string>("");
@@ -27,40 +25,56 @@ const Page = () => {
     useEffect(() => {
         const fetchStreamData = async () => {
             if (streamId) {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stream/${streamId}`);
-                const data = await response.json();
-                if (data) {
-                    setStream({
-                        stream_id: data.stream_id,
-                        url: data.url,
-                        title: data.title
-                    });
-                    // Fetch more match info if needed
-                    setMatch({
-                        id: data.match_id || "",
-                        title: data.title || "",
-                        date: data.date || Date.now().toString().slice(0,10),
-                        black: data.black || "",
-                        white: data.white || "",
-                        style: data.style || "",
-                        description: data.description || ""
-                    });
-                    setWhiteId(data.white_id || "");
-                    setBlackId(data.black_id || "");
-                } 
+                try {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stream/${streamId}`);
+                    const data = await response.json();
+                    if (data) {
+                        setStream({
+                            stream_id: data.stream_id,
+                            url: data.url,
+                            title: data.title
+                        });
+                        // Fetch more match info if needed
+                        setMatch({
+                            id: data.match_id || "",
+                            title: data.title || "",
+                            date: data.date || Date.now().toString().slice(0,10),
+                            black: data.black || "",
+                            white: data.white || "",
+                            style: data.style || "",
+                            description: data.description || ""
+                        });
+                        setWhiteId(data.white_id || "");
+                        setBlackId(data.black_id || "");
+                    }
+                } catch (error) {
+                    console.error("Erreur lors de la récupération des données du stream:", error);
+                } finally {
+                    setIsLoading(false);
+                }
             }
         };
         fetchStreamData();
     }, [streamId]);
 
     useEffect(() => {
-    socket = io(`ws://backend:8000/ws/match/${match.id}`);
-
-    socket.on("update", (sgf: string) => {
-      setSgfUrl(sgf);
-    });
-
-    return () => socket.disconnect();
+        if (!match.id) return;
+        const ws = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL}${match.id}`);
+        ws.onopen = () => {
+            console.log("Connecté au WebSocket du match");
+        };
+        ws.onmessage = (event) => {
+            console.log("Nouveau SGF reçu", event.data);
+            setSgfUrl(event.data);
+        };
+        ws.onerror = (error) => {
+            console.error("Erreur WebSocket:", error);
+        };
+        return () => {
+            if (ws.readyState === 1) { // If the connection is open
+            ws.close();
+            }
+        };
     }, [match.id]);
 
     return (
@@ -68,8 +82,20 @@ const Page = () => {
             
             {/* Conteneur Vidéo (70%) */}
             <div className="md:col-span-7">
-                <VideoPlayer url={stream?.url ? stream.url : DEFAULT_HLS_URL} />
-                <h1 className="text-xl font-semibold text-dark-100">{stream?.title}</h1>
+                {isLoading ? (
+                    <div className="w-full aspect-video bg-black flex items-center justify-center text-white">
+                        Chargement du stream...
+                    </div>
+                ) : stream ? (
+                    <>
+                        <VideoPlayer url={stream.url} />
+                        <h1 className="text-xl font-semibold text-dark-100">{stream.title}</h1>
+                    </>
+                ) : (
+                    <div className="w-full aspect-video bg-gray-200 flex items-center justify-center">
+                        Stream introuvable
+                    </div>
+                )}
             </div>
 
             {/* Conteneur Go (30%) */}
