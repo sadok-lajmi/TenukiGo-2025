@@ -39,11 +39,22 @@ const Page = () => {
     fetchPlayers();
   }, []);
 
-  // manage the preview video player
+  // streamUrl is the state of the stream URL input
   const [streamUrl, setStreamUrl] = useState("");
+  // previewUrl is the state of the video player preview URL
+  const [previewUrl, setPreviewUrl] = useState("");
+
   const handleStreamUrlChange = (e: ChangeEvent<HTMLInputElement>) => {
     setStreamUrl(e.target.value);
   };
+
+  // Validate URL and launch preview
+  const handleLoadPreview = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent form submission
+    setPreviewUrl(streamUrl);
+  };
+
+  const activeUrl = previewUrl ? previewUrl : DEFAULT_HLS_URL;
 
   // handle submit
   const [error, setError] = useState<string | null>(null);
@@ -144,14 +155,28 @@ const Page = () => {
 
       <form className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
         <h1 className='text-2xl font-semibold'>Stream Preview</h1>
-        <FormField 
-          id='stream_url'
-          label='Stream URL'
-          value={streamUrl}
-          onChange={handleStreamUrlChange}
-          placeholder={`Default stream URL : ${DEFAULT_HLS_URL}`}
+        <div className="flex gap-2 items-end"> 
+            <div className="flex-grow">
+                <FormField 
+                id='stream_url'
+                label='Stream URL'
+                value={streamUrl}
+                onChange={handleStreamUrlChange}
+                placeholder={`Default stream URL : ${DEFAULT_HLS_URL}`}
+                />
+            </div>
+            <button 
+                onClick={handleLoadPreview}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded mb-1"
+                style={{height: 'fit-content'}}
+            >
+                Charger
+            </button>
+        </div>
+        <VideoPlayer 
+            key={activeUrl} 
+            url={activeUrl} 
         />
-        <VideoPlayer url={streamUrl ? streamUrl : DEFAULT_HLS_URL} />
       </form>
       {error && <p className="text-red-500 mt-2">{error}</p>}
       <div className="flex justify-center mt-4 gap-2">   
