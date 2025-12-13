@@ -10,13 +10,16 @@ router = APIRouter()
 # Clé: match_id, Valeur: Instance de StreamingProcessor
 ACTIVE_PROCESSORS = {} 
 
-class ProcessStreamingRequest(BaseModel):
+class StartStreamingRequest(BaseModel):
     match_id: int
     rtsp_url: str
     ws_url: str # URL du WebSocket du Backend
 
+class StopStreamingRequest(BaseModel):
+    match_id: int
+
 @router.post("/stream/start")
-async def start_stream(request: ProcessStreamingRequest):
+async def start_stream(request: StartStreamingRequest):
     """
     Démarre le traitement d'un flux live.
     Garantit qu'un seul processeur tourne par match_id.
@@ -45,12 +48,12 @@ async def start_stream(request: ProcessStreamingRequest):
     return {"status": "Stream processing started"}
 
 @router.post("/stream/stop")
-async def stop_stream(match_id: int):
+async def stop_stream(request: StopStreamingRequest):
     """Arrête proprement le processeur de streaming."""
-    if match_id not in ACTIVE_PROCESSORS:
+    if request.match_id not in ACTIVE_PROCESSORS:
         raise HTTPException(status_code=404, detail="Stream non trouvé.")
 
-    processor: StreamingProcessor = ACTIVE_PROCESSORS[match_id]
+    processor: StreamingProcessor = ACTIVE_PROCESSORS[request.match_id]
     
     # 1. Demander au processeur de s'arrêter (change son flag is_running)
     processor.stop() 
@@ -58,10 +61,10 @@ async def stop_stream(match_id: int):
     # 2. Annuler la tâche asynchrone directement
     if not processor.task and not processor.task.done():
         processor.task.cancel()
-        print(f"🛑 Tâche asyncio pour match {match_id} annulée.")
+        print(f"🛑 Tâche asyncio pour match {request.match_id} annulée.")
     
     # 3. Supprimer la référence
-    del ACTIVE_PROCESSORS[match_id]
+    del ACTIVE_PROCESSORS[request.match_id]
 
     return {"status": "Stream processing stopped"}
 
