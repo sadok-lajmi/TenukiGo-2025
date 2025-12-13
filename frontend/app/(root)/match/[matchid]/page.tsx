@@ -109,7 +109,7 @@ export default function MatchDetailsPage() {
           href={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.sgfFile}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
-          Importer le SGF
+          Exporter le SGF
         </Link>
       )}
 

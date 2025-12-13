@@ -16,12 +16,9 @@ const VideoCard = ({ id, title, thumbnail, createdAt, duration }: VideoCardProps
   
   return (
     <Link href={`/video/${id}`} className='video-card'>
-        <Image 
+        <img 
           src={imgSrc} 
-          alt='thumbnail' 
-          onError={() => {
-            if (imgSrc !== fallback) setImgSrc(fallback)
-          }} 
+          alt='thumbnail'
           width={290} 
           height={160} 
           className='thumbnail' 
