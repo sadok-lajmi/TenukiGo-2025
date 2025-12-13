@@ -92,7 +92,9 @@ def create_stream(
     """, (sgf_path, match_id))
 
     conn.commit()
-    conn.close()    
+    conn.close()
+
+    start_stream(stream_id)
 
     return {"message": "Stream created", "stream_id": stream_id}
 
