@@ -17,10 +17,10 @@ const Page = () => {
   });
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { id, value } = e.target;
     setFormData((prevState) => ({
       ...prevState,
-      [name]: value,
+      [id]: value,
     }));
   };
 
