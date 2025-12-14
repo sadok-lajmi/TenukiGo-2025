@@ -146,7 +146,6 @@ const handleCompletetion = async () => {
 
       {error && <p className="mt-4 text-red-600">{error}</p>}
 
-      {console.log('🔍 Rendering GoSgfViewer with sgfUrl:', sgfUrl)}
       <GoSgfViewer sgfUrl={sgfUrl || undefined} upload={false} />
 
       {sgfUrl && (
