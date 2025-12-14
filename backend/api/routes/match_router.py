@@ -1,11 +1,12 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from typing import Optional
-from pathlib import Path
 from datetime import datetime
+import os
 
 from api.utils.db_services import db
 from api.utils.file_storage import save_file
 from config.settings import (
+    STORAGE_DIR,
     VIDEO_DIR,
     THUMBNAIL_DIR,
     SGF_DIR
@@ -168,9 +169,9 @@ async def edit_match(
 
     elif remove_sgf == "true" and sgf_path:
         # delete old file
-        p = Path(sgf_path)
-        if p.exists():
-            p.unlink()
+        p = os.path.join(STORAGE_DIR, sgf_path)
+        if os.path.exists(p):
+            os.remove(p)
         sgf_path = None
 
     # save sgf path

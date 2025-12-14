@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
-from pathlib import Path
 import requests
 import os
 
@@ -115,9 +114,9 @@ async def edit_video(
     if remove_sgf:
         cur.execute("UPDATE video SET sgf = NULL WHERE video_id = %s", (video_id,))
         # delete the SGF file from storage
-        p = Path(SGF_DIR) / Path(video["sgf"])
-        if p.exists():
-            p.unlink()
+        p = os.path.join(STORAGE_DIR, video["sgf"])
+        if os.path.exists(p):
+            os.remove(p)
 
     conn.commit()
     conn.close()
