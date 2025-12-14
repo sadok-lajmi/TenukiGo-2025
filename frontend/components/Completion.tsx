@@ -74,7 +74,19 @@ const handleCompletetion = async () => {
       setSgfUrl(data.sgf_url);
       setProcessing(false);
     } else {
-      setError('Erreur lors de la complétion entre les photos..');
+      try {
+        const errorData = await response.json();
+        // Check if it's our structured error response
+        if (errorData.detail?.message) {
+          setError(errorData.detail.message);
+        } else if (errorData.detail) {
+          setError(typeof errorData.detail === 'string' ? errorData.detail : 'Erreur lors de la complétion entre les photos.');
+        } else {
+          setError('Erreur lors de la complétion entre les photos.');
+        }
+      } catch {
+        setError('Erreur lors de la complétion entre les photos.');
+      }
       setProcessing(false);
     }
     } catch (err) {
