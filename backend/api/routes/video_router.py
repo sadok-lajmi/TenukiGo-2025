@@ -136,6 +136,21 @@ def delete_video(video_id: int):
         conn.close()
         raise HTTPException(status_code=404, detail="Video not found")
 
+    # Delete video file
+    video_path = os.path.join(STORAGE_DIR, video["path"])
+    if os.path.exists(video_path):
+        os.remove(video_path)
+    # Delete thumbnail file
+    if video["thumbnail"]:
+        thumb_path = os.path.join(STORAGE_DIR, video["thumbnail"])
+        if os.path.exists(thumb_path):
+            os.remove(thumb_path)
+    # Delete SGF file
+    if video["sgf"]:
+        sgf_path = os.path.join(STORAGE_DIR, video["sgf"])
+        if os.path.exists(sgf_path):
+            os.remove(sgf_path)
+
     # Delete video record
     cur.execute("DELETE FROM video WHERE video_id = %s", (video_id,))
 

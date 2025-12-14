@@ -236,6 +236,12 @@ def delete_match(match_id: int):
     # Remove association from video if any
     cur.execute("UPDATE video SET match_id = NULL WHERE match_id = %s", (match_id,))
 
+    # Remove SGF file if any
+    if match["sgf"]:
+        p = os.path.join(STORAGE_DIR, match["sgf"])
+        if os.path.exists(p):
+            os.remove(p)
+
     # Delete match record
     cur.execute("DELETE FROM match WHERE match_id = %s", (match_id,))
 
