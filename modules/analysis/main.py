@@ -1,3 +1,9 @@
+"""
+Analysis Module Main Application
+Sets up FastAPI app, includes routers for video and stream analysis,
+and configures CORS and OpenAPI documentation.
+"""
+
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware

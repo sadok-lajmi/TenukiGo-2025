@@ -20,6 +20,18 @@ from config.settings import (
 logger = logging.getLogger("StreamingProcessor")
 
 class StreamingProcessor:
+    """
+    Processor for analyzing Go game streams in real-time.
+    Connects to an RTSP video stream and a WebSocket backend to send SGF updates.
+
+    Uses a GoBoard for board detection and a GoGame for game logic and AI analysis.
+    1. Initializes the board from the video stream.
+    2. Processes each video frame to detect moves.
+    3. Sends SGF updates to the backend via WebSocket.
+    4. On game end, performs AI post-processing and sends final SGF.
+    5. Handles reconnections to both RTSP and WebSocket as needed.
+    """
+
     def __init__(self,  match_id: int, rtsp_url: str, ws_url: str):
         self.match_id = match_id
         self.rtsp_url = rtsp_url

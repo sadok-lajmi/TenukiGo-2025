@@ -13,7 +13,7 @@
           "Live Streaming Analysis"
         ],
         "summary": "Start Stream",
-        "description": "D\u00e9marre le traitement d'un flux live.\nGarantit qu'un seul processeur tourne par match_id.",
+        "description": "Starts processing a live stream.\nEnsures only one processor runs per match_id.",
         "operationId": "start_stream_stream_start_post",
         "requestBody": {
           "content": {

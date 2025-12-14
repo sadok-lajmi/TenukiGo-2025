@@ -1,5 +1,7 @@
 """
-CV2 Video Analysis Utilities for Go Game
+Board initialization utility.
+Uses cv2 to read video frames and attempts to initialize the Go board
+using the GoGame logic.
 """
 
 import logging
@@ -15,7 +17,14 @@ logger = logging.getLogger(__name__)
 
 def initialize_board(cap: cv2.VideoCapture,
                      go_game: GoGame) -> bool:
-    """Try to find and initialize the board from video frames."""
+    """
+    Try to find and initialize the board from video frames.
+    Args:
+        cap (cv2.VideoCapture): OpenCV video capture object.
+        go_game (GoGame): Instance of GoGame to initialize.
+    Returns:
+        bool: True if board was successfully initialized, False otherwise.
+    """
     logger.info("Finding board in video...")
     frame_count_init = 0
 
