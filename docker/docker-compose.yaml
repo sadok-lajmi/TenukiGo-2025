@@ -25,7 +25,7 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8000
     volumes:
       - ../backend:/app
-      - ./storage:/app/storage # Montage du volume pour les fichiers uploadés
+      - ../backend/storage:/app/storage # Montage du volume pour les fichiers uploadés
     ports:
       - "8000:8000"
     environment:
@@ -51,7 +51,6 @@ services:
       - /app/.next # Préserve le cache de build Next.js (IMPORTANT pour la vitesse)
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
-      - NEXT_PUBLIC_DOCKER_STORAGE_URL=http://backend:8000/storage/
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
 
@@ -62,7 +61,7 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 5000
     volumes:
       - ../modules/analysis:/app
-      - ./storage:/app/storage # Montage du même volume pour accéder aux fichiers uploadés
+      - ../backend/storage:/app/storage # Montage du même volume pour accéder aux fichiers uploadés
     ports:
       - "5000:5000"
     environment:
@@ -76,7 +75,7 @@ services:
     command: uvicorn api:app --host 0.0.0.0 --port 5001
     volumes:
       - ../modules/photo:/app
-      - ./storage:/app/storage
+      - ../backend/storage:/app/storage
     ports:
       - "5001:5001"
 
@@ -102,7 +101,7 @@ services:
       - "8554:8554"   # RTSP (Sortie pour l'analyseur)
     volumes:
       - ./mediamtx/mediamtx.yml:/mediamtx.yml:ro
-      - ./storage:/tenuki_storage
+      - ../backend/storage:/tenuki_storage
 
 volumes:
   tenuki-pgdata:
