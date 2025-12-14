@@ -5,7 +5,6 @@ import { useParams } from "next/navigation"
 import Link from "next/dist/client/link"
 import DeletePopUp from "@/components/DeletePopUp"
 import GoSgfViewer from "@/components/GoSgfViewer"
-import { set } from "better-auth"
 
 interface VideoDetails {
 id: string
