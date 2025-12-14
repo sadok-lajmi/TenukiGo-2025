@@ -30,4 +30,4 @@ RUN mkdir -p /app/storage/sgf_files /app/storage/videos /app/storage/thumbnails
 EXPOSE 8000
 
 # Lancement de l'application
-CMD ["python", "main.py"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
