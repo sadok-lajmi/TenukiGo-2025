@@ -77,7 +77,7 @@ export default function GoPlayable() {
                 </div>
 
                 {/* Barre latérale de contrôle */}
-                <div className="w-full md:w-80 flex flex-col gap-4">
+                <div className="w-full md:w-140 flex flex-col gap-4">
 
                     {/* Info Tour */}
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-neutral-100 flex items-center justify-between">
