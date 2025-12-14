@@ -22,7 +22,7 @@ def complete_between_photos(
             'use_ai': 'false',  # Use algorithmic by default
             'metadata': '{"player_black":"Joueur 1","player_white":"Joueur 2"}'
         }
-        response = requests.post(PHOTO_SERVICE_URL + "/photo/process_two", files=files, data=data, timeout=300)
+        response = requests.post(PHOTO_SERVICE_URL + "/photo", files=files, data=data, timeout=300)
         response.raise_for_status()
         result = response.json()
         return result
