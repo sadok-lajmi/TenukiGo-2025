@@ -1,5 +1,5 @@
 import FileInput from '@/components/FileInput';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import GoSgfViewer from './GoSgfViewer';
 import Link from 'next/dist/client/link';
 
@@ -17,6 +17,7 @@ const [image2, setImage2] = useState({
     });
 
 const [sgfUrl, setSgfUrl] = useState<string>('');
+const [processing, setProcessing] = useState(() => { return localStorage.getItem('processing_completion') ?? false });
 const [error, setError] = useState<string>('');
 
 const handleFileChange = (
@@ -36,6 +37,41 @@ const handleResetFile = (state: any, setter: Function) => {
     state.inputRef.current && (state.inputRef.current.value = "");
 };
 
+// Load processing state from localStorage when page loads
+  useEffect(() => {
+    const saved = localStorage.getItem('processing_completion');
+    if (saved) setProcessing(JSON.parse(saved));
+  }, []);
+
+// Save processing state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('processing_completion', JSON.stringify(processing));
+  }, [processing]);
+
+// Function to handle completion between two images
+const handleCompletetion = async () => {
+    setError('');
+    setSgfUrl('');
+    setProcessing(true);
+    
+    const formData = new FormData();
+    formData.append('image1', image1.file as Blob);
+    formData.append('image2', image2.file as Blob);
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/photo`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      setSgfUrl(data.sgf_url);
+    } else {
+      setError('Erreur lors de la complétion entre les photos..');
+      setProcessing(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center w-full bg-neutral-100 p-4 md:p-8 font-sans text-neutral-800 rounded-xl">
       <header className="w-full max-w-3xl mb-6">
@@ -43,29 +79,22 @@ const handleResetFile = (state: any, setter: Function) => {
       </header>
       <FileInput id="image1" label="Image du départ" accept="image/*" file={image1.file} previewUrl={image1.previewUrl} inputRef={image1.inputRef} onChange={(e) => handleFileChange(setImage1, e)} onReset={() => handleResetFile(image1, setImage1)} type="image" />
       <FileInput id="image2" label="Image de fin" accept="image/*" file={image2.file} previewUrl={image2.previewUrl} inputRef={image2.inputRef} onChange={(e) => handleFileChange(setImage2, e)} onReset={() => handleResetFile(image2, setImage2)} type="image" />
-      <button
-        className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
-        disabled={!image1.file || !image2.file}
-        onClick={async () => {
-          const formData = new FormData();
-          formData.append('image1', image1.file as Blob);
-          formData.append('image2', image2.file as Blob);
-
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/photo`, {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            setSgfUrl(data.sgf_url);
-          } else {
-            setError('Erreur lors de la complétion entre les photos..');
-          }
-        }}
-      >
-        Compléter entre les photos
+      {processing ? (
+        <button
+          className="mt-4 px-6 py-2 bg-gray-400 text-white rounded cursor-not-allowed"
+          disabled
+        >
+          Traitement en cours...
+        </button>
+      ) : (
+        <button
+          className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+          disabled={!image1.file || !image2.file}
+          onClick={handleCompletetion}
+        >
+          Compléter entre les photos
       </button>
+      )}
 
       {error && <p className="mt-4 text-red-600">{error}</p>}
 

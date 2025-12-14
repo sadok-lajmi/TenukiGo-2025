@@ -1,10 +1,20 @@
 'use client';
 import Completion from '@/components/Completion';
 import GoViewerFull from '@/components/go/GoViewerFull';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const Page = () => {
   const [mode, setMode] = useState<'sgf' | 'images'>('sgf'); // sgf mode for importing a sgf to analyse it and images is for importing two images to deduce a sequence of moves
+  // Load mode state from localStorage when page loads
+    useEffect(() => {
+      const saved = localStorage.getItem('replay_mode');
+      if (saved) setMode(JSON.parse(saved));
+    }, []);
+  
+  // Save mode state to localStorage whenever it changes
+    useEffect(() => {
+      localStorage.setItem('replay_mode', JSON.stringify(mode));
+    }, [mode]);
 
   return (
     <div className='wrapper md watch-page items-center'>
