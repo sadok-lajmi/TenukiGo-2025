@@ -481,10 +481,10 @@
         @apply flex items-center gap-2 md:gap-4;
 
         a {
-          @apply py-2.5 px-5 flex items-center gap-2.5 text-sm font-semibold text-dark-100 border border-gray-25 rounded-4xl;
+          @apply p-3 md:py-2.5 md:px-5 flex items-center gap-2.5 text-sm font-semibold text-dark-100 border border-gray-25 rounded-4xl;
 
           span {
-            @apply truncate;
+            @apply hidden md:block truncate;
           }
         }
       }

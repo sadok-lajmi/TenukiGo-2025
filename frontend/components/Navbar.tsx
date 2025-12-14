@@ -3,49 +3,109 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const user = {}; // Replace with actual user authentication logic in the future
 
 const Navbar = () => {
     const router = useRouter();
-  return (
-    <header className='navbar'>
-        <nav>
-            <Link href="/">
-                <Image src="/assets/icons/logo.svg" alt="Logo" width={32} height={32} />
-                <h1>GoStream</h1>
-            </Link>
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-            <Link href="/watchlist">
-                <button>Lives</button>
-            </Link>
+    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-            <Link href="/">
-                <button>Vidéos</button>
-            </Link>
+    return (
+        <header className='navbar relative z-50 bg-white'>
+            <nav>
+                <Link href="/">
+                    <Image src="/assets/icons/logo.svg" alt="Logo" width={32} height={32} />
+                    <h1>GoStream</h1>
+                </Link>
 
-            <Link href="/matches">
-                <button>Parties</button>
-            </Link>
+                {/* Mobile Burger Menu Button */}
+                <button
+                    className="md:hidden p-2 text-dark-100"
+                    onClick={toggleMenu}
+                    aria-label="Toggle menu"
+                >
+                    {isMenuOpen ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                        </svg>
+                    )}
+                </button>
 
-            <Link href="/players">
-                <button>Joueurs</button>
-            </Link>
+                {/* Desktop Navigation */}
+                <div className="hidden md:flex items-center gap-6">
+                    <Link href="/watchlist">
+                        <button className="text-sm font-semibold hover:text-pink-100 transition-colors">Lives</button>
+                    </Link>
 
-            {user && (
-                <figure>
-                    <button onClick={() => router.push('/profile/123456')} >
-                        <Image src="/assets/images/dummy.jpg" alt="User Icon" width={36} height={36} className="rounded-full aspect-square" />
-                    </button>
-                    <button className="cursor-pointer">
-                        <Image src="/assets/icons/logout.svg" alt="Logout Icon" width={24} height={24} className="rotate-180" />
-                    </button>
-                </figure>
+                    <Link href="/">
+                        <button className="text-sm font-semibold hover:text-pink-100 transition-colors">Vidéos</button>
+                    </Link>
+
+                    <Link href="/matches">
+                        <button className="text-sm font-semibold hover:text-pink-100 transition-colors">Parties</button>
+                    </Link>
+
+                    <Link href="/players">
+                        <button className="text-sm font-semibold hover:text-pink-100 transition-colors">Joueurs</button>
+                    </Link>
+                </div>
+
+
+                {user && (
+                    <figure className="hidden md:flex">
+                        <button onClick={() => router.push('/profile/123456')} >
+                            <Image src="/assets/images/dummy.jpg" alt="User Icon" width={36} height={36} className="rounded-full aspect-square" />
+                        </button>
+                        <button className="cursor-pointer">
+                            <Image src="/assets/icons/logout.svg" alt="Logout Icon" width={24} height={24} className="rotate-180" />
+                        </button>
+                    </figure>
+                )}
+            </nav>
+
+            {/* Mobile Navigation Dropdown */}
+            {isMenuOpen && (
+                <div className="absolute top-[90px] left-0 w-full bg-white border-b border-gray-20 shadow-lg md:hidden flex flex-col p-4 gap-4 z-40">
+                    <Link href="/watchlist" onClick={() => setIsMenuOpen(false)}>
+                        <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Lives</button>
+                    </Link>
+
+                    <Link href="/" onClick={() => setIsMenuOpen(false)}>
+                        <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Vidéos</button>
+                    </Link>
+
+                    <Link href="/matches" onClick={() => setIsMenuOpen(false)}>
+                        <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Parties</button>
+                    </Link>
+
+                    <Link href="/players" onClick={() => setIsMenuOpen(false)}>
+                        <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Joueurs</button>
+                    </Link>
+
+                    {/* Mobile User Actions */}
+                    {user && (
+                        <div className="flex items-center gap-4 pt-4 border-t border-gray-20">
+                            <button onClick={() => { router.push('/profile/123456'); setIsMenuOpen(false); }} className="flex items-center gap-2" >
+                                <Image src="/assets/images/dummy.jpg" alt="User Icon" width={36} height={36} className="rounded-full aspect-square" />
+                                <span className="text-sm font-semibold">Profile</span>
+                            </button>
+                            <button className="cursor-pointer ml-auto bg-gray-50 p-2 rounded-full">
+                                <Image src="/assets/icons/logout.svg" alt="Logout Icon" width={24} height={24} className="rotate-180" />
+                            </button>
+                        </div>
+                    )}
+                </div>
             )}
-        </nav>
 
-    </header>
-  )
+        </header>
+    )
 }
 
 export default Navbar
