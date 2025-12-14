@@ -11,7 +11,8 @@ async def save_file(file: UploadFile, directory: str) -> str:
     Returns:
         str: The path to the saved file, starting from the storage/ directory.
     """
-    filename = f"{datetime.now().timestamp()}_{file.filename}"
+    safename = "".join(c for c in file.filename if c.isalnum() or c in ('.', '_')).rstrip()
+    filename = f"{datetime.now().timestamp()}_{safename}"
     file_path = os.path.join(directory, filename)
     with open(file_path, "wb") as f:
         content = await file.read()
@@ -28,7 +29,8 @@ def save_file_from_content(filename: str, content: str, directory: str) -> str:
     Returns:
         str: The path to the saved file, starting from the storage/ directory.
     """
-    filename = f"{datetime.now().timestamp()}_{filename}"
+    safename = "".join(c for c in filename if c.isalnum() or c in ('.', '_')).rstrip()
+    filename = f"{datetime.now().timestamp()}_{safename}"
     file_path = os.path.join(directory, filename)
     with open(file_path, "wb") as f:
         f.write(content)
