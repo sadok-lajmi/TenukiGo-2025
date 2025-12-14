@@ -82,6 +82,7 @@ export const useGoGame = (defaultSgfUrl?: string) => {
   const [currentMoveIndex, setCurrentMoveIndex] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [defaultSgf, setDefaultSgf] = useState<string>('');
+  const [sgfContent, setSgfContent] = useState<string>('');
 
   // Charger le SGF par défaut
   useEffect(() => {
@@ -97,6 +98,7 @@ export const useGoGame = (defaultSgfUrl?: string) => {
         if (!response.ok) throw new Error('Failed to fetch SGF');
         const text = await response.text();
         setDefaultSgf(text);
+        setSgfContent(text); // Initialize sgfContent
         setMoves(parseSGF(text)); // Initialise les moves
       } catch (error) {
         console.error("Error loading default SGF:", error);
@@ -126,11 +128,13 @@ export const useGoGame = (defaultSgfUrl?: string) => {
   const goToEnd = useCallback(() => setCurrentMoveIndex(moves.length), [moves.length]);
 
   const handleSgfUpload = (newSgfContent: string) => {
+    setSgfContent(newSgfContent); // Update sgfContent
     setMoves(parseSGF(newSgfContent));
     setCurrentMoveIndex(0);
   };
 
   const resetToDefault = () => {
+    setSgfContent(defaultSgf); // Reset sgfContent
     setMoves(parseSGF(defaultSgf));
     setCurrentMoveIndex(0);
   };
@@ -191,5 +195,6 @@ export const useGoGame = (defaultSgfUrl?: string) => {
     resetToDefault,
     playInteractiveMove, // Nouvelle fonction exportée
     loadSgf: handleSgfUpload, // Alias pour compatibilité
+    sgfContent,
   };
 };
