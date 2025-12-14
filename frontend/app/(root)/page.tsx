@@ -54,7 +54,7 @@ const Page = () => {
         ) : (
           sortedVideos.map((video) => (
             <VideoCard key={video['video_id']} id={video['video_id']} title={video['title']} 
-            thumbnail={`${process.env.NEXT_PUBLIC_DOCKER_STORAGE_URL ?? process.env.NEXT_PUBLIC_STORAGE_URL}${video['thumbnail']}`} 
+            thumbnail={`${process.env.NEXT_PUBLIC_STORAGE_URL ?? process.env.NEXT_PUBLIC_STORAGE_URL}${video['thumbnail']}`} 
             createdAt={new Date(video['date_upload'])} duration={video['duration']} />
           ))
         )}
