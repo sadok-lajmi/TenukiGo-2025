@@ -3,6 +3,7 @@ import FormField from "@/components/FormField";
 import VideoPlayer from "@/components/VideoPlayer";
 import { ChangeEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { DEFAULT_HLS_URL } from "@/constants";
 
 const Page = () => {
   const [password, setPassword] = useState("");
@@ -16,10 +17,10 @@ const Page = () => {
   });
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { id, value } = e.target;
     setFormData((prevState) => ({
       ...prevState,
-      [name]: value,
+      [id]: value,
     }));
   };
 
@@ -38,11 +39,22 @@ const Page = () => {
     fetchPlayers();
   }, []);
 
-  // manage the preview video player
+  // streamUrl is the state of the stream URL input
   const [streamUrl, setStreamUrl] = useState("");
+  // previewUrl is the state of the video player preview URL
+  const [previewUrl, setPreviewUrl] = useState("");
+
   const handleStreamUrlChange = (e: ChangeEvent<HTMLInputElement>) => {
     setStreamUrl(e.target.value);
   };
+
+  // Validate URL and launch preview
+  const handleLoadPreview = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent form submission
+    setPreviewUrl(streamUrl);
+  };
+
+  const activeUrl = previewUrl ? previewUrl : DEFAULT_HLS_URL;
 
   // handle submit
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +83,7 @@ const Page = () => {
     dataToSend.append('description', formData.description);
     dataToSend.append('url', streamUrl);
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stream/start`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stream/create`, {
             method: 'POST',
             body: dataToSend,
         });
@@ -90,15 +102,15 @@ const Page = () => {
 
   return (
     <div className='wrapper-md stream-page'>
-      <h1>Live Stream</h1>
+      <h1>Lancez un LiveStream</h1>
       <form className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
-        <h1 className='text-2xl font-semibold'>Match info</h1>
+        <h1 className='text-2xl font-semibold'>Infos de la partie</h1>
         <FormField 
           id='title'
-          label='Stream Title *'
+          label='Titre *'
           value={formData.title}
           onChange={handleInputChange}
-          placeholder='Enter the title of your stream'
+          placeholder='Entrez le titre de la partie diffusée'
         />
         <FormField 
           id='style'
@@ -115,21 +127,21 @@ const Page = () => {
         />
         <FormField 
           id='player_b'
-          label='Player for Black *'
+          label='Joueur (Noir) *'
           as = 'search'
           options={players}
           value={formData.player_b}
           onChange={handleInputChange}
-          placeholder='first and last name'
+          placeholder='prénom et nom'
         />
         <FormField 
           id='player_w'
-          label='Player for White *'
+          label='Joueur (Blanc) *'
           as ='search'
           options={players}
           value={formData.player_w}
           onChange={handleInputChange}
-          placeholder='first and last name'
+          placeholder='prénom et nom'
         />
         <FormField 
           id='description'
@@ -137,20 +149,34 @@ const Page = () => {
           value={formData.description}
           onChange={handleInputChange}
           as='textarea'
-          placeholder='Describe the streamed game'
+          placeholder='Décrivez la partie diffusée'
         />
       </form>
 
       <form className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
-        <h1 className='text-2xl font-semibold'>Stream Preview</h1>
-        <FormField 
-          id='stream_url'
-          label='Stream URL'
-          value={streamUrl}
-          onChange={handleStreamUrlChange}
-          placeholder='Default stream URL : http://localhost:8080/live/streamkey/index.m3u8'
+        <h1 className='text-2xl font-semibold'>Aperçu du Stream</h1>
+        <div className="flex gap-2 items-end"> 
+            <div className="flex-grow">
+                <FormField 
+                id='stream_url'
+                label='Stream URL'
+                value={streamUrl}
+                onChange={handleStreamUrlChange}
+                placeholder={`Default stream URL : ${DEFAULT_HLS_URL}`}
+                />
+            </div>
+            <button 
+                onClick={handleLoadPreview}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded mb-1"
+                style={{height: 'fit-content'}}
+            >
+                Charger
+            </button>
+        </div>
+        <VideoPlayer 
+            key={activeUrl} 
+            url={activeUrl} 
         />
-        <VideoPlayer url={streamUrl ? streamUrl : "http://localhost:8080/live/streamkey/index.m3u8"} />
       </form>
       {error && <p className="text-red-500 mt-2">{error}</p>}
       <div className="flex justify-center mt-4 gap-2">   

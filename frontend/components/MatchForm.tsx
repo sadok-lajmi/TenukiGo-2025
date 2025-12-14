@@ -303,7 +303,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
       {(!removeVideo && !selectExistingVideo) && (
       <FileInput
         id="video"
-        label="Video"
+        label="Vidéo"
         accept="video/*"
         file={video.file}
         previewUrl={video.previewUrl}
@@ -340,7 +340,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
       {!removeSgf && (
       <FileInput
         id="sgf"
-        label="SGF File"
+        label="Fichier SGF"
         accept=".sgf"
         file={sgf.file}
         previewUrl={sgf.previewUrl}
@@ -360,7 +360,7 @@ export default function MatchForm({ mode, initialData }: MatchFormProps) {
         className="border border-gray-300 rounded px-3 py-2 mt-2 w-50"
       />
       <button className="bg-yellow-500 text-white px-4 py-2 rounded-xl w-30 self-center">
-        {mode === "create" ? "Upload" : "Save"}
+        {mode === "create" ? "Soumettre" : "Enregistrer"}
       </button>
       </div>
 

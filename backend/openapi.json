@@ -719,23 +719,103 @@
         }
       }
     },
-    "/stream/start": {
+    "/stream/create": {
       "post": {
         "tags": [
           "Stream"
         ],
-        "summary": "Start Stream",
-        "operationId": "start_stream_stream_start_post",
+        "summary": "Create Stream",
+        "operationId": "create_stream_stream_create_post",
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/Body_start_stream_stream_start_post"
+                "$ref": "#/components/schemas/Body_create_stream_stream_create_post"
               }
             }
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream/{stream_id}/start-analysis": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Start Stream",
+        "operationId": "start_stream_stream__stream_id__start_analysis_post",
+        "parameters": [
+          {
+            "name": "stream_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Stream Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream/{stream_id}/stop-analysis": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Stop Stream",
+        "operationId": "stop_stream_stream__stream_id__stop_analysis_post",
+        "parameters": [
+          {
+            "name": "stream_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Stream Id"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1027,6 +1107,57 @@
         ],
         "title": "Body_create_player_player_create_post"
       },
+      "Body_create_stream_stream_create_post": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "style": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Style"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "white": {
+            "type": "integer",
+            "title": "White"
+          },
+          "black": {
+            "type": "integer",
+            "title": "Black"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "style",
+          "white",
+          "black",
+          "url"
+        ],
+        "title": "Body_create_stream_stream_create_post"
+      },
       "Body_edit_match_match__match_id__edit_post": {
         "properties": {
           "title": {
@@ -1269,57 +1400,6 @@
         "type": "object",
         "title": "Body_edit_video_video__video_id__edit_post"
       },
-      "Body_start_stream_stream_start_post": {
-        "properties": {
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "style": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Style"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "white": {
-            "type": "integer",
-            "title": "White"
-          },
-          "black": {
-            "type": "integer",
-            "title": "Black"
-          },
-          "url": {
-            "type": "string",
-            "title": "Url"
-          }
-        },
-        "type": "object",
-        "required": [
-          "title",
-          "style",
-          "white",
-          "black",
-          "url"
-        ],
-        "title": "Body_start_stream_stream_start_post"
-      },
       "Body_upload_video_video_upload_post": {
         "properties": {
           "title": {
@@ -1346,7 +1426,7 @@
           "match_id": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "integer"
               },
               {
                 "type": "null"

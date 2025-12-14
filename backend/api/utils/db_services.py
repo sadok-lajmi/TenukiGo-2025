@@ -7,13 +7,10 @@ def db():
 
 def get_sgf_path(match_id: int) -> str:
     """Returns the SGF path for a given match from the database."""
-    cursor = db.cursor()
-    cursor.execute("SELECT sgf FROM match WHERE id = ?", (match_id,))
-    sgf_url = cursor.fetchone()["sgf"]
+    cursor = db().cursor()
+    cursor.execute("SELECT sgf FROM match WHERE match_id = %s", (match_id,))
+    sgf_path = cursor.fetchone()["sgf"]
     cursor.close()
-    if sgf_url[0] == "/":
-        sgf_url = sgf_url[1:]
-        print(f"Jte l'avais dit !")
-    return sgf_url
+    return sgf_path
 
 

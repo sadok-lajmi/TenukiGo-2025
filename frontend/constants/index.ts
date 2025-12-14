@@ -35,6 +35,8 @@ export const initialVideoState = {
 
 export const infos = ["transcript", "metadata"];
 
+export const DEFAULT_HLS_URL = "http://localhost:8080/live/streamkey/index.m3u8";
+
 export const DEFAULT_VIDEO_CONFIG = {
   width: { ideal: 1920 },
   height: { ideal: 1080 },

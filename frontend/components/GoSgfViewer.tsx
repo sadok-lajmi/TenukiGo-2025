@@ -138,24 +138,44 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
   // Charger le SGF par défaut depuis le dossier public au montage
   useEffect(() => {
     setIsLoading(true);
-    fetch(sgfUrl ?? '/sgf/example.sgf')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`Impossible de charger le SGF (Status: ${response.status})`);
+    
+    const loadSgfContent = async () => {
+      try {
+        const urlToLoad = sgfUrl ?? '/sgf/example.sgf';
+        console.log('🎮 GoSgfViewer loading:', urlToLoad);
+        
+        let sgfContent: string;
+        
+        // Handle data URLs (base64 encoded SGF content)
+        if (urlToLoad.startsWith('data:application/x-sgf;base64,')) {
+          console.log('🎮 Processing data URL');
+          const base64Content = urlToLoad.split(',')[1];
+          sgfContent = atob(base64Content);
+          console.log('🎮 Decoded SGF content:', sgfContent.substring(0, 100) + '...');
+        } else {
+          // Regular URL - fetch normally
+          console.log('🎮 Fetching regular URL');
+          const response = await fetch(urlToLoad);
+          if (!response.ok) {
+            throw new Error(`Impossible de charger le SGF (Status: ${response.status})`);
+          }
+          sgfContent = await response.text();
         }
-        return response.text();
-      })
-      .then(text => {
-        setSgfFile(text);
-        setDefaultSgf(text);
+        
+        setSgfFile(sgfContent);
+        setDefaultSgf(sgfContent);
         setIsLoading(false);
-      })
-      .catch(err => {
-        console.error("Erreur de chargement SGF:", err);
+        console.log('🎮 SGF loaded successfully');
+        
+      } catch (err: any) {
+        console.error("🎮 Erreur de chargement SGF:", err);
         setError(err.message);
         setIsLoading(false);
-      });
-  }, []);
+      }
+    };
+    
+    loadSgfContent();
+  }, [sgfUrl]);
 
   // Parser les coups seulement quand le fichier SGF change
   const moves = useMemo(() => parseSGF(sgfFile), [sgfFile]);
@@ -314,7 +334,7 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
       <div className="flex flex-col items-center justify-center min-h-[400px] w-full bg-neutral-100 rounded-xl p-8 text-red-600">
         <p className="font-bold mb-2">Erreur</p>
         <p>{error}</p>
-        <p className="text-sm text-neutral-500 mt-4">Vérifiez que le fichier <code>public/sgf/example.sgf</code> existe.</p>
+        <p className="text-sm text-neutral-500 mt-4">Vérifiez que le fichier <code>{sgfUrl}</code> existe.</p>
       </div>
     );
   }

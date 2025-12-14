@@ -120,7 +120,7 @@ export default function PlayerDetailsPage() {
             />
           ))
         ) : (
-          <p className="text-gray-100 text-sm">No matches found.</p>
+          <p className="text-gray-100 text-sm">Pas de parties.</p>
         )}
       </section>
     </main>

@@ -25,13 +25,16 @@ services:
     command: python main.py
     volumes:
       - ../backend:/app
-      - storage:/app/storage # Montage du volume pour les fichiers uploadés
+      - ./storage:/app/storage # Montage du volume pour les fichiers uploadés
     ports:
       - "8000:8000"
     environment:
+      - DB_URL=postgresql://go_user:secret@db:5432/go_db
       - ANALYSIS_SERVICE_URL=http://analysis:5000
       - ANALYSIS_CALLBACK_URL=http://backend:8000/video/video_id/analysis-complete
       - PHOTO_SERVICE_URL=http://photo:5001
+      - MEDIAMTX_RTSP_URL=rtsp://mediamtx:8554
+      - WS_STREAMING_URL=ws://backend:8000/ws/match
     depends_on:
       db:
         condition: service_healthy
@@ -48,7 +51,7 @@ services:
       - /app/.next # Préserve le cache de build Next.js (IMPORTANT pour la vitesse)
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
-      - NEXT_PUBLIC_PASSWORD
+      - NEXT_PUBLIC_DOCKER_STORAGE_URL=http://backend:8000/storage/
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
 
@@ -59,24 +62,38 @@ services:
     command: python main.py
     volumes:
       - ../modules/analysis:/app
-      - storage:/app/storage # Montage du même volume pour accéder aux fichiers uploadés
+      - ./storage:/app/storage # Montage du même volume pour accéder aux fichiers uploadés
     ports:
       - "5000:5000"
+    environment:
+      - CUDA_VISIBLE_DEVICES=-1 # Désactive l'utilisation du GPU (à ajuster selon le déploiement)
+      - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|fflags;discardcorrupt|flags;low_delay
 
   # --- Module photo/completion ---
   photo:
     build: ../modules/photo
     container_name: tenuki-photo
-    command: python api.py
+    command: uvicorn api:app --host 0.0.0.0 --port 5001
     volumes:
       - ../modules/photo:/app
-      - storage:/app/storage
+      - ./storage:/app/storage
     ports:
       - "5001:5001"
 
+  # --- Module GoInsight (Analyse SGF) ---
+  goinsight:
+    build: ../modules/goinsight
+    container_name: tenuki-goinsight
+    command: uvicorn api:app --host 0.0.0.0 --port 8001
+    # Pas besoin de volumes car tout est dans l'image (y compris model)
+    # Sauf si on veut développer en live, mais l'image est complexe.
+    ports:
+      - "8001:8001"
+
+
   # --- Module de Streaming (MediaMTX) ---
   mediamtx:
-    image: bluenviron/mediamtx:latest
+    image: bluenviron/mediamtx:1.15.4
     container_name: tenuki-mediamtx
     restart: unless-stopped
     ports:
@@ -86,9 +103,7 @@ services:
       - "8554:8554"   # RTSP (Sortie pour l'analyseur)
     volumes:
       - ./mediamtx/mediamtx.yml:/mediamtx.yml:ro
-      # Enregistrements : Stockés dans modules/diffusion/recordings
-      - storage:/tenuki_storage
+      - ./storage:/tenuki_storage
 
 volumes:
   tenuki-pgdata:
-  storage: # Volume nommé pour partager les fichiers

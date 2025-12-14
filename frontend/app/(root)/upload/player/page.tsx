@@ -6,7 +6,7 @@ const Page = () => {
 
     return (
         <div className="wrapper-md upload-page">
-            <h1>Add a player</h1>
+            <h1>Ajouter un Joueur</h1>
             <PlayerForm mode="create" />
         </div>
     )

@@ -14,10 +14,10 @@ PORT = 8000
 # -------------------------------
 
 # Upload directories
-UPLOAD_DIR = "storage" # Corresponds to Docker container path
-VIDEO_DIR = os.path.join(UPLOAD_DIR, "videos")
-THUMBNAIL_DIR = os.path.join(UPLOAD_DIR, "thumbnails")
-SGF_DIR =  os.path.join(UPLOAD_DIR, "sgf_files")
+STORAGE_DIR = "storage" # Corresponds to Docker container path
+VIDEO_DIR = os.path.join(STORAGE_DIR, "videos")
+THUMBNAIL_DIR = os.path.join(STORAGE_DIR, "thumbnails")
+SGF_DIR =  os.path.join(STORAGE_DIR, "sgf_files")
 
 # Ensure directories exist
 os.makedirs(VIDEO_DIR, exist_ok=True)

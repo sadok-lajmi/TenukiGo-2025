@@ -5,27 +5,49 @@ This module provides a Flask API for move completion analysis.
 It allows suggesting move sequences between board states using AI or algorithmic methods.
 """
 
-from flask import Flask, request, jsonify, send_file, make_response
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form
+from fastapi.responses import JSONResponse
 import numpy as np
 from typing import List, Dict, Any, Optional
 import traceback
 import os
 import tempfile
 import uuid
-from werkzeug.utils import secure_filename
 from service import MoveCompletionService, BoardState, create_board_state_from_array
 from model_loader import AIModelLoader
 from image_processor import ImageProcessor
 from sgf_generator import SGFGenerator, SGFFileManager
+from settings import settings
+import json
+from pydantic import BaseModel
+from typing import Optional
 
-app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-app.config['UPLOAD_FOLDER'] = '/app/uploads'  # Volume Docker partagé
-app.config['SGF_FOLDER'] = '/app/uploads/sgf'  # Dossier pour les SGF
+class ModelLoadRequest(BaseModel):
+    model_path: Optional[str] = None
+    use_legacy: bool = True
+
+class AnalyzeRequest(BaseModel):
+    initial_state: list[list[int]]
+    final_state: list[list[int]]
+    board_size: int = 19
+
+class CompleteMovesRequest(BaseModel):
+    initial_state: list[list[int]]
+    final_state: list[list[int]]
+    board_size: int = 19
+    use_ai: bool = False
+
+class YoloLoadRequest(BaseModel):
+    model_path: str
+
+app = FastAPI(
+    title="Photo Analysis API",
+    description="API for Go board photo analysis and move completion",
+    version="1.0.0"
+)
 
 # Créer les dossiers si nécessaire
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-os.makedirs(app.config['SGF_FOLDER'], exist_ok=True)
+os.makedirs(settings.get_upload_folder(), exist_ok=True)
 
 completion_service = MoveCompletionService()
 sgf_generator = SGFGenerator()
@@ -34,25 +56,42 @@ sgf_manager = SGFFileManager()
 # Initialize image processor (will be set with model path)
 image_processor = None
 
-# Allowed file extensions
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
+# Auto-load YOLO model if available
+def initialize_yolo_model():
+    """Attempt to load YOLO model on startup."""
+    global image_processor
+    
+    if settings.YOLO_MODEL_PATH and os.path.exists(settings.YOLO_MODEL_PATH):
+        try:
+            image_processor = ImageProcessor(settings.YOLO_MODEL_PATH)
+            print(f"✅ YOLO model loaded successfully from {settings.YOLO_MODEL_PATH}")
+        except Exception as e:
+            print(f"❌ Failed to load YOLO model: {e}")
+            image_processor = None
+    else:
+        print(f"⚠️  YOLO model not found at {settings.YOLO_MODEL_PATH}")
 
-def allowed_file(filename):
+# Initialize on startup
+initialize_yolo_model()
+
+def allowed_file(filename: str) -> bool:
     """Check if file extension is allowed."""
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+           filename.rsplit('.', 1)[1].lower() in settings.ALLOWED_EXTENSIONS
 
-@app.route('/health', methods=['GET'])
-def health_check():
+@app.get('/health')
+async def health_check():
     """Health check endpoint."""
-    return jsonify({
+    return {
         "status": "healthy",
         "service": "completion-analysis",
-        "model_loaded": completion_service.model_loader.is_model_loaded()
-    })
+        "ai_model_loaded": completion_service.model_loader.is_model_loaded(),
+        "yolo_model_loaded": image_processor is not None,
+        "photo_analysis_ready": image_processor is not None
+    }
 
-@app.route('/complete', methods=['POST'])
-def complete_moves():
+@app.post('/complete')
+async def complete_moves(request: CompleteMovesRequest):
     """
     Complete moves between two board states.
     
@@ -65,32 +104,31 @@ def complete_moves():
     }
     """
     try:
-        data = request.json
-        if not data:
-            return jsonify({"error": "No JSON data provided"}), 400
-        
-        # Extract board states
-        initial_board = data.get('initial_state')
-        final_board = data.get('final_state')
-        board_size = data.get('board_size', 19)
-        use_ai = data.get('use_ai', False)
+        # Extract board states from request
+        initial_board = request.initial_state
+        final_board = request.final_state
+        board_size = request.board_size
+        use_ai = request.use_ai
         
         if not initial_board or not final_board:
-            return jsonify({
-                "error": "Missing initial_state or final_state"
-            }), 400
+            raise HTTPException(
+                status_code=400,
+                detail="Missing initial_state or final_state"
+            )
         
         # Validate board dimensions
         if len(initial_board) != board_size or len(final_board) != board_size:
-            return jsonify({
-                "error": f"Board dimensions don't match board_size {board_size}"
-            }), 400
+            raise HTTPException(
+                status_code=400,
+                detail=f"Board dimensions don't match board_size {board_size}"
+            )
         
         for row in initial_board + final_board:
             if len(row) != board_size:
-                return jsonify({
-                    "error": f"All rows must have {board_size} elements"
-                }), 400
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"All rows must have {board_size} elements"
+                )
         
         # Create board states
         initial_state = create_board_state_from_array(initial_board, board_size)
@@ -101,17 +139,19 @@ def complete_moves():
             initial_state, final_state, use_ai=use_ai
         )
         
-        return jsonify(result)
+        return result
         
+    except HTTPException:
+        raise
     except Exception as e:
-        app.logger.error(f"Error in complete_moves: {traceback.format_exc()}")
-        return jsonify({
-            "error": f"Internal server error: {str(e)}",
-            "success": False
-        }), 500
+        print(f"Error in complete_moves: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
 
-@app.route('/model/load', methods=['POST'])
-def load_model():
+@app.post('/model/load')
+async def load_model(request: ModelLoadRequest):
     """
     Load an AI model.
     
@@ -122,64 +162,66 @@ def load_model():
     }
     """
     try:
-        data = request.json or {}
-        model_path = data.get('model_path')
-        use_legacy = data.get('use_legacy', True)
+        model_path = request.model_path
+        use_legacy = request.use_legacy
         
         if model_path:
             result = completion_service.load_model_from_file(model_path)
         elif use_legacy:
             result = completion_service.load_legacy_model()
         else:
-            return jsonify({
-                "error": "No model_path provided and use_legacy is False"
-            }), 400
+            raise HTTPException(
+                status_code=400,
+                detail="No model_path provided and use_legacy is False"
+            )
         
-        return jsonify(result)
+        return result
         
+    except HTTPException:
+        raise
     except Exception as e:
-        app.logger.error(f"Error in load_model: {traceback.format_exc()}")
-        return jsonify({
-            "error": f"Failed to load model: {str(e)}",
-            "success": False
-        }), 500
+        print(f"Error in load_model: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load model: {str(e)}"
+        )
 
-@app.route('/model/info', methods=['GET'])
-def model_info():
+@app.get('/model/info')
+async def model_info():
     """Get information about the currently loaded model."""
     try:
         info = completion_service.get_model_info()
         is_loaded = completion_service.model_loader.is_model_loaded()
         
-        return jsonify({
+        return {
             "model_loaded": is_loaded,
             "model_info": info,
             "success": True
-        })
+        }
         
     except Exception as e:
-        app.logger.error(f"Error in model_info: {traceback.format_exc()}")
-        return jsonify({
-            "error": f"Failed to get model info: {str(e)}",
-            "success": False
-        }), 500
+        print(f"Error in model_info: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get model info: {str(e)}"
+        )
 
-@app.route('/model/unload', methods=['POST'])
-def unload_model():
+@app.post('/model/unload')
+async def unload_model():
     """Unload the current AI model."""
     try:
         result = completion_service.model_loader.unload_model()
-        return jsonify(result)
+        return result
         
     except Exception as e:
-        app.logger.error(f"Error in unload_model: {traceback.format_exc()}")
-        return jsonify({
-            "error": f"Failed to unload model: {str(e)}",
-            "success": False
-        }), 500
+        print(f"Error in unload_model: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to unload model: {str(e)}"
+        )
 
-@app.route('/analyze', methods=['POST'])
-def analyze_position():
+@app.post('/analyze')
+async def analyze_position(request: AnalyzeRequest):
     """
     Analyze differences between two board states without completing moves.
     
@@ -191,19 +233,16 @@ def analyze_position():
     }
     """
     try:
-        data = request.json
-        if not data:
-            return jsonify({"error": "No JSON data provided"}), 400
-        
-        # Extract board states
-        initial_board = data.get('initial_state')
-        final_board = data.get('final_state')
-        board_size = data.get('board_size', 19)
+        # Extract board states from request
+        initial_board = request.initial_state
+        final_board = request.final_state
+        board_size = request.board_size
         
         if not initial_board or not final_board:
-            return jsonify({
-                "error": "Missing initial_state or final_state"
-            }), 400
+            raise HTTPException(
+                status_code=400,
+                detail="Missing initial_state or final_state"
+            )
         
         # Create board states
         initial_state = create_board_state_from_array(initial_board, board_size)
@@ -218,7 +257,7 @@ def analyze_position():
         total_white_added = len(differences[2]["ajout"])
         total_white_removed = len(differences[2]["retire"])
         
-        return jsonify({
+        return {
             "success": True,
             "differences": differences,
             "statistics": {
@@ -228,17 +267,19 @@ def analyze_position():
                 "white_stones_removed": total_white_removed,
                 "total_changes": total_black_added + total_black_removed + total_white_added + total_white_removed
             }
-        })
+        }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        app.logger.error(f"Error in analyze_position: {traceback.format_exc()}")
-        return jsonify({
-            "error": f"Analysis failed: {str(e)}",
-            "success": False
-        }), 500
+        print(f"Error in analyze_position: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Analysis failed: {str(e)}"
+        )
 
-@app.route('/photo/upload', methods=['POST'])
-def upload_photo():
+@app.post('/photo/upload')
+async def upload_photo(file: UploadFile = File(...), metadata: str = Form('')):
     """
     Upload and process a photo to extract board state.
     
@@ -250,63 +291,90 @@ def upload_photo():
         global image_processor
         
         if image_processor is None:
-            return jsonify({
-                "error": "YOLO model not loaded. Use /model/load first.",
-                "success": False
-            }), 500
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "YOLO model not loaded",
+                    "message": "Photo analysis requires a YOLO model for board detection. Please contact administrator.",
+                    "required_action": "Load YOLO model via /model/load_yolo endpoint",
+                    "status": "model_missing"
+                }
+            )
         
         # Check if file is present
-        if 'file' not in request.files:
-            return jsonify({
-                "error": "No file provided",
-                "success": False
-            }), 400
-        
-        file = request.files['file']
-        
         if file.filename == '':
-            return jsonify({
-                "error": "No file selected",
-                "success": False
-            }), 400
+            raise HTTPException(
+                status_code=400,
+                detail="No file selected"
+            )
         
         if not allowed_file(file.filename):
-            return jsonify({
-                "error": "File type not allowed. Supported: " + ", ".join(ALLOWED_EXTENSIONS),
-                "success": False
-            }), 400
+            raise HTTPException(
+                status_code=400,
+                detail=f"File type not allowed. Supported: {', '.join(settings.ALLOWED_EXTENSIONS)}"
+            )
         
         # Process image
-        image_bytes = file.read()
+        image_bytes = await file.read()
         board_matrix = image_processor.process_image_bytes(image_bytes)
         
         if board_matrix is None:
-            return jsonify({
-                "error": "Could not process image - no Go board detected",
-                "success": False
-            }), 400
+            raise HTTPException(
+                status_code=400,
+                detail="Could not process image - no Go board detected"
+            )
         
         # Get board info
         board_info = image_processor.get_board_info()
         
-        return jsonify({
+        return {
             "success": True,
             "board_matrix": board_matrix.tolist(),
             "board_info": board_info,
-            "filename": secure_filename(file.filename)
-        })
+            "filename": file.filename
+        }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        app.logger.error(f"Error in upload_photo: {traceback.format_exc()}")
-        return jsonify({
-            "error": f"Upload failed: {str(e)}",
-            "success": False
-        }), 500
+        print(f"Error in upload_photo: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Upload failed: {str(e)}"
+        )
 
-@app.route('/photo/process_two', methods=['POST'])
-def process_two_photos():
+@app.post('/photo/process_two')
+async def process_two_photos(
+    file1: UploadFile = File(...),
+    file2: UploadFile = File(...),
+    use_ai: str = Form('false'),
+    metadata: str = Form('')
+):
     """
     Process two photos and generate SGF with predicted moves between them.
+    """
+    return await _process_two_photos_internal(file1, file2, use_ai, metadata)
+
+@app.post('/photo')
+async def process_two_photos_legacy(
+    image1: UploadFile = File(...),
+    image2: UploadFile = File(...),
+    use_ai: str = Form('false'),
+    metadata: str = Form('')
+):
+    """
+    Legacy endpoint for frontend compatibility - processes two photos.
+    """
+    return await _process_two_photos_internal(image1, image2, use_ai, metadata)
+
+async def _process_two_photos_internal(
+    file1: UploadFile,
+    file2: UploadFile, 
+    use_ai: str = 'false',
+    metadata: str = ''
+):
+    """
+    Internal function to process two photos and generate SGF with predicted moves between them.
     
     Form data:
     - file1: First image file (initial position)
@@ -318,268 +386,108 @@ def process_two_photos():
         global image_processor
         
         if image_processor is None:
-            return jsonify({
-                "error": "YOLO model not loaded. Use /model/load first.",
-                "success": False
-            }), 500
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "YOLO model not loaded",
+                    "message": "Photo analysis requires a YOLO model for board detection. Please contact administrator.",
+                    "required_action": "Load YOLO model via /model/load_yolo endpoint",
+                    "status": "model_missing"
+                }
+            )
         
         # Check files
-        if 'file1' not in request.files or 'file2' not in request.files:
-            return jsonify({
-                "error": "Two files (file1, file2) required",
-                "success": False
-            }), 400
-        
-        file1 = request.files['file1']
-        file2 = request.files['file2']
-        
         for i, file in enumerate([file1, file2], 1):
             if file.filename == '':
-                return jsonify({
-                    "error": f"File {i} not selected",
-                    "success": False
-                }), 400
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"File {i} not selected"
+                )
             
             if not allowed_file(file.filename):
-                return jsonify({
-                    "error": f"File {i} type not allowed",
-                    "success": False
-                }), 400
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"File {i} type not allowed"
+                )
         
         # Process images
-        board1 = image_processor.process_image_bytes(file1.read())
-        board2 = image_processor.process_image_bytes(file2.read())
+        file1_bytes = await file1.read()
+        file2_bytes = await file2.read()
+        board1 = image_processor.process_image_bytes(file1_bytes)
+        board2 = image_processor.process_image_bytes(file2_bytes)
         
         if board1 is None:
-            return jsonify({
-                "error": "Could not process first image - no Go board detected",
-                "success": False
-            }), 400
+            raise HTTPException(
+                status_code=400,
+                detail="Could not process first image - no Go board detected"
+            )
             
         if board2 is None:
-            return jsonify({
-                "error": "Could not process second image - no Go board detected", 
-                "success": False
-            }), 400
+            raise HTTPException(
+                status_code=400,
+                detail="Could not process second image - no Go board detected"
+            )
         
         # Get completion parameters
-        use_ai = request.form.get('use_ai', 'false').lower() == 'true'
+        use_ai_bool = use_ai.lower() == 'true'
         
         # Create board states and get completion
         initial_state = BoardState(board1, 19)
         final_state = BoardState(board2, 19)
         
         completion_result = completion_service.suggest_completion(
-            initial_state, final_state, use_ai=use_ai
+            initial_state, final_state, use_ai=use_ai_bool
         )
         
         if not completion_result["success"]:
-            return jsonify({
-                "error": f"Move completion failed: {completion_result['error']}",
-                "success": False
-            }), 500
+            raise HTTPException(
+                status_code=500,
+                detail=f"Move completion failed: {completion_result['error']}"
+            )
         
         # Parse metadata
-        metadata = {}
-        if 'metadata' in request.form:
+        metadata_dict = {}
+        if metadata:
             try:
-                import json
-                metadata = json.loads(request.form['metadata'])
+                metadata_dict = json.loads(metadata)
             except:
                 pass
         
         # Add analysis info to metadata
-        metadata["analysis_method"] = completion_result["method"]
-        metadata["confidence"] = completion_result["confidence"]
-        metadata["move_count"] = completion_result["move_count"]
+        metadata_dict["analysis_method"] = completion_result["method"]
+        metadata_dict["confidence"] = completion_result["confidence"]
+        metadata_dict["move_count"] = completion_result["move_count"]
         
         # Generate SGF
         sgf_content = sgf_generator.two_positions_to_sgf(
-            board1, board2, completion_result["moves"], metadata
+            board1, board2, completion_result["moves"], metadata_dict
         )
         
-        # Save SGF file
-        filename = f"game_{uuid.uuid4().hex[:8]}.sgf"
-        sgf_path = os.path.join(app.config['SGF_FOLDER'], filename)
+        # Note: SGF file handling removed from photo module
+        # Backend should handle SGF storage
         
-        try:
-            with open(sgf_path, 'w', encoding='utf-8') as f:
-                f.write(sgf_content)
-            
-            sgf_url = f"/sgf_files/{filename}"
-            
-        except Exception as e:
-            app.logger.error(f"Failed to save SGF file: {e}")
-            sgf_url = None
-        
-        return jsonify({
+        return {
             "success": True,
             "sgf_content": sgf_content,
-            "sgf_url": sgf_url,
-            "sgf_filename": filename,
             "completion_result": completion_result,
             "initial_board": board1.tolist(),
             "final_board": board2.tolist()
-        })
+        }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        app.logger.error(f"Error in process_two_photos: {traceback.format_exc()}")
-        return jsonify({
-            "error": f"Processing failed: {str(e)}",
-            "success": False
-        }), 500
-
-@app.route('/sgf/file/<filename>')
-def serve_sgf_file(filename):
-    """
-    Serve SGF file from uploads directory.
-    """
-    try:
-        # Sécuriser le nom de fichier
-        filename = secure_filename(filename)
-        
-        if not filename.endswith('.sgf'):
-            return jsonify({"error": "Invalid file type"}), 400
-        
-        sgf_path = os.path.join(app.config['SGF_FOLDER'], filename)
-        
-        if not os.path.exists(sgf_path):
-            return jsonify({"error": "File not found"}), 404
-        
-        return send_file(
-            sgf_path,
-            as_attachment=True,
-            download_name=filename,
-            mimetype='application/x-go-sgf'
+        print(f"Error in process_two_photos: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Processing failed: {str(e)}"
         )
-        
-    except Exception as e:
-        app.logger.error(f"Error serving SGF file: {e}")
-        return jsonify({
-            "error": f"Failed to serve file: {str(e)}",
-            "success": False
-        }), 500
 
-@app.route('/sgf/download', methods=['POST'])
-def download_sgf():
-    """
-    Generate and download SGF file from board data or moves.
-    
-    Expected JSON:
-    {
-        "content_type": "board_matrix|moves|sgf_content",
-        "data": {...},
-        "metadata": {...},
-        "filename": "game.sgf"
-    }
-    """
-    try:
-        data = request.json
-        if not data:
-            return jsonify({"error": "No JSON data provided"}), 400
-        
-        content_type = data.get('content_type')
-        content_data = data.get('data')
-        metadata = data.get('metadata', {})
-        filename = data.get('filename', 'game.sgf')
-        
-        if not filename.endswith('.sgf'):
-            filename += '.sgf'
-        
-        sgf_content = ""
-        
-        if content_type == "board_matrix":
-            # Convert board matrix to SGF
-            board_matrix = np.array(content_data)
-            sgf_content = sgf_generator.board_matrix_to_sgf(board_matrix, metadata)
-            
-        elif content_type == "moves":
-            # Convert moves to SGF
-            moves = [(move[0], move[1], move[2]) for move in content_data]
-            sgf_content = sgf_generator.move_sequence_to_sgf(moves, metadata)
-            
-        elif content_type == "sgf_content":
-            # Use provided SGF content
-            sgf_content = content_data
-            
-        else:
-            return jsonify({
-                "error": "Invalid content_type. Use: board_matrix, moves, or sgf_content"
-            }), 400
-        
-        if not sgf_content:
-            return jsonify({"error": "Failed to generate SGF content"}), 500
-        
-        # Save SGF file to uploads
-        if not filename.endswith('.sgf'):
-            filename += '.sgf'
-        
-        unique_filename = f"{uuid.uuid4().hex[:8]}_{filename}"
-        sgf_path = os.path.join(app.config['SGF_FOLDER'], unique_filename)
-        
-        try:
-            with open(sgf_path, 'w', encoding='utf-8') as f:
-                f.write(sgf_content)
-            
-            sgf_url = f"/sgf/file/{unique_filename}"
-            
-            return jsonify({
-                "success": True,
-                "sgf_url": sgf_url,
-                "filename": unique_filename,
-                "download_url": f"http://localhost:5001{sgf_url}"
-            })
-            
-        except Exception as e:
-            app.logger.error(f"Failed to save SGF: {e}")
-            # Fallback: return file directly
-            response = make_response(sgf_content)
-            response.headers['Content-Type'] = 'application/x-go-sgf'
-            response.headers['Content-Disposition'] = f'attachment; filename={filename}'
-            return response
-        
-    except Exception as e:
-        app.logger.error(f"Error in download_sgf: {traceback.format_exc()}")
-        return jsonify({
-            "error": f"Download failed: {str(e)}",
-            "success": False
-        }), 500
 
-@app.route('/sgf/validate', methods=['POST'])
-def validate_sgf():
-    """
-    Validate SGF content.
-    
-    Expected JSON:
-    {
-        "sgf_content": "(...)"
-    }
-    """
-    try:
-        data = request.json
-        if not data:
-            return jsonify({"error": "No JSON data provided"}), 400
-        
-        sgf_content = data.get('sgf_content')
-        if not sgf_content:
-            return jsonify({"error": "No sgf_content provided"}), 400
-        
-        validation_result = sgf_manager.validate_sgf(sgf_content)
-        
-        return jsonify({
-            "success": True,
-            "validation": validation_result
-        })
-        
-    except Exception as e:
-        app.logger.error(f"Error in validate_sgf: {traceback.format_exc()}")
-        return jsonify({
-            "error": f"Validation failed: {str(e)}",
-            "success": False
-        }), 500
 
-@app.route('/model/load_yolo', methods=['POST'])
-def load_yolo_model():
+
+@app.post('/model/load_yolo')
+async def load_yolo_model(request: YoloLoadRequest):
     """
     Load YOLO model for image processing.
     
@@ -591,72 +499,37 @@ def load_yolo_model():
     try:
         global image_processor
         
-        data = request.json or {}
-        model_path = data.get('model_path')
-        
-        if not model_path:
-            return jsonify({
-                "error": "model_path required",
-                "success": False
-            }), 400
+        model_path = request.model_path
         
         if not os.path.exists(model_path):
-            return jsonify({
-                "error": f"Model file not found: {model_path}",
-                "success": False
-            }), 400
+            raise HTTPException(
+                status_code=400,
+                detail=f"Model file not found: {model_path}"
+            )
         
         # Initialize image processor with model
         image_processor = ImageProcessor(model_path)
         
-        return jsonify({
+        return {
             "success": True,
             "message": f"YOLO model loaded from {model_path}",
             "model_path": model_path
-        })
+        }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        app.logger.error(f"Error in load_yolo_model: {traceback.format_exc()}")
-        return jsonify({
-            "error": f"Failed to load YOLO model: {str(e)}",
-            "success": False
-        }), 500
+        print(f"Error in load_yolo_model: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load YOLO model: {str(e)}"
+        )
 
-@app.errorhandler(413)
-def too_large(e):
-    return jsonify({
-        "error": "File too large. Maximum size: 16MB",
-        "success": False
-    }), 413
-
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({
-        "error": "Endpoint not found",
-        "available_endpoints": [
-            "/health",
-            "/complete",
-            "/analyze", 
-            "/model/load",
-            "/model/load_yolo",
-            "/model/info",
-            "/model/unload",
-            "/photo/upload",
-            "/photo/process_two",
-            "/sgf/download",
-            "/sgf/validate",
-            "/sgf/file/<filename>"
-        ]
-    }), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    return jsonify({
-        "error": "Internal server error",
-        "success": False
-    }), 500
+# FastAPI handles error responses automatically
 
 if __name__ == "__main__":
+    import uvicorn
+    
     # Try to load legacy model on startup
     try:
         print("Attempting to load legacy AI model...")
@@ -668,5 +541,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"✗ Could not load legacy model: {e}")
     
-    print("Starting Photo/Completion Analysis API...")
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    print("Starting Photo Analysis API...")
+    uvicorn.run(app, host=settings.HOST, port=settings.PORT, log_level="info")

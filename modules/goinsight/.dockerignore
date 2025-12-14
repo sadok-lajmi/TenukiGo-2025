@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+.venv
+.env
+.git
+.gitignore
+# Exclude the windows binaries to save space
+model/*.exe
+model/*.dll
+model/*.zip
+neuralnet/*.gz

@@ -36,7 +36,7 @@ export default function VideoForm({ mode, initialData }: VideoFormProps) {
   const [thumbnail, setThumbnail] = useState({
     file: null as File | null,
     previewUrl: initialData?.thumbnail
-      ? `${process.env.NEXT_PUBLIC_UPLOADS_URL}${initialData.thumbnail}`
+      ? `${process.env.NEXT_PUBLIC_STORAGE_URL}${initialData.thumbnail}`
       : "",
     inputRef: useRef<HTMLInputElement>(null),
   });
@@ -221,7 +221,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         className="border border-gray-300 rounded px-3 py-2 mt-2 w-50"
       />
       <button className="bg-yellow-500 text-white px-4 py-2 rounded-xl w-30 self-center">
-        {mode === "create" ? "Upload" : "Save"}
+        {mode === "create" ? "Soumettre" : "Enregistrer"}
       </button>
       </div>
 

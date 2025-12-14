@@ -19,7 +19,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProcessStreamingRequest"
+                "$ref": "#/components/schemas/StartStreamingRequest"
               }
             }
           },
@@ -55,17 +55,16 @@
         "summary": "Stop Stream",
         "description": "Arr\u00eate proprement le processeur de streaming.",
         "operationId": "stop_stream_stream_stop_post",
-        "parameters": [
-          {
-            "name": "match_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Match Id"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopStreamingRequest"
+              }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -181,7 +180,7 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "ProcessStreamingRequest": {
+      "StartStreamingRequest": {
         "properties": {
           "match_id": {
             "type": "integer",
@@ -202,7 +201,20 @@
           "rtsp_url",
           "ws_url"
         ],
-        "title": "ProcessStreamingRequest"
+        "title": "StartStreamingRequest"
+      },
+      "StopStreamingRequest": {
+        "properties": {
+          "match_id": {
+            "type": "integer",
+            "title": "Match Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "match_id"
+        ],
+        "title": "StopStreamingRequest"
       },
       "ValidationError": {
         "properties": {
@@ -243,9 +255,9 @@
             "type": "integer",
             "title": "Video Id"
           },
-          "filename": {
+          "video_path": {
             "type": "string",
-            "title": "Filename"
+            "title": "Video Path"
           },
           "callback_url": {
             "type": "string",
@@ -255,7 +267,7 @@
         "type": "object",
         "required": [
           "video_id",
-          "filename",
+          "video_path",
           "callback_url"
         ],
         "title": "VideoAnalysisRequest"
