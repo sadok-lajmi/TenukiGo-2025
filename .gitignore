@@ -80,12 +80,6 @@ frontend/next-env.d.ts
 backend/__pycache__/
 backend/*.py[cod]
 
-# Upload folder
-backend/uploads/
-
-# Recordings folder
-modules/diffusion/recordings/
-
 # Environment files
 backend/.env
 backend/venv/
@@ -102,4 +96,4 @@ modules/photo/__pycache__/
 modules/photo/*.py[cod]
 
 # Storage folder
-docker/storage/
+backend/storage/

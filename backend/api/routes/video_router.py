@@ -211,13 +211,14 @@ def generate_sgf_from_video(video_id: int):
     
     # Call Analysis module API
     try:
-        requests.post(ANALYSIS_SERVICE_URL + "/video/process",
+        response = requests.post(ANALYSIS_SERVICE_URL + "/video/process",
                                  json={"video_id": video_id,
                                        "video_path": os.path.join(STORAGE_DIR, video_path),
                                        "callback_url": ANALYSIS_CALLBACK_URL.replace("video_id", str(video_id))
                                        },
                                  timeout=300)
         
+        response.raise_for_status()
         return {"message": "Analysis succesfully launched"}
     
     except requests.RequestException as e:

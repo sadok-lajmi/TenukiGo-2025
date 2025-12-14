@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.12-slim-bookworm
 
 WORKDIR /app
 
@@ -17,9 +17,6 @@ COPY . .
 
 # Create uploads directory and models directory
 RUN mkdir -p /app/uploads /app/models
-
-# Set volume for uploads (will be mounted by docker-compose)
-VOLUME ["/app/uploads"]
 
 # Expose port
 EXPOSE 5001

@@ -25,11 +25,6 @@ class Settings:
         '/app/models/yolo_go_detection.pt'  # Default to migrated model
     )
     
-    # API settings
-    HOST: str = os.getenv('PHOTO_HOST', '0.0.0.0')
-    PORT: int = int(os.getenv('PHOTO_PORT', '5001'))
-    DEBUG: bool = os.getenv('DEBUG', 'False').lower() == 'true'
-    
     @classmethod
     def get_upload_folder(cls) -> str:
         """Get upload folder and ensure it exists."""

@@ -1,13 +1,7 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
 import json
-
-from config.settings import (
-    HOST,
-    PORT
-)
 
 # Import Routers
 from api.routes.stream_router import router as stream_router
@@ -53,4 +47,5 @@ with open("openapi.json", "w") as f:
     json.dump(app.openapi(), f, indent=2)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host=HOST, port=PORT, reload=False)
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=False)

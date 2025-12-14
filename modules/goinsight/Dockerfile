@@ -74,7 +74,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . .
 
 # Expose API Port
-EXPOSE 8000
+EXPOSE 5002
 
 # Run
-CMD ["python", "api.py"]
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "5002"]

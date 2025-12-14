@@ -57,7 +57,7 @@ export const useGoAnalysis = (
         const formData = new FormData();
         formData.append('sgf_content', sgfContent);
 
-        const res = await fetch('http://localhost:8001/analyse/shallow', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_GOINSIGHT_SERVICE_URL}/analyse/shallow`, {
           method: 'POST',
           body: formData,
         });
@@ -115,7 +115,7 @@ export const useGoAnalysis = (
           invert_selection: false
         };
 
-        const res = await fetch('http://localhost:8001/analyse/deep', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_GOINSIGHT_SERVICE_URL}/analyse/deep`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)

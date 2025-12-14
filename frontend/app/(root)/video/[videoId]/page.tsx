@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import Link from "next/dist/client/link"
 import DeletePopUp from "@/components/DeletePopUp"
 import GoSgfViewer from "@/components/GoSgfViewer"
+import { set } from "better-auth"
 
 interface VideoDetails {
 id: string
@@ -28,7 +29,6 @@ match?: {
 
 export default function VideoDetailsPage() {
 const [error, setError] = useState<string | null>(null);
-const [converting, setConverting] = useState<boolean>(false);
 
 // Fetch video details from API here and update state
 const [video, setVideo] = useState<VideoDetails>(null as unknown as VideoDetails);
@@ -74,12 +74,27 @@ useEffect(() => {
   fetchMoreData();
 }, [videoId]);
 
+const [converting, setConverting] = useState<boolean>(() => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(`converting_${videoId}`);
+    return saved ? JSON.parse(saved) : false;
+  }
+  return false;
+});
+
 // Load converting state from localStorage when page loads
   useEffect(() => {
     if (!videoId) return;
     const saved = localStorage.getItem(`converting_${videoId}`);
     if (saved) setConverting(JSON.parse(saved));
   }, [videoId]);
+
+// set converting to false when video.sgf is updated
+  useEffect(() => {
+    if (video?.sgf) {
+      setConverting(false);
+    }
+  }, [video?.sgf]);
 
 // Save converting state to localStorage whenever it changes
   useEffect(() => {
@@ -91,6 +106,7 @@ useEffect(() => {
 const handleConvertToSgf = async () => {
   if (!videoId) return;
   setConverting(true);
+  setError(null);
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/video/${videoId}/convert-to-sgf`, {
       method: 'POST',
@@ -103,7 +119,7 @@ const handleConvertToSgf = async () => {
         sgf: data.sgf, // Assuming the API returns the SGF file path in 'sgf'
       }));
     } else {
-      setError('Erreur lors de la conversion de la vidéo en SGF ou la conversion prends du temps.. Veuillez revenir à cette page plus tard.');
+      setError('Erreur lors de la conversion de la vidéo en SGF...');
       setConverting(false);
     }
   } catch (error) {
