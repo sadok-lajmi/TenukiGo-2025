@@ -5,12 +5,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # -------------------------------
-# MODULE CONFIG
-# -------------------------------
-HOST = "0.0.0.0"
-PORT = 5000
-
-# -------------------------------
 # ANALYSIS CONFIG
 # -------------------------------
 ANALYSIS_INTERVAL = 0.1  # seconds

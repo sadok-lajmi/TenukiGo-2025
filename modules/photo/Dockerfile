@@ -18,9 +18,6 @@ COPY . .
 # Create uploads directory and models directory
 RUN mkdir -p /app/uploads /app/models
 
-# Set volume for uploads (will be mounted by docker-compose)
-VOLUME ["/app/uploads"]
-
 # Expose port
 EXPOSE 5001
 

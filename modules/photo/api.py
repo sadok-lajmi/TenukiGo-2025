@@ -6,21 +6,16 @@ It allows suggesting move sequences between board states using AI or algorithmic
 """
 
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form
-from fastapi.responses import JSONResponse
-import numpy as np
-from typing import List, Dict, Any, Optional
+from typing import Optional
+from pydantic import BaseModel
 import traceback
+import json
 import os
-import tempfile
-import uuid
+
 from service import MoveCompletionService, BoardState, create_board_state_from_array
-from model_loader import AIModelLoader
 from image_processor import ImageProcessor
 from sgf_generator import SGFGenerator, SGFFileManager
 from settings import settings
-import json
-from pydantic import BaseModel
-from typing import Optional
 
 class ModelLoadRequest(BaseModel):
     model_path: Optional[str] = None
@@ -542,4 +537,4 @@ if __name__ == "__main__":
         print(f"✗ Could not load legacy model: {e}")
     
     print("Starting Photo Analysis API...")
-    uvicorn.run(app, host=settings.HOST, port=settings.PORT, log_level="info")
+    uvicorn.run(app, host='0.0.0.0', port=5001, log_level="info")
