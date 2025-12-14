@@ -19,10 +19,8 @@ export default function GoViewerFull() {
   const {
     isLoading, moves, currentMoveIndex, currentBoard, lastMove,
     nextMove, prevMove, goToStart, goToEnd,
-    handleSgfUpload, resetToDefault
+    handleSgfUpload, resetToDefault, sgfContent
   } = useGoGame(DEFAULT_SGF_URL);
-  
-  const { analysisData, getAnalysisForMove } = useGoAnalysis(moves);
 
   // --- ETATS UI ---
   const [showAnalysis, setShowAnalysis] = useState<boolean>(true);
@@ -30,7 +28,9 @@ export default function GoViewerFull() {
   const [selectionStart, setSelectionStart] = useState<{ x: number; y: number } | null>(null);
   const [selectionDragCurrent, setSelectionDragCurrent] = useState<{ x: number; y: number } | null>(null);
   const [activeRegion, setActiveRegion] = useState<Region | null>(null);
-  
+
+  const { analysisData, getAnalysisForMove, isAnalyzing } = useGoAnalysis(moves, sgfContent, currentMoveIndex, activeRegion);
+
   const svgRef = useRef<SVGSVGElement>(null);
 
   // --- DERIVED STATE ---
@@ -38,7 +38,7 @@ export default function GoViewerFull() {
     () => getAnalysisForMove(currentMoveIndex, activeRegion),
     [getAnalysisForMove, currentMoveIndex, activeRegion]
   );
-  
+
   const selectionRect: Region | null = useMemo(() => {
     if (!selectionStart || !selectionDragCurrent) return null;
     return {
@@ -89,7 +89,7 @@ export default function GoViewerFull() {
     setSelectionDragCurrent(null);
     setIsSelectingRegion(false);
   };
-  
+
   // Gérer le mouseup en dehors du SVG
   useEffect(() => {
     const upListener = () => handleMouseUp();
@@ -126,7 +126,7 @@ export default function GoViewerFull() {
         - 3 colonnes au total
       */}
       <main className="lg:grid lg:grid-cols-3 lg:gap-8 w-full max-w-7xl items-start justify-center">
-        
+
         {/* Colonne Gauche (2/3): Plateau + Graphe */}
         <div className="lg:col-span-2 flex flex-col gap-4">
           <GoBoard
