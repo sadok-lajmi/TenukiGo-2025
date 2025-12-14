@@ -17,7 +17,7 @@ const [image2, setImage2] = useState({
     });
 
 const [sgfUrl, setSgfUrl] = useState<string>('');
-const [processing, setProcessing] = useState(() => { return localStorage.getItem('processing_completion') ?? false });
+const [processing, setProcessing] = useState(false);
 const [error, setError] = useState<string>('');
 
 const handleFileChange = (
@@ -53,7 +53,7 @@ const handleCompletetion = async () => {
     setError('');
     setSgfUrl('');
     setProcessing(true);
-    
+    try {
     const formData = new FormData();
     formData.append('image1', image1.file as Blob);
     formData.append('image2', image2.file as Blob);
@@ -66,9 +66,14 @@ const handleCompletetion = async () => {
     if (response.ok) {
       const data = await response.json();
       setSgfUrl(data.sgf_url);
+      setProcessing(false);
     } else {
       setError('Erreur lors de la complétion entre les photos..');
       setProcessing(false);
+    }
+    } catch (err) {
+    setError('Erreur lors de la complétion entre les photos.');
+    setProcessing(false);
     }
   };
 
