@@ -50,7 +50,6 @@ services:
       - /app/node_modules
       - /app/.next # Préserve le cache de build Next.js (IMPORTANT pour la vitesse)
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
 
