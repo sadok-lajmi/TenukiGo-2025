@@ -25,7 +25,7 @@ services:
     command: python main.py
     volumes:
       - ../backend:/app
-      - storage:/app/storage # Montage du volume pour les fichiers uploadés
+      - ./storage:/app/storage # Montage du volume pour les fichiers uploadés
     ports:
       - "8000:8000"
     environment:
@@ -61,11 +61,12 @@ services:
     command: python main.py
     volumes:
       - ../modules/analysis:/app
-      - storage:/app/storage # Montage du même volume pour accéder aux fichiers uploadés
+      - ./storage:/app/storage # Montage du même volume pour accéder aux fichiers uploadés
     ports:
       - "5000:5000"
     environment:
       - CUDA_VISIBLE_DEVICES=-1 # Désactive l'utilisation du GPU (à ajuster selon le déploiement)
+      - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|fflags;discardcorrupt|flags;low_delay
 
   # --- Module photo/completion ---
   photo:
@@ -74,7 +75,7 @@ services:
     command: uvicorn api:app --host 0.0.0.0 --port 5001
     volumes:
       - ../modules/photo:/app
-      - storage:/app/storage
+      - ./storage:/app/storage
     ports:
       - "5001:5001"
 
@@ -90,8 +91,7 @@ services:
       - "8554:8554"   # RTSP (Sortie pour l'analyseur)
     volumes:
       - ./mediamtx/mediamtx.yml:/mediamtx.yml:ro
-      - storage:/tenuki_storage
+      - ./storage:/tenuki_storage
 
 volumes:
   tenuki-pgdata:
-  storage: # Volume nommé pour partager les fichiers
