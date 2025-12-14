@@ -272,8 +272,13 @@ async def upload_photo(file: UploadFile = File(...), metadata: str = Form('')):
         
         if image_processor is None:
             raise HTTPException(
-                status_code=500,
-                detail="YOLO model not loaded. Use /model/load_yolo first."
+                status_code=400,
+                detail={
+                    "error": "YOLO model not loaded",
+                    "message": "Photo analysis requires a YOLO model for board detection. Please contact administrator.",
+                    "required_action": "Load YOLO model via /model/load_yolo endpoint",
+                    "status": "model_missing"
+                }
             )
         
         # Check if file is present
@@ -327,6 +332,29 @@ async def process_two_photos(
 ):
     """
     Process two photos and generate SGF with predicted moves between them.
+    """
+    return await _process_two_photos_internal(file1, file2, use_ai, metadata)
+
+@app.post('/photo')
+async def process_two_photos_legacy(
+    image1: UploadFile = File(...),
+    image2: UploadFile = File(...),
+    use_ai: str = Form('false'),
+    metadata: str = Form('')
+):
+    """
+    Legacy endpoint for frontend compatibility - processes two photos.
+    """
+    return await _process_two_photos_internal(image1, image2, use_ai, metadata)
+
+async def _process_two_photos_internal(
+    file1: UploadFile,
+    file2: UploadFile, 
+    use_ai: str = 'false',
+    metadata: str = ''
+):
+    """
+    Internal function to process two photos and generate SGF with predicted moves between them.
     
     Form data:
     - file1: First image file (initial position)
@@ -339,8 +367,13 @@ async def process_two_photos(
         
         if image_processor is None:
             raise HTTPException(
-                status_code=500,
-                detail="YOLO model not loaded. Use /model/load_yolo first."
+                status_code=400,
+                detail={
+                    "error": "YOLO model not loaded",
+                    "message": "Photo analysis requires a YOLO model for board detection. Please contact administrator.",
+                    "required_action": "Load YOLO model via /model/load_yolo endpoint",
+                    "status": "model_missing"
+                }
             )
         
         # Check files
