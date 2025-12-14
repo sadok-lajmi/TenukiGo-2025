@@ -56,6 +56,24 @@ sgf_manager = SGFFileManager()
 # Initialize image processor (will be set with model path)
 image_processor = None
 
+# Auto-load YOLO model if available
+def initialize_yolo_model():
+    """Attempt to load YOLO model on startup."""
+    global image_processor
+    
+    if settings.YOLO_MODEL_PATH and os.path.exists(settings.YOLO_MODEL_PATH):
+        try:
+            image_processor = ImageProcessor(settings.YOLO_MODEL_PATH)
+            print(f"✅ YOLO model loaded successfully from {settings.YOLO_MODEL_PATH}")
+        except Exception as e:
+            print(f"❌ Failed to load YOLO model: {e}")
+            image_processor = None
+    else:
+        print(f"⚠️  YOLO model not found at {settings.YOLO_MODEL_PATH}")
+
+# Initialize on startup
+initialize_yolo_model()
+
 def allowed_file(filename: str) -> bool:
     """Check if file extension is allowed."""
     return '.' in filename and \
@@ -67,7 +85,9 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "completion-analysis",
-        "model_loaded": completion_service.model_loader.is_model_loaded()
+        "ai_model_loaded": completion_service.model_loader.is_model_loaded(),
+        "yolo_model_loaded": image_processor is not None,
+        "photo_analysis_ready": image_processor is not None
     }
 
 @app.post('/complete')

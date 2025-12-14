@@ -19,6 +19,12 @@ class Settings:
         None  # Remove hardcoded path
     )
     
+    # YOLO model path - auto-detect in models folder
+    YOLO_MODEL_PATH: Optional[str] = os.getenv(
+        'YOLO_MODEL_PATH',
+        '/app/models/yolo_go_detection.pt'  # Default to migrated model
+    )
+    
     # API settings
     HOST: str = os.getenv('PHOTO_HOST', '0.0.0.0')
     PORT: int = int(os.getenv('PHOTO_PORT', '5001'))

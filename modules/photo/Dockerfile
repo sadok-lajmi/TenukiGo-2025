@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code
 COPY . .
 
-# Create uploads directory
-RUN mkdir -p /app/uploads
+# Create uploads directory and models directory
+RUN mkdir -p /app/uploads /app/models
 
 # Set volume for uploads (will be mounted by docker-compose)
 VOLUME ["/app/uploads"]

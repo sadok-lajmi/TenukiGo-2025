@@ -56,6 +56,9 @@ const handleResetFile = (state: any, setter: Function) => {
 
 // Function to handle completion between two images
 const handleCompletetion = async () => {
+    console.log('🚀 handleCompletetion called');
+    console.log('📁 Files:', { image1: image1.file, image2: image2.file });
+    
     setError('');
     setSgfUrl('');
     setProcessing(true);
@@ -63,18 +66,52 @@ const handleCompletetion = async () => {
     const formData = new FormData();
     formData.append('image1', image1.file as Blob);
     formData.append('image2', image2.file as Blob);
+    
+    console.log('📤 Sending request to:', `${process.env.NEXT_PUBLIC_API_URL}/photo`);
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/photo`, {
       method: 'POST',
       body: formData,
     });
 
+    console.log('📥 Response status:', response.status);
+
     if (response.ok) {
       const data = await response.json();
-      setSgfUrl(data.sgf_url);
+      console.log('✅ Response data:', data);
+      
+      // Handle new API response format with sgf_content instead of sgf_url  
+      if (data.sgf_content) {
+        console.log('🎯 Creating data URL for SGF content');
+        // Save SGF content as a data URL that GoSgfViewer can fetch
+        const dataUrl = `data:application/x-sgf;base64,${btoa(data.sgf_content)}`;
+        console.log('🎯 Data URL created:', dataUrl.substring(0, 100) + '...');
+        setSgfUrl(dataUrl);
+        console.log('🎯 SGF URL state updated');
+      } else if (data.sgf_url) {
+        // Fallback for old format
+        console.log('🎯 Using legacy sgf_url format');
+        setSgfUrl(data.sgf_url);
+      } else {
+        console.log('❌ No SGF content received');
+        setError('Aucun contenu SGF reçu de l\'API');
+      }
+      console.log('🏁 Setting processing to false');
       setProcessing(false);
     } else {
-      setError('Erreur lors de la complétion entre les photos..');
+      try {
+        const errorData = await response.json();
+        // Check if it's our structured error response
+        if (errorData.detail?.message) {
+          setError(errorData.detail.message);
+        } else if (errorData.detail) {
+          setError(typeof errorData.detail === 'string' ? errorData.detail : 'Erreur lors de la complétion entre les photos.');
+        } else {
+          setError('Erreur lors de la complétion entre les photos.');
+        }
+      } catch {
+        setError('Erreur lors de la complétion entre les photos.');
+      }
       setProcessing(false);
     }
     } catch (err) {
@@ -109,15 +146,17 @@ const handleCompletetion = async () => {
 
       {error && <p className="mt-4 text-red-600">{error}</p>}
 
-      <GoSgfViewer sgfUrl={sgfUrl ? `${process.env.NEXT_PUBLIC_STORAGE_URL}${sgfUrl}` : undefined} upload={false} />
+      {console.log('🔍 Rendering GoSgfViewer with sgfUrl:', sgfUrl)}
+      <GoSgfViewer sgfUrl={sgfUrl || undefined} upload={false} />
 
       {sgfUrl && (
         <div className="mt-4 w-full max-w-3xl">
         <Link
-          href={`${process.env.NEXT_PUBLIC_STORAGE_URL}${sgfUrl}`}
+          href={sgfUrl}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
+          download="game.sgf"
         >
-          Exporter le SGF 
+          Télécharger le SGF 
         </Link>
         </div>)}
     </div>
