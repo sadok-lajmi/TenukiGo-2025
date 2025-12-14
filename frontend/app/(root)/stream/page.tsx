@@ -104,7 +104,7 @@ const Page = () => {
     <div className='wrapper-md stream-page'>
       <h1>Lancez un LiveStream</h1>
       <form className='rounded-20 shadow-10 gap-6 w-full flex flex-col px-5 py-7.5'>
-        <h1 className='text-2xl font-semibold'>Match info</h1>
+        <h1 className='text-2xl font-semibold'>Infos de la partie</h1>
         <FormField 
           id='title'
           label='Titre *'
