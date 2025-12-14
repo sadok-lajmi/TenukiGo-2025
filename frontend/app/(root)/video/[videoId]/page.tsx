@@ -89,6 +89,13 @@ const [converting, setConverting] = useState<boolean>(() => {
     if (saved) setConverting(JSON.parse(saved));
   }, [videoId]);
 
+// set converting to false when video.sgf is updated
+  useEffect(() => {
+    if (video?.sgf) {
+      setConverting(false);
+    }
+  }, [video?.sgf]);
+
 // Save converting state to localStorage whenever it changes
   useEffect(() => {
     if (!videoId) return;
