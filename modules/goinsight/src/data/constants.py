@@ -1,0 +1,4 @@
+VALID_COLUMN_GTP = "ABCDEFGHJKLMNOPQRSTUVWXYZ"
+VALID_COLUMN_SGF = "abcdefghijklmnopqrstuvwxyz"
+SGF_PROPERTIES = {"GM": "1", "FF": "4", "AP": "GoInsight"}
+MAX_BOARD_SIZE = 25
