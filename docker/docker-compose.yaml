@@ -84,12 +84,11 @@ services:
   goinsight:
     build: ../modules/goinsight
     container_name: tenuki-goinsight
-    command: uvicorn api:app --host 0.0.0.0 --port 8001
+    command: python main.py
     # Pas besoin de volumes car tout est dans l'image (y compris model)
     # Sauf si on veut développer en live, mais l'image est complexe.
     ports:
-      - "8001:8001"
-
+      - "5002:5002"
 
   # --- Module de Streaming (MediaMTX) ---
   mediamtx:
