@@ -78,6 +78,17 @@ services:
     ports:
       - "5001:5001"
 
+  # --- Module GoInsight (Analyse SGF) ---
+  goinsight:
+    build: ../modules/goinsight
+    container_name: tenuki-goinsight
+    command: python api.py
+    # Pas besoin de volumes car tout est dans l'image (y compris model)
+    # Sauf si on veut développer en live, mais l'image est complexe.
+    ports:
+      - "8000:8000"
+
+
   # --- Module de Streaming (MediaMTX) ---
   mediamtx:
     image: bluenviron/mediamtx:1.15.4
