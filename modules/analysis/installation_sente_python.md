@@ -4,6 +4,10 @@ Ce guide explique comment installer la librairie **sente** sous Windows
 avec Python 3.11+ en appliquant quelques correctifs nécessaires (patchs
 C++ et ajustements Python).
 
+L'installation de sente n'est pas requise pour le fonctionnement du module Analysis avec docker, l'image docker réalise le patch automatiquement. 
+
+Le but de ce guide est de permettre une installation manuelle dans un environnement virtuel Python, afin d'effectuer des tests ou du développement local.
+
 ## Prérequis : Outils de Compilation C++
 
 Pour compiler les modules natifs, vous devez disposer du compilateur C++
