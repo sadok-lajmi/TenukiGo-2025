@@ -20,6 +20,25 @@ from sgf_generator import SGFGenerator, SGFFileManager
 from settings import settings
 import json
 from pydantic import BaseModel
+from typing import Optional
+
+class ModelLoadRequest(BaseModel):
+    model_path: Optional[str] = None
+    use_legacy: bool = True
+
+class AnalyzeRequest(BaseModel):
+    initial_state: list[list[int]]
+    final_state: list[list[int]]
+    board_size: int = 19
+
+class CompleteMovesRequest(BaseModel):
+    initial_state: list[list[int]]
+    final_state: list[list[int]]
+    board_size: int = 19
+    use_ai: bool = False
+
+class YoloLoadRequest(BaseModel):
+    model_path: str
 
 app = FastAPI(
     title="Photo Analysis API",
@@ -42,17 +61,17 @@ def allowed_file(filename: str) -> bool:
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in settings.ALLOWED_EXTENSIONS
 
-@app.route('/health', methods=['GET'])
-def health_check():
+@app.get('/health')
+async def health_check():
     """Health check endpoint."""
-    return jsonify({
+    return {
         "status": "healthy",
         "service": "completion-analysis",
         "model_loaded": completion_service.model_loader.is_model_loaded()
-    })
+    }
 
-@app.route('/complete', methods=['POST'])
-def complete_moves():
+@app.post('/complete')
+async def complete_moves(request: CompleteMovesRequest):
     """
     Complete moves between two board states.
     
@@ -65,10 +84,6 @@ def complete_moves():
     }
     """
     try:
-        data = request.json
-        if not data:
-            return jsonify({"error": "No JSON data provided"}), 400
-        
         # Extract board states from request
         initial_board = request.initial_state
         final_board = request.final_state
@@ -83,15 +98,17 @@ def complete_moves():
         
         # Validate board dimensions
         if len(initial_board) != board_size or len(final_board) != board_size:
-            return jsonify({
-                "error": f"Board dimensions don't match board_size {board_size}"
-            }), 400
+            raise HTTPException(
+                status_code=400,
+                detail=f"Board dimensions don't match board_size {board_size}"
+            )
         
         for row in initial_board + final_board:
             if len(row) != board_size:
-                return jsonify({
-                    "error": f"All rows must have {board_size} elements"
-                }), 400
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"All rows must have {board_size} elements"
+                )
         
         # Create board states
         initial_state = create_board_state_from_array(initial_board, board_size)
@@ -241,8 +258,8 @@ async def analyze_position(request: AnalyzeRequest):
             detail=f"Analysis failed: {str(e)}"
         )
 
-@app.route('/photo/upload', methods=['POST'])
-def upload_photo():
+@app.post('/photo/upload')
+async def upload_photo(file: UploadFile = File(...), metadata: str = Form('')):
     """
     Upload and process a photo to extract board state.
     
