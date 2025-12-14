@@ -1,12 +1,15 @@
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional, Tuple
+import uvicorn
 import sys
 import os
 import shutil
 import tempfile
 import json
-from typing import Optional, Tuple, List
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+
+from settings import HOST, PORT
 
 # Ensure src can be imported
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -101,5 +104,4 @@ async def deep_analysis(request: DeepAnalysisRequest):
             os.remove(tmp_path)
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=HOST, port=PORT)
