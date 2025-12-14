@@ -10,7 +10,7 @@ from config.settings import (
 )
 
 # Import Routers
-from api.routes.streaming_router import router as streaming_router
+from api.routes.stream_router import router as stream_router
 from api.routes.video_router import router as video_router
 
 # Initialize App
@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 # --- Register Routes ---
-app.include_router(streaming_router, tags=["Live Streaming Analysis"])
+app.include_router(stream_router, tags=["Live Streaming Analysis"])
 app.include_router(video_router, tags=["Video Analysis"])
 
 @app.get("/")
@@ -53,4 +53,4 @@ with open("openapi.json", "w") as f:
     json.dump(app.openapi(), f, indent=2)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host=HOST, port=PORT, reload=True)
+    uvicorn.run("main:app", host=HOST, port=PORT, reload=False)

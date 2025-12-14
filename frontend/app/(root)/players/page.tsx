@@ -34,7 +34,7 @@ const Page = () => {
       
       <section className='video-grid'>
         {filteredPlayers.length === 0 ? (
-          <p>No players found.</p>
+          <p>Aucun joueur trouvé.</p>
         ) : (
           filteredPlayers.map((player) => (
             <PlayerCard key={player['player_id']} id={player['player_id']} firstname={player['firstname']} lastname={player['lastname']} level={player['level']}/>

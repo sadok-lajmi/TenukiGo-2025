@@ -76,17 +76,20 @@ useEffect(() => {
 
 // Load converting state from localStorage when page loads
   useEffect(() => {
+    if (!videoId) return;
     const saved = localStorage.getItem(`converting_${videoId}`);
     if (saved) setConverting(JSON.parse(saved));
   }, [videoId]);
 
 // Save converting state to localStorage whenever it changes
   useEffect(() => {
+    if (!videoId) return;
     localStorage.setItem(`converting_${videoId}`, JSON.stringify(converting));
   }, [converting, videoId]);
 
 // handle conversion to sgf
 const handleConvertToSgf = async () => {
+  if (!videoId) return;
   setConverting(true);
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/video/${videoId}/convert-to-sgf`, {
@@ -101,9 +104,11 @@ const handleConvertToSgf = async () => {
       }));
     } else {
       setError('Erreur lors de la conversion de la vidéo en SGF ou la conversion prends du temps.. Veuillez revenir à cette page plus tard.');
+      setConverting(false);
     }
   } catch (error) {
     setError('Erreur lors de la conversion de la vidéo en SGF');
+    setConverting(false);
   }
 };
 
@@ -222,7 +227,7 @@ return (
             href={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.sgf}`}
             className="block text-blue-500 underline hover:text-blue-600 font-medium"
           >
-            Importer le SGF
+            Exporter le SGF
           </Link>
         )}
         {/* SGF Viewer if the sgf exists */}

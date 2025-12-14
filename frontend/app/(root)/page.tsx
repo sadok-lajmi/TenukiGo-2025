@@ -50,7 +50,7 @@ const Page = () => {
       <DropdownList onChange={handleSortChange} />
       <section className='video-grid'>
         {sortedVideos.length === 0 ? (
-          <p>No videos found.</p>
+          <p>Aucune vidéo trouvée.</p>
         ) : (
           sortedVideos.map((video) => (
             <VideoCard key={video['video_id']} id={video['video_id']} title={video['title']} 

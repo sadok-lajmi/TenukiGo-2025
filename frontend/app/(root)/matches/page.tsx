@@ -51,7 +51,7 @@ const Page = () => {
       <DropdownList onChange={handleSortChange}/>
       <section className='video-grid'>
         {sortedMatches.length === 0 ? (
-          <p>No matches found.</p>
+          <p>Aucun match trouvé.</p>
         ) : (
           sortedMatches.map((match) => (
             <MatchCard key={match['match_id']} id={match['match_id']} title={match['title']} thumbnail={match['thumbnail']} date={new Date(match['date'])} duration={match['duration']} />
