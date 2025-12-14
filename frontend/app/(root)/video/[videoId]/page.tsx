@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/dist/client/link"
 import DeletePopUp from "@/components/DeletePopUp"
@@ -73,39 +73,36 @@ useEffect(() => {
   fetchMoreData();
 }, [videoId]);
 
-const [converting, setConverting] = useState<boolean>(() => {
-  if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem(`converting_${videoId}`);
-    return saved ? JSON.parse(saved) : false;
-  }
-  return false;
-});
+const [converting, setConverting] = useState<boolean>(false);
+console.log(videoId);
 
 // Load converting state from localStorage when page loads
-  useEffect(() => {
-    if (!videoId) return;
-    const saved = localStorage.getItem(`converting_${videoId}`);
-    if (saved) setConverting(JSON.parse(saved));
-  }, [videoId]);
+useEffect(() => {
+  if (!videoId) return;
+  // On vérifie simplement si la clé existe et est "true"
+  const saved = localStorage.getItem(`converting_${videoId}`);
+  if (saved === 'true') {
+    setConverting(true);
+  } else {
+    setConverting(false);
+  }
+}, [videoId]);
 
 // set converting to false when video.sgf is updated
-  useEffect(() => {
-    if (video?.sgf) {
-      setConverting(false);
-    }
-  }, [video?.sgf]);
-
-// Save converting state to localStorage whenever it changes
-  useEffect(() => {
-    if (!videoId) return;
-    localStorage.setItem(`converting_${videoId}`, JSON.stringify(converting));
-  }, [converting, videoId]);
+useEffect(() => {
+  if (video?.sgf) {
+    setConverting(false);
+    // On nettoie le localStorage car la conversion est finie
+    if (videoId) localStorage.removeItem(`converting_${videoId}`); 
+  }
+}, [video?.sgf, videoId]);
 
 // handle conversion to sgf
 const handleConvertToSgf = async () => {
   if (!videoId) return;
   setConverting(true);
   setError(null);
+  localStorage.setItem(`converting_${videoId}`, 'true');
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/video/${videoId}/convert-to-sgf`, {
       method: 'POST',
@@ -120,10 +117,12 @@ const handleConvertToSgf = async () => {
     } else {
       setError('Erreur lors de la conversion de la vidéo en SGF...');
       setConverting(false);
+      localStorage.removeItem(`converting_${videoId}`);
     }
   } catch (error) {
     setError('Erreur lors de la conversion de la vidéo en SGF');
     setConverting(false);
+    localStorage.removeItem(`converting_${videoId}`);
   }
 };
 
