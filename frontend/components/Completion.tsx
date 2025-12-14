@@ -17,7 +17,13 @@ const [image2, setImage2] = useState({
     });
 
 const [sgfUrl, setSgfUrl] = useState<string>('');
-const [processing, setProcessing] = useState(false);
+const [processing, setProcessing] = useState(() => {
+    if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('processing_completion');
+    return saved ? JSON.parse(saved) : false;
+    }
+    return false;
+    });
 const [error, setError] = useState<string>('');
 
 const handleFileChange = (
