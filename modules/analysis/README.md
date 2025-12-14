@@ -128,22 +128,30 @@ Si vous voyez `[h264 @ ...] error while decoding MB ...` ou des images grises :
 
 ## 🏗️ Architecture du Module
 
+La structure suit une architecture modulaire claire :
+
 ```
 modules/analysis/
-├── main.py                 # Point d'entrée & Routes API
-├── StreamingProcessor.py   # Gestionnaire de boucle asynchrone & OpenCV
+├── api/
+│   ├── processors/
+│   │   ├── StreamingProcessor.py # Gestionnaire RTSP Temps réel
+│   │   └── VideoProcessor.py     # Gestionnaire Fichiers Vidéo
+│   ├── routes/
+│   │   ├── stream_router.py      # Endpoints HTTP pour le streaming
+│   │   └── video_router.py       # Endpoints HTTP pour l'upload
+│   └── utils/                    # Utilitaires API
+├── config/                       # Configuration (Settings, Logging)
 ├── logique/
-│   ├── GoGame.py          # Logique métier & règles du Go
-│   ├── GoBoard.py         # Computer Vision (Détection plateau)
-│   ├── utils/             # Helpers (SGF, chargement modèles)
-│   └── corrector_noAI.py  # Fallback si l'IA échoue
-├── models/                 # Fichiers .pt et .keras
-├── requirements.txt        # Dépendances (opencv-python, tensorflow, fastapi...)
-└── Dockerfile              # Configuration de l'image
+│   ├── GoGame.py                 # Règles du jeu (sente)
+│   └── GoBoard.py                # Computer Vision (YOLO/OpenCV)
+├── models/                       # Fichiers binaires (.pt, .keras)
+├── storage/                      # Volume partagé pour vidéos/SGF
+├── main.py                       # Point d'entrée FastAPI
+├── Dockerfile                    # Definition de l'image
+└── requirements.txt              # Dépendances Python
 ```
 
 ## 📚 Références
 
 - TenukiGo 2024 Project GitHub :
 https://github.com/Borishkof/TenukiGo
-
