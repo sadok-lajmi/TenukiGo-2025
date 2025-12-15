@@ -13,6 +13,7 @@ from logique.utils.sgf_utils import to_sgf
 from api.utils.initialize_board import initialize_board
 from config.settings import (
     ANALYSIS_INTERVAL,
+    MAX_ERRORS,
     YOLO_PATH,
     KERAS_PATH
 )
@@ -67,23 +68,36 @@ class StreamingProcessor:
                     logger.error("❌ Impossible d'ouvrir le flux RTSP")
                     return
 
+                # --- 1. Initialize Board ---
+                if not initialize_board(cap, self.go_game):
+                    cap.release()
+                    logger.error("❌ Échec de l'initialisation du plateau")
+                    return
+                
+                consecutive_errors = 0
+
+                # --- 2. Process Frames ---
                 while self.is_running:
                     # Block until a frame is available
                     ret, frame = cap.read()
                     
                     if not ret:
-                        logger.warning("⚠️ Perte de frame ou fin du flux. Reconnexion...")
-                        await asyncio.sleep(2)
+                        consecutive_errors += 1
+                        logger.warning(f"⚠️ Frame manquante ({consecutive_errors}/{MAX_ERRORS})")
+
+                        if consecutive_errors >= MAX_ERRORS:
+                            logger.error("❌ Flux RTSP définitivement perdu.")
+                            break # Exit to end the processing loop
+                        
+                        await asyncio.sleep(ANALYSIS_INTERVAL * 5) # Wait longer before retrying
                         cap.release()
                         cap = cv2.VideoCapture(self.rtsp_url)
                         continue
                     
-                    # --- 1. Initialize Board ---
-                    if not initialize_board(cap, self.go_game):
-                        cap.release()
-                        return
-                    
-                    # --- 2. Process Frame ---
+                    # 2. DÉTECTION DE FRAME VIDE (Sécurité supplémentaire)
+                    if frame is None or frame.size == 0:
+                        continue
+
                     try:
                         _ = self.go_game.main_loop(frame, end_game=False)
                     except Exception as e:
@@ -141,6 +155,7 @@ class StreamingProcessor:
                 }
                 await websocket.send(json.dumps(message))
 
+                self.stop()
                 break # Clean exit from the persistent connection loop
 
             except websockets.ConnectionClosed:

@@ -1,9 +1,11 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.concurrency import run_in_threadpool
+import os
 
 from api.websockets.ConnectionManager import manager
 from api.utils.db_services import get_sgf_path
 from api.utils.file_storage import modify_file_content
+from config.settings import STORAGE_DIR
 
 router = APIRouter()
 
@@ -23,18 +25,21 @@ async def websocket_endpoint(
         while True:
             # Wait for a message from the client
             data = await websocket.receive_json()
-            
+            print(f"WebSocket Match {match_id} received: {data}")
             # --- Message treatment ---
             msg_type = data.get("type")
 
             sgf_content = data.get("sgf")
-            sgf_path = get_sgf_path(match_id)
+            sgf_path = os.path.join(STORAGE_DIR, get_sgf_path(match_id))
+            print(f"SGF Path for Match {match_id}: {sgf_path}")
 
             if msg_type == "sgf_update":
                 # 1. Save to file storage
+                print(f"Modifying SGF file at {sgf_path} for Match {match_id}")
                 await run_in_threadpool(modify_file_content, sgf_path, sgf_content)
                 
                 # 2. Broadcast to all spectators
+                print(f"Broadcasting SGF update for Match {match_id}")
                 await manager.broadcast_to_match(match_id, data, sender_socket=websocket)
 
             elif msg_type == "game_end":

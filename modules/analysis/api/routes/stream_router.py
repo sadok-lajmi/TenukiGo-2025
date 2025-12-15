@@ -50,7 +50,7 @@ async def start_stream(request: StartStreamingRequest):
     processor.task = task 
     ACTIVE_PROCESSORS[request.match_id] = processor 
     
-    return {"status": "Stream processing started"}
+    return {"message": "Stream processing started"}
 
 @router.post("/stream/stop")
 async def stop_stream(request: StopStreamingRequest):
@@ -71,7 +71,7 @@ async def stop_stream(request: StopStreamingRequest):
     # 3. Remove the reference from the active processors
     del ACTIVE_PROCESSORS[request.match_id]
 
-    return {"status": "Stream processing stopped"}
+    return {"message": "Stream processing stopped"}
 
 @router.get("/stream/status")
 def get_status():
