@@ -85,24 +85,68 @@ const Navbar = () => {
                 </div>
             )}
 
-            {/* Mobile Navigation Dropdown */}
             {isMenuOpen && (
-                <div className="absolute top-[90px] left-0 w-full bg-white border-b border-gray-20 shadow-lg md:hidden flex flex-col p-4 gap-4 z-40">
-                    <Link href="/watchlist" onClick={() => setIsMenuOpen(false)}>
-                        <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Lives</button>
-                    </Link>
+                    <div className="absolute top-[90px] left-0 w-full bg-white border-b border-gray-200 shadow-lg md:hidden flex flex-col p-4 gap-4 z-40">
 
-                    <Link href="/" onClick={() => setIsMenuOpen(false)}>
-                        <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Vidéos</button>
-                    </Link>
+                        {/* Lives */}
+                        <div className="flex items-center justify-between">
+                        <Link href="/watchlist" onClick={() => setIsMenuOpen(false)} className="flex-1">
+                            <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">
+                            Livestreams
+                            </button>
+                        </Link>
 
-                    <Link href="/matches" onClick={() => setIsMenuOpen(false)}>
-                        <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Parties</button>
-                    </Link>
+                        <Link href="/stream" onClick={() => setIsMenuOpen(false)}>
+                            <button className="p-2 hover:text-pink-100 transition-colors">
+                            <img src="/assets/icons/play.png" alt="Upload Icon" width={19} height={19} />
+                            </button>
+                        </Link>
+                        </div>
 
-                    <Link href="/players" onClick={() => setIsMenuOpen(false)}>
-                        <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Joueurs</button>
-                    </Link>
+                        {/* Vidéos */}
+                        <div className="flex items-center justify-between">
+                        <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex-1">
+                            <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">
+                            Vidéos
+                            </button>
+                        </Link>
+
+                        <Link href="/upload/video" onClick={() => setIsMenuOpen(false)}>
+                            <button className="p-2 hover:text-pink-100 transition-colors">
+                            <img src="/assets/icons/upload.svg" alt="Upload Icon" width={20} height={20} />
+                            </button>
+                        </Link>
+                        </div>
+
+                        {/* Parties */}
+                        <div className="flex items-center justify-between">
+                        <Link href="/matches" onClick={() => setIsMenuOpen(false)} className="flex-1">
+                            <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">
+                            Parties
+                            </button>
+                        </Link>
+
+                        <Link href="/upload/match" onClick={() => setIsMenuOpen(false)}>
+                            <button className="p-2 hover:text-pink-100 transition-colors">
+                            <img src="/assets/icons/upload.svg" alt="Upload Icon" width={20} height={20} />
+                            </button>
+                        </Link>
+                        </div>
+
+                        {/* Joueurs */}
+                        <div className="flex items-center justify-between">
+                        <Link href="/players" onClick={() => setIsMenuOpen(false)} className="flex-1">
+                            <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">
+                            Joueurs
+                            </button>
+                        </Link>
+
+                        <Link href="/upload/player" onClick={() => setIsMenuOpen(false)}>
+                            <button className="p-2 hover:text-pink-100 transition-colors">
+                            <img src="/assets/icons/upload.svg" alt="Upload Icon" width={20} height={20} />
+                            </button>
+                        </Link>
+                        </div>
 
                     {/* Mobile User Actions */}
                     {user && (
