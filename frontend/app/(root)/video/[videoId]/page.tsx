@@ -145,11 +145,15 @@ if (!video) {
 return (
 
   <main className="wrapper page flex flex-col gap-6 py-8">
+    <div className="flex items-center justify-between">
+    {/* Title */}
+    <h1 className="text-2xl font-bold text-dark-100">{video.title}</h1>
     <div className="flex justify-end gap-2"> 
       <Link href={`/video/${videoId}/edit`}>
         <img src="/assets/icons/edit.png" className="w-6 h-6 cursor-pointer left" />
       </Link>
       <DeletePopUp mode="video" id={videoId?.toString()} />
+    </div>
     </div>
 
     {/* Video Section */}
@@ -164,10 +168,9 @@ return (
         />
       </div>
 
-      {/* Title + Date */}
+      {/* Date */}
       <div className="flex justify-between items-center">
       <div className="flex flex-col mt-3 gap-1">
-        <h1 className="text-xl font-semibold text-dark-100">{video.title}</h1>
         <p className="text-sm text-gray-100">Postée le : {video.uploadDate}</p>
       </div>
         { !video.sgf && (
