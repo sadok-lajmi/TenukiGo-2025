@@ -78,11 +78,11 @@ const Navbar = () => {
 
             {/* Functionalities Dropdown Menu */}
             {functionsMenu && (
-                <div className="absolute top-[65px] left-[34px] w-31 bg-white border border-gray-20 shadow-lg flex flex-col p-2 gap-2 z-45 rounded-lg items-center">
-                    <button onClick={() => { router.push('/stream'); setFunctionsMenu(false); }} className="w-full text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Diffuser</button>
-                    <button onClick={() => { router.push('/replay'); setFunctionsMenu(false); }} className="w-full text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Analyser</button>
-                    <button onClick={() => { router.push('/completion'); setFunctionsMenu(false); }} className="w-full text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Compléter</button>
-                    <button onClick={() => { router.push('/play'); setFunctionsMenu(false); }} className="w-full text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Jouer</button>
+                <div className="absolute top-[65px] left-[34px] w-31 bg-white border border-gray-20 shadow-lg flex flex-col z-45 rounded-lg items-center">
+                    <button onClick={() => { router.push('/stream'); setFunctionsMenu(false); }} className="w-6/7 text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Diffuser</button>
+                    <button onClick={() => { router.push('/replay'); setFunctionsMenu(false); }} className="w-6/7 text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors border-t border-gray-20">Analyser</button>
+                    <button onClick={() => { router.push('/completion'); setFunctionsMenu(false); }} className="w-6/7 text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors border-t border-gray-20">Compléter</button>
+                    <button onClick={() => { router.push('/play'); setFunctionsMenu(false); }} className="w-6/7 text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors border-t border-gray-20">Jouer</button>
                 </div>
             )}
 

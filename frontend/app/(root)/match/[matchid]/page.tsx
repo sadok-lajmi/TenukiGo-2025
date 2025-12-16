@@ -2,9 +2,10 @@
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Delete } from "lucide-react"
+
 import DeletePopUp from "@/components/DeletePopUp"
-import GoSgfViewer from "@/components/GoSgfViewer"
+import GoViewerFull from "@/components/go/GoViewerFull"
+import { set } from "better-auth"
 
 interface MatchDetails {
   title: string
@@ -26,8 +27,12 @@ export default function MatchDetailsPage() {
   const [match, setMatch] = useState<MatchDetails | null>(null);
   const [blackId, setBlackId] = useState<number | null>(null);
   const [whiteId, setWhiteId] = useState<number | null>(null);
+  const [showsgfmatch, setShowSgfMatch] = useState<boolean>(false);
+  const [showsgfvideo, setShowSgfVideo] = useState<boolean>(false);
+  const analysematch = () => { setShowSgfMatch(true); }
+  const analysevideo = () => { setShowSgfVideo(true); }
   // fetching matchdata by id 
-  const params = useParams();
+  const params = useParams(); 
   const matchId = params.matchid;
   // fetch match data
   useEffect(() => {
@@ -105,30 +110,27 @@ export default function MatchDetailsPage() {
 
       {/* SGF File (if exists) */}
       {match?.sgfFile && (
+        <div className="flex items-center justify-between">
         <Link
           href={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.sgfFile}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
           Exporter le SGF
         </Link>
+        <button className="px-4 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full w-fit"
+        onClick={analysematch}>Analyser</button>
+        </div>
       )}
 
-      
-      {/* SGF Viewer if the sgf exists */}
-      {/* use the sgf related to the video first if there's any */}
-      {match?.videosgf ? (
+      {/* SGF Viewer of the match sgf if showsgfmatch is true */}
+      {showsgfmatch && (
         <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
-        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.videosgf}`} />
-        </section> ) : (
-        match?.sgfFile && (
-        <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
-        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.sgfFile}`} />
-        </section> )
+        <GoViewerFull sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match?.sgfFile}`} />
+        </section>
       )}
-      
 
       {/* Video Section (if exists) */}
-      {match?.videoId && (
+      {match?.videoId ? (
         <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
             <div className="w-full rounded-xl overflow-hidden">
             <Link href={`/video/${match.videoId?.toString()}`} className="text-lg font-semibold text-dark-100">Vidéo de la partie</Link>
@@ -144,13 +146,26 @@ export default function MatchDetailsPage() {
           </div>
           {/* SGF File (of the video if it exists) */}
           {match?.videosgf && (
+            <div className="flex items-center justify-between">
             <Link
               href={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.videosgf}`}
               className="block text-blue-500 underline hover:text-blue-600 font-medium"
             >
               Exporter le SGF
             </Link>
+            <button className="px-4 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full w-fit"
+            onClick={analysevideo}>Analyser</button>
+            </div>
           )}
+        </section>
+      ) : (
+      <p className="text-gray-100 text-sm">Pas de vidéo associée à cette partie.</p>
+      )}
+
+      {/* SGF Viewer of the video sgf if showsgfvideo is true */}
+      {showsgfvideo && match?.videosgf && (
+        <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
+        <GoViewerFull sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.videosgf}`} />
         </section>
       )}
     </main>

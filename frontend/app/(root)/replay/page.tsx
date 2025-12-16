@@ -8,7 +8,7 @@ const Page = () => {
           <h1>Analyser une partie</h1> 
         </div>
       
-        <GoViewerFull />
+        <GoViewerFull importMode={true} />
       
     </div>
   )

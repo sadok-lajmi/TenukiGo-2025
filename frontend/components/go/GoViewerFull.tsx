@@ -14,13 +14,13 @@ import GoUpload from '@/components/go/GoUpload';
 // Le SGF par défaut sera chargé depuis cette URL
 const DEFAULT_SGF_URL = '/sgf/example.sgf';
 
-export default function GoViewerFull() {
+export default function GoViewerFull({ sgfUrl = DEFAULT_SGF_URL , importMode = false }: { sgfUrl?: string, importMode?: boolean }) {
   // --- HOOKS ---
   const {
     isLoading, moves, currentMoveIndex, currentBoard, lastMove,
     nextMove, prevMove, goToStart, goToEnd,
     handleSgfUpload, resetToDefault, sgfContent
-  } = useGoGame(DEFAULT_SGF_URL);
+  } = useGoGame(sgfUrl);
 
   // --- ETATS UI ---
   const [showAnalysis, setShowAnalysis] = useState<boolean>(true);
@@ -174,6 +174,8 @@ export default function GoViewerFull() {
               if (action === 'end') goToEnd();
             }}
           />
+          {/* Upload SGF */}
+          {importMode && (
           <GoUpload
             onSgfUpload={handleSgfUpload}
             onReset={() => {
@@ -181,6 +183,7 @@ export default function GoViewerFull() {
               setActiveRegion(null);
             }}
           />
+          )}
         </div>
       </main>
     </div>
