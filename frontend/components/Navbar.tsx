@@ -10,16 +10,22 @@ const user = {}; // Replace with actual user authentication logic in the future
 const Navbar = () => {
     const router = useRouter();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [functionsMenu, setFunctionsMenu] = useState(false);
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+    const toggleFunctionsMenu = () => setFunctionsMenu(!functionsMenu);
 
     return (
         <header className='navbar relative z-50 bg-white'>
             <nav>
-                <Link href="/">
+                <button
+                    className="flex items-center gap-1 p-2 font-bold text-xl text-dark-100 hover:text-pink-100 transition-colors size-auto"
+                    onClick={toggleFunctionsMenu}
+                    aria-label="Toggle menu"
+                >
                     <Image src="/assets/icons/logo.svg" alt="Logo" width={32} height={32} />
                     <h1>GoStream</h1>
-                </Link>
+                </button>
 
                 {/* Mobile Burger Menu Button */}
                 <button
@@ -69,6 +75,15 @@ const Navbar = () => {
                     </figure>
                 )}
             </nav>
+
+            {/* Functionalities Dropdown Menu */}
+            {functionsMenu && (
+                <div className="absolute top-[65px] left-[34px] w-31 bg-white border border-gray-20 shadow-lg flex flex-col p-2 gap-2 z-45 rounded-lg items-center">
+                    <button onClick={() => { router.push('/stream'); setFunctionsMenu(false); }} className="w-full text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Diffuser</button>
+                    <button onClick={() => { router.push('/replay'); setFunctionsMenu(false); }} className="w-full text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Analyser</button>
+                    <button onClick={() => { router.push('/play'); setFunctionsMenu(false); }} className="w-full text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Jouer</button>
+                </div>
+            )}
 
             {/* Mobile Navigation Dropdown */}
             {isMenuOpen && (
