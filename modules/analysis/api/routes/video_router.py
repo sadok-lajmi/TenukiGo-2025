@@ -1,3 +1,8 @@
+"""
+Video processing routes.
+Handles analysis of uploaded video files for Go game extraction to SGF.
+"""
+
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 import os
@@ -8,8 +13,8 @@ router = APIRouter()
 
 class VideoAnalysisRequest(BaseModel):
     video_id: int
-    video_path: str
-    callback_url: str
+    video_path: str # Path to the uploaded video file
+    callback_url: str # URL to notify backend when processing is done
 
 def run_video_analysis_task(video_id: int, video_path: str, callback_url: str):
     """

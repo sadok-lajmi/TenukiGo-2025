@@ -51,6 +51,11 @@ const Header = ({ subHeader, title, userImg, query, onChange, type } : SharedHea
                     <Image src="/assets/icons/rewind.png" alt="Review Icon" width={16} height={16} />
                     <span>Analyser</span>
                 </Link>
+
+                <Link href="/completion">
+                    <Image src="/assets/icons/images.svg" alt="Images Icon" width={16} height={16} />
+                    <span>Compléter</span>
+                </Link>
                        
             </aside>
 

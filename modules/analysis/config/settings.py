@@ -1,14 +1,18 @@
+"""
+Analysis module configuration settings.
+Includes constants for analysis intervals, maximum frames for
+board initialization, and paths to ML models.
+"""
+
 import logging
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # -------------------------------
 # ANALYSIS CONFIG
 # -------------------------------
 ANALYSIS_INTERVAL = 0.1  # seconds
-MAX_INIT_FRAMES = 300
+MAX_INIT_FRAMES = 10000
+MAX_ERRORS = 5
 
 # -------------------------------
 # PATH & DIRECTORIES

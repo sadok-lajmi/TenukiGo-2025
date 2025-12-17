@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/dist/client/link"
 import DeletePopUp from "@/components/DeletePopUp"
 import GoSgfViewer from "@/components/GoSgfViewer"
-import { set } from "better-auth"
+import GoViewerFull from "@/components/go/GoViewerFull"
 
 interface VideoDetails {
 id: string
@@ -34,6 +34,11 @@ const [error, setError] = useState<string | null>(null);
 const [video, setVideo] = useState<VideoDetails>(null as unknown as VideoDetails);
 const { match } = video || {}
 const [moreMatchInfo, setMoreMatchInfo] = useState<{date: string, black: string, white: string}>({date: Date.now().toString().slice(0,10), black: "", white: ""});
+
+const [showsgfvideo, setShowSgfVideo] = useState<boolean>(false);
+const analysevideo = () => { setShowSgfVideo(true); }
+const [showsgfmatch, setShowSgfMatch] = useState<boolean>(false);
+const analysematch = () => { setShowSgfMatch(true); }
 const params = useParams()
 const videoId = params.videoId
 useEffect(() => {
@@ -74,39 +79,36 @@ useEffect(() => {
   fetchMoreData();
 }, [videoId]);
 
-const [converting, setConverting] = useState<boolean>(() => {
-  if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem(`converting_${videoId}`);
-    return saved ? JSON.parse(saved) : false;
-  }
-  return false;
-});
+const [converting, setConverting] = useState<boolean>(false);
+console.log(videoId);
 
 // Load converting state from localStorage when page loads
-  useEffect(() => {
-    if (!videoId) return;
-    const saved = localStorage.getItem(`converting_${videoId}`);
-    if (saved) setConverting(JSON.parse(saved));
-  }, [videoId]);
+useEffect(() => {
+  if (!videoId) return;
+  // On vérifie simplement si la clé existe et est "true"
+  const saved = localStorage.getItem(`converting_${videoId}`);
+  if (saved === 'true') {
+    setConverting(true);
+  } else {
+    setConverting(false);
+  }
+}, [videoId]);
 
 // set converting to false when video.sgf is updated
-  useEffect(() => {
-    if (video?.sgf) {
-      setConverting(false);
-    }
-  }, [video?.sgf]);
-
-// Save converting state to localStorage whenever it changes
-  useEffect(() => {
-    if (!videoId) return;
-    localStorage.setItem(`converting_${videoId}`, JSON.stringify(converting));
-  }, [converting, videoId]);
+useEffect(() => {
+  if (video?.sgf) {
+    setConverting(false);
+    // On nettoie le localStorage car la conversion est finie
+    if (videoId) localStorage.removeItem(`converting_${videoId}`); 
+  }
+}, [video?.sgf, videoId]);
 
 // handle conversion to sgf
 const handleConvertToSgf = async () => {
   if (!videoId) return;
   setConverting(true);
   setError(null);
+  localStorage.setItem(`converting_${videoId}`, 'true');
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/video/${videoId}/convert-to-sgf`, {
       method: 'POST',
@@ -121,10 +123,12 @@ const handleConvertToSgf = async () => {
     } else {
       setError('Erreur lors de la conversion de la vidéo en SGF...');
       setConverting(false);
+      localStorage.removeItem(`converting_${videoId}`);
     }
   } catch (error) {
     setError('Erreur lors de la conversion de la vidéo en SGF');
     setConverting(false);
+    localStorage.removeItem(`converting_${videoId}`);
   }
 };
 
@@ -141,11 +145,15 @@ if (!video) {
 return (
 
   <main className="wrapper page flex flex-col gap-6 py-8">
+    <div className="flex items-center justify-between">
+    {/* Title */}
+    <h1 className="text-2xl font-bold text-dark-100">{video.title}</h1>
     <div className="flex justify-end gap-2"> 
       <Link href={`/video/${videoId}/edit`}>
         <img src="/assets/icons/edit.png" className="w-6 h-6 cursor-pointer left" />
       </Link>
       <DeletePopUp mode="video" id={videoId?.toString()} />
+    </div>
     </div>
 
     {/* Video Section */}
@@ -160,10 +168,9 @@ return (
         />
       </div>
 
-      {/* Title + Date */}
+      {/* Date */}
       <div className="flex justify-between items-center">
       <div className="flex flex-col mt-3 gap-1">
-        <h1 className="text-xl font-semibold text-dark-100">{video.title}</h1>
         <p className="text-sm text-gray-100">Postée le : {video.uploadDate}</p>
       </div>
         { !video.sgf && (
@@ -177,16 +184,20 @@ return (
       {error && <p className="text-red-500 text-sm">{error}</p>}
       {/* SGF File (of the video if it exists) */}
       {video?.sgf && (
+        <div className="flex items-center justify-between">
         <Link
           href={`${process.env.NEXT_PUBLIC_STORAGE_URL}${video.sgf}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
           Exporter le SGF 
         </Link>
+        <button className="px-4 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full w-fit"
+        onClick={analysevideo}>Analyser</button>
+        </div>
       )}
       {/* SGF Viewer if the sgf exists */}
-      {video?.sgf && (
-        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${video.sgf}`} />
+      {showsgfvideo && (
+        <GoViewerFull sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${video.sgf}`} />
       )}
     </section>
 
@@ -239,16 +250,20 @@ return (
 
         {/* SGF File (if exists) */}
         {match?.sgf && (
+          <div className="flex items-center justify-between">
           <Link
             href={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.sgf}`}
             className="block text-blue-500 underline hover:text-blue-600 font-medium"
           >
             Exporter le SGF
           </Link>
+          <button className="px-4 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full w-fit"
+          onClick={analysematch}>Analyser</button>
+          </div>
         )}
         {/* SGF Viewer if the sgf exists */}
-        {(match?.sgf && !(video?.sgf)) && (
-          <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.sgf}`} />
+        {showsgfmatch && (
+          <GoViewerFull sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.sgf}`} />
         )}
       </section>
     ) : (

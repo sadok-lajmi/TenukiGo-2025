@@ -20,7 +20,11 @@ logger = logging.getLogger("VideoProcessor")
 
 class VideoProcessor:
     """
-    Handles the processing of a video file to generate a Go game SGF.
+    Processor for analyzing Go game videos.
+    1. Initializes the board from the video.
+    2. Processes each video frame to detect moves.
+    3. Generates final SGF after processing all frames.
+    4. Notifies backend via webhook with results.
     """
 
     def __init__(self, video_id: int, video_path: str, callback_url: str = None):
