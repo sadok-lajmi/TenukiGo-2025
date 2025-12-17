@@ -50,7 +50,7 @@ class StreamingProcessor:
         # Context manager to maintain persistent WebSocket connection
         async for websocket in websockets.connect(self.ws_url):
             try:
-                logger.info("✅ Connecté au Backend WebSocket")
+                logger.info("Connecté au Backend WebSocket")
                 
                 # Initialize Go Game and Board
                 self.go_board = GoBoard(model_path=YOLO_PATH)
@@ -65,13 +65,13 @@ class StreamingProcessor:
                 # Lauch the video capture
                 cap = cv2.VideoCapture(self.rtsp_url)
                 if not cap.isOpened():
-                    logger.error("❌ Impossible d'ouvrir le flux RTSP")
+                    logger.error("Impossible d'ouvrir le flux RTSP")
                     return
 
                 # --- 1. Initialize Board ---
                 if not initialize_board(cap, self.go_game):
                     cap.release()
-                    logger.error("❌ Échec de l'initialisation du plateau")
+                    logger.error(" Échec de l'initialisation du plateau")
                     return
                 
                 consecutive_errors = 0
@@ -83,10 +83,10 @@ class StreamingProcessor:
                     
                     if not ret:
                         consecutive_errors += 1
-                        logger.warning(f"⚠️ Frame manquante ({consecutive_errors}/{MAX_ERRORS})")
+                        logger.warning(f" Frame manquante ({consecutive_errors}/{MAX_ERRORS})")
 
                         if consecutive_errors >= MAX_ERRORS:
-                            logger.error("❌ Flux RTSP définitivement perdu.")
+                            logger.error(" Flux RTSP définitivement perdu.")
                             break # Exit to end the processing loop
                         
                         await asyncio.sleep(ANALYSIS_INTERVAL * 5) # Wait longer before retrying

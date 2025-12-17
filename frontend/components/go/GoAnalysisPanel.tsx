@@ -5,32 +5,32 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceD
 import { AlertCircle, Brain, Target, Crop, Zap } from 'lucide-react';
 import { AnalysisNode, MoveClassification, Region } from './types'; 
 
-// Interface pour les props (MISE A JOUR)
+// Interface for props (UPDATED)
 interface GoAnalysisPanelProps {
   currentAnalysis?: AnalysisNode;
   fullAnalysisData: AnalysisNode[];
   currentMoveIndex: number;
   activeRegion: Region | null;
-  variant?: 'full' | 'graphOnly' | 'cardOnly'; // Prop pour diviser le composant
+  variant?: 'full' | 'graphOnly' | 'cardOnly'; // Prop to split the component
 }
 
-// --- SOUS-COMPOSANTS ---
+// --- SUB-COMPONENTS ---
 
-// Composant pour le graphique (mis à jour pour les nouvelles props)
+// Component for the graph (updated for new props)
 const WinRateGraph: React.FC<{ fullAnalysisData: AnalysisNode[]; currentMoveIndex: number }> = ({ fullAnalysisData, currentMoveIndex }) => {
-  // Prépare les données pour Recharts
+  // Prepare data for Recharts
   const chartData = fullAnalysisData.map((item, index) => ({
     move: index,
     winRate: item.winRate,
   }));
 
-  // Calcule le winrate pour le tooltip
+  // Compute win rate for the tooltip
   const getWinRateForMove = (move: number) => {
     if (move < 0 || move >= fullAnalysisData.length) return 'N/A';
     return `${(fullAnalysisData[move].winRate * 100).toFixed(1)}%`;
   };
 
-  // Position x de la ligne verticale
+  // X position of the vertical line
   const currentX = (currentMoveIndex / (chartData.length - 1 || 1)) * 100;
 
   return (
@@ -70,7 +70,7 @@ const WinRateGraph: React.FC<{ fullAnalysisData: AnalysisNode[]; currentMoveInde
             strokeWidth={2}
             dot={false}
           />
-          {/* Ligne verticale pour le coup actuel */}
+          {/* Vertical line for the current move */}
           {currentMoveIndex >= 0 && (
             <ReferenceDot
               x={currentMoveIndex}
@@ -88,7 +88,7 @@ const WinRateGraph: React.FC<{ fullAnalysisData: AnalysisNode[]; currentMoveInde
   );
 };
 
-// Badge de classification
+// Classification badge
 const ClassificationBadge = ({ type }: { type?: MoveClassification }) => {
     if (!type) return null;
     const configs = {
@@ -103,7 +103,7 @@ const ClassificationBadge = ({ type }: { type?: MoveClassification }) => {
     return <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${config.bg} ${config.text}`}>{config.label}</div>;
 };
 
-// Composant pour la carte d'analyse (mis à jour pour les nouvelles props)
+// Analysis card component (updated for new props)
 const AnalysisCard: React.FC<{ currentAnalysis?: AnalysisNode; currentMoveIndex: number; activeRegion: Region | null }> = ({ currentAnalysis, currentMoveIndex, activeRegion }) => {
   
   if (!currentAnalysis) {
@@ -126,7 +126,7 @@ const AnalysisCard: React.FC<{ currentAnalysis?: AnalysisNode; currentMoveIndex:
         {!isLocal && <ClassificationBadge type={currentAnalysis.classification} />}
       </div>
 
-      {/* Stats principales */}
+      {/* Main stats */}
       <div className="grid grid-cols-2 gap-4 text-center mb-4">
         <div>
           <span className="text-sm text-gray-500">WIN RATE (NOIR)</span>
@@ -135,7 +135,7 @@ const AnalysisCard: React.FC<{ currentAnalysis?: AnalysisNode; currentMoveIndex:
           </p>
         </div>
         <div>
-          <span className="text-sm text-gray-500">SCORE EST.</span>
+          <span className="text-sm text-gray-500">EST. SCORE</span>
           <p className="text-3xl font-bold text-gray-900">
             {currentAnalysis.scoreLead > 0 ? 'N+' : 'B+'}
             {Math.abs(currentAnalysis.scoreLead).toFixed(1)}
@@ -148,10 +148,10 @@ const AnalysisCard: React.FC<{ currentAnalysis?: AnalysisNode; currentMoveIndex:
          <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg">
           <h4 className="font-semibold flex items-center gap-2 mb-1">
             <Target size={18} />
-            Suggestion {isLocal ? "locale" : ""} :
+            {isLocal ? "Local suggestion" : "Suggestion"} :
           </h4>
           <p className="text-base">
-            Jeu en [{currentAnalysis.bestMove.x}, {currentAnalysis.bestMove.y}]
+            Play at [{currentAnalysis.bestMove.x}, {currentAnalysis.bestMove.y}]
           </p>
         </div>
       )}
@@ -160,13 +160,13 @@ const AnalysisCard: React.FC<{ currentAnalysis?: AnalysisNode; currentMoveIndex:
 };
 
 
-// --- Composant Principal ---
+// --- Main Component ---
 export default function GoAnalysisPanel({
   currentAnalysis,
   fullAnalysisData,
   currentMoveIndex,
   activeRegion,
-  variant = 'full' // Valeur par défaut
+  variant = 'full' // Default value
 }: GoAnalysisPanelProps) {
 
   if (fullAnalysisData.length === 0) {
@@ -177,7 +177,7 @@ export default function GoAnalysisPanel({
     );
   }
 
-  // Rendu conditionnel basé sur la variante
+  // Conditional rendering based on variant
   switch (variant) {
     case 'graphOnly':
       return <WinRateGraph fullAnalysisData={fullAnalysisData} currentMoveIndex={currentMoveIndex} />;

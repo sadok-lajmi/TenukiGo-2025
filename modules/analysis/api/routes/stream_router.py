@@ -66,7 +66,7 @@ async def stop_stream(request: StopStreamingRequest):
     # 2. Cancel the async task directly
     if not processor.task and not processor.task.done():
         processor.task.cancel()
-        print(f"🛑 Asyncio task for match {request.match_id} cancelled.")
+        print(f" Asyncio task for match {request.match_id} cancelled.")
     
     # 3. Remove the reference from the active processors
     del ACTIVE_PROCESSORS[request.match_id]

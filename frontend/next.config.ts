@@ -19,12 +19,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Configuration Webpack pour forcer le Hot Reload sous Docker
+  // Webpack configuration to force Hot Reload under Docker
   webpack: (config, context) => {
     if (context.dev) {
         config.watchOptions = {
-            poll: 1000,   // Vérifie les changements toutes les secondes
-            aggregateTimeout: 300, // Attend 300ms après un changement avant de rebuild
+            poll: 1000,   // Check for changes every second
+            aggregateTimeout: 300, // Wait 300ms after a change before rebuilding
         }
     }
     return config;

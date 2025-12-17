@@ -104,7 +104,7 @@ const Navbar = () => {
                         </Link>
                         </div>
 
-                        {/* Vidéos */}
+                        {/* Videos */}
                         <div className="flex items-center justify-between">
                         <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex-1">
                             <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">
@@ -119,7 +119,7 @@ const Navbar = () => {
                         </Link>
                         </div>
 
-                        {/* Parties */}
+                        {/* Matches */}
                         <div className="flex items-center justify-between">
                         <Link href="/matches" onClick={() => setIsMenuOpen(false)} className="flex-1">
                             <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">
@@ -134,7 +134,7 @@ const Navbar = () => {
                         </Link>
                         </div>
 
-                        {/* Joueurs */}
+                        {/* Players */}
                         <div className="flex items-center justify-between">
                         <Link href="/players" onClick={() => setIsMenuOpen(false)} className="flex-1">
                             <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">

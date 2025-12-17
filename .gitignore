@@ -1,5 +1,5 @@
 # ----------------------------------------
-# 1. EXCLUSIONS GENERALES 
+# 1. GENERAL EXCLUSIONS
 # ----------------------------------------
 
 # Logs
@@ -31,7 +31,7 @@ __pycache__/
 
 
 # ------------------------------------------------------
-# 2. EXCLUSIONS SPECIFIQUES AU PROJET REACT (frontend/)
+#  2. SPECIFIC EXCLUSIONS FOR THE REACT PROJECT (frontend/)
 # ------------------------------------------------------
 
 # Dependencies
@@ -73,7 +73,7 @@ frontend/next-env.d.ts
 
 
 # ------------------------------------------------
-# 2. EXCLUSIONS SPECIFIQUES AU BACKEND (backend/)
+# 3. SPECIFIC EXCLUSIONS FOR THE BACKEND (backend/)
 # ------------------------------------------------
 
 # Pycache files

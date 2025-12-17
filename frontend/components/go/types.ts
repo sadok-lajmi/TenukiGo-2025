@@ -20,7 +20,7 @@ export interface AnalysisNode {
   bestMove?: { x: number, y: number };
 }
 
-// Rectangle de sélection {x1,y1} (haut gauche) -> {x2,y2} (bas droite)
+// Selection rectangle {x1,y1} (top-left) -> {x2,y2} (bottom-right)
 export interface Region {
     x1: number;
     y1: number;

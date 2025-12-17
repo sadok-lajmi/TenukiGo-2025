@@ -8,8 +8,8 @@ import { BOARD_PIXEL_SIZE, BOARD_SIZE, PADDING, CELL_SIZE } from '@/components/g
 import { RotateCcw, MousePointerClick } from 'lucide-react';
 
 export default function GoPlayable() {
-    // On n'a pas besoin de charger un SGF par défaut pour jouer, on peut commencer vide
-    // ou on peut charger un SGF pour l'analyser/le continuer.
+    // No need to load a default SGF to play, we can start empty
+    // or we can load an SGF to analyze/continue it.
     const {
         currentBoard,
         currentMoveIndex,
@@ -19,14 +19,14 @@ export default function GoPlayable() {
         prevMove,
         goToStart,
         goToEnd,
-        playInteractiveMove, // La fonction qu'on vient d'ajouter
+        playInteractiveMove, // Newly added function
         resetToDefault
-    } = useGoGame(); // Pas d'URL par défaut = plateau vide
+    } = useGoGame(); // No default URL = empty board
 
     const svgRef = useRef<SVGSVGElement>(null);
 
-    // --- LOGIQUE DE CLIC (Conversion Pixels -> Grille) ---
-    // C'est la même logique que dans GoViewerFull, mais utilisée pour jouer.
+    // --- CLICK LOGIC (Pixels -> Board conversion) ---
+    // Same logic as in GoViewerFull, but used for playing.
     const handleBoardClick = (e: React.MouseEvent<SVGSVGElement>) => {
         if (!svgRef.current) return;
 
@@ -40,11 +40,11 @@ export default function GoPlayable() {
         const x = Math.max(0, Math.min(BOARD_SIZE - 1, Math.round((rawX - PADDING) / CELL_SIZE)));
         const y = Math.max(0, Math.min(BOARD_SIZE - 1, Math.round((rawY - PADDING) / CELL_SIZE)));
 
-        // Jouer le coup
+        // Play the move
         playInteractiveMove(x, y);
     };
 
-    // Calcul du prochain joueur pour l'affichage
+    // Compute next player for display
     const nextPlayer = currentMoveIndex > 0
         ? (moves[currentMoveIndex - 1].player === 'B' ? 'Blanc' : 'Noir')
         : 'Noir';
@@ -52,7 +52,7 @@ export default function GoPlayable() {
     return (
         <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 gap-6">
 
-            {/* En-tête */}
+            {/* Header */}
             <div className="text-center">
                 <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
                     <MousePointerClick className="text-blue-600" />
@@ -61,25 +61,25 @@ export default function GoPlayable() {
                 <p className="text-neutral-500">Testez des variations ou jouez une partie complète.</p>
             </div>
 
-            {/* Zone principale */}
+            {/* Main area */}
             <div className="flex flex-col md:flex-row gap-8 items-start w-full justify-center">
 
-                {/* Plateau */}
+                {/* Board */}
                 <div className="flex-shrink-0 self-center size-[min(100%,400px)] shadow-sm bg-white">
                     <GoBoard
                         ref={svgRef}
                         boardState={currentBoard}
                         lastMove={lastMove}
-                        // On utilise onMouseDown pour la réactivité immédiate
+                        // Using onMouseDown for immediate responsiveness
                         onMouseDown={handleBoardClick}
-                        cursor="pointer" // Indique qu'on peut cliquer
+                        cursor="pointer" // Indicates that it is clickable
                     />
                 </div>
 
-                {/* Barre latérale de contrôle */}
+                {/* Control sidebar */}
                 <div className="w-full md:w-140 flex flex-col gap-4">
 
-                    {/* Info Tour */}
+                    {/* Turn info */}
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-neutral-100 flex items-center justify-between">
                         <span className="font-medium text-neutral-700">Au trait :</span>
                         <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ export default function GoPlayable() {
                         </div>
                     </div>
 
-                    {/* Contrôles de navigation (Pour revenir en arrière si on s'est trompé) */}
+                    {/* Navigation controls (to go back if a mistake was made) */}
                     <GoControls
                         currentMoveIndex={currentMoveIndex}
                         moves={moves}
@@ -101,7 +101,7 @@ export default function GoPlayable() {
                         compact={true}
                     />
 
-                    {/* Affichage du contenu du nouveau sgf en cours */}
+                    {/* Display current SGF content */}
                     <div className="flex gap-4">
                     <div className="flex-1 bg-white p-4 rounded-xl shadow-sm border border-neutral-100">
                         <h3 className="font-medium text-neutral-700 mb-2">Coups joués :</h3>
@@ -131,12 +131,12 @@ export default function GoPlayable() {
                     </div>
                     </div>
 
-                    {/* Actions Spécifiques au jeu */}
+                    {/* Game-specific actions */}
                     <div className="bg-white p-4 rounded-xl shadow-md flex flex-col gap-2">
                         <button
                             onClick={() => {
-                                // Reset simple: vide le tableau des coups
-                                window.location.reload(); // Pour l'instant le moyen le plus simple de vider l'état initial du hook sans ajouter trop de complexité
+                                // Simple reset: clears the moves array
+                                window.location.reload(); // For now the simplest way to reset the hook state without adding too much complexity
                             }}
                             className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors font-medium text-sm"
                         >

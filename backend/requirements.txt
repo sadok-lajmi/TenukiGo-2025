@@ -1,7 +1,7 @@
-fastapi>=0.110.0          # Framework web (Version mature et stable)
-uvicorn[standard]>=0.29.0 # Serveur ASGI (Compatible Python 3.12+)
-psycopg2-binary>=2.9.9    # Driver PostgreSQL (La version 2.9.9+ supporte officiellement Py3.12)
-python-multipart>=0.0.9   # Nécessaire pour l'upload (UploadFile)
-requests>=2.31.0          # Requêtes HTTP (Version sécurisée récente)
-python-dotenv>=1.0.1      # Gestion des variables d'environnement
-pydantic>=2.6.0           # Validation des données (Version 2.x pour compatibilité avec FastAPI)
+fastapi>=0.110.0          # Web framework (Mature and stable version)
+uvicorn[standard]>=0.29.0 # ASGI server (Compatible with Python 3.12+)
+psycopg2-binary>=2.9.9    # PostgreSQL driver (Version 2.9.9+ officially supports Py3.12)
+python-multipart>=0.0.9   # Required for uploads (UploadFile)
+requests>=2.31.0          # HTTP requests (Recent secure version)
+python-dotenv>=1.0.1      # Environment variables management
+pydantic>=2.6.0           # Data validation (Version 2.x for FastAPI compatibility)

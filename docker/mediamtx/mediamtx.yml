@@ -18,6 +18,6 @@ paths:
   all:
     source: publisher
     record: yes
-    # %Y%m%d_%H%M%S assure un nom de fichier unique par session.
+    # %Y%m%d_%H%M%S ensures a unique file name per session.
     recordPath: /tenuki_storage/videos/%path/%Y%m%d_%H%M%S
     recordFormat: fmp4

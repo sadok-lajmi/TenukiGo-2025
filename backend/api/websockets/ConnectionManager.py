@@ -3,7 +3,6 @@ from fastapi import WebSocket
 
 class ConnectionManager:
     def __init__(self):
-        # Dictionnaire : match_id -> Liste de WebSockets
         self.active_connections: Dict[int, List[WebSocket]] = {}
 
     async def connect(self, websocket: WebSocket, match_id: int):
@@ -33,6 +32,5 @@ class ConnectionManager:
                         await connection.send_json(message)
                     except Exception as e:
                         print(f"Erreur d'envoi WS: {e}")
-                        # On pourrait gérer la déconnexion ici aussi
 
 manager = ConnectionManager()
