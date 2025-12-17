@@ -12,7 +12,7 @@ import GoToolbar from '@/components/go/GoToolbar';
 import GoUpload from '@/components/go/GoUpload';
 
 // Le SGF par défaut sera chargé depuis cette URL
-const DEFAULT_SGF_URL = '/sgf/example.sgf';
+const DEFAULT_SGF_URL = '/sgf/example1.sgf';
 
 export default function GoViewerFull({ sgfUrl = DEFAULT_SGF_URL , importMode = false }: { sgfUrl?: string, importMode?: boolean }) {
   // --- HOOKS ---
@@ -106,8 +106,7 @@ export default function GoViewerFull({ sgfUrl = DEFAULT_SGF_URL , importMode = f
 
   return (
     <div className="w-full max-w-7xl mx-auto p-4 lg:p-8">
-      <header className="mb-6 text-center flex flex-col items-center gap-4">
-        <h2 className="text-3xl font-bold text-neutral-900">Visualiseur SGF</h2>
+      <header className="mb-6 text-center flex flex-col items-center gap-4"> 
         <GoToolbar
           showAnalysis={showAnalysis}
           onToggleAnalysis={() => setShowAnalysis(!showAnalysis)}

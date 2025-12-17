@@ -58,7 +58,7 @@ export default function VideoForm({ mode, initialData }: VideoFormProps) {
           m.video_id === null // only allow selecting a match with no video
         )
         .map((m: any) => ({
-          label: m.title,
+          label: m.title + ` - ${m.white} vs ${m.black} (${new Date(m.date).toLocaleDateString()})`,
           value: m.match_id,
         }));
 
