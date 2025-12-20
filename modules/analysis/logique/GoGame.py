@@ -3,7 +3,7 @@ Main game logic and state management for Go game recognition.
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import keras
 import numpy as np
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class GoGame:
     """Manages the game logic, state, and move detection."""
 
-    def __init__(self, game: sente.Game,
+    def __init__(self,
                  board_detect: GoBoard,
                  corrector_model: keras.Model,
                  transparent_mode: bool = False):
@@ -27,14 +27,12 @@ class GoGame:
         Initialize the GoGame manager.
 
         Args:
-            game: Sente game instance
             board_detect: GoBoard detection instance
             corrector_model: AI model for move correction
             transparent_mode: Whether to use transparent mode
         """
-        self.moves: List[Tuple[str, Tuple[int, int]]] = []
         self.board_detect = board_detect
-        self.game = game
+        self.game = sente.Game()
         self.corrector_model = corrector_model
         self.current_player: Optional[str] = None
         self.transparent_mode = transparent_mode
@@ -57,7 +55,6 @@ class GoGame:
         Returns:
             sgf_text
         """
-        self.moves = []
         self.current_player = current_player
         self.frame = frame
 
@@ -202,7 +199,6 @@ class GoGame:
                 self.game.step_up()
             x, y = black_added[0][0] + 1, black_added[0][1] + 1
             self.play_move(x, y, 1)  # 1 = Black
-            self.moves.append(('B', (x - 1, 18 - (y - 1))))
             self.recent_moves_buffer.append({
                 'color': 'B', 'position': black_added[0]
             })
@@ -213,7 +209,6 @@ class GoGame:
                 self.game.step_up()
             x, y = white_added[0][0] + 1, white_added[0][1] + 1
             self.play_move(x, y, 2)  # 2 = White
-            self.moves.append(('W', (x - 1, 18 - (y - 1))))
             self.recent_moves_buffer.append({
                 'color': 'W', 'position': white_added[0]
             })
@@ -230,12 +225,10 @@ class GoGame:
         for stone in black_stones:
             x, y = stone[0] + 1, stone[1] + 1
             self.play_move(x, y, 1)  # 1 = Black
-            self.moves.append(('B', (x - 1, 18 - (y - 1))))
 
         for stone in white_stones:
             x, y = stone[0] + 1, stone[1] + 1
             self.play_move(x, y, 2)  # 2 = White
-            self.moves.append(('W', (x - 1, 18 - (y - 1))))
 
     def get_sgf(self) -> str:
         """Get SGF string for the current game."""

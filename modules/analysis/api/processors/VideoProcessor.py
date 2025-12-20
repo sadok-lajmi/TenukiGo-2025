@@ -58,10 +58,9 @@ class VideoProcessor:
         self.go_board = GoBoard(model_path=YOLO_PATH)
         corrector_model = load_corrector_model(model_path=KERAS_PATH)
         self.go_game = GoGame(
-            game=sente.Game(),
             board_detect=self.go_board,
             corrector_model=corrector_model,
-            transparent_mode=True
+            transparent_mode=False
         )
 
         cap = cv2.VideoCapture(self.video_path)
