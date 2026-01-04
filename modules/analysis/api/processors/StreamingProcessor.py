@@ -51,7 +51,7 @@ class StreamingProcessor:
         # Context manager to maintain persistent WebSocket connection
         async for websocket in websockets.connect(self.ws_url):
             try:
-                logger.info("Connecté au Backend WebSocket")
+                logger.info("Connected to WebSocket")
                 
                 # Initialize Go Game and Board
                 self.go_board = GoBoard(model_path=YOLO_PATH)
@@ -65,13 +65,13 @@ class StreamingProcessor:
                 # Lauch the video capture
                 cap = cv2.VideoCapture(self.rtsp_url)
                 if not cap.isOpened():
-                    logger.error("Impossible d'ouvrir le flux RTSP")
+                    logger.error("Unable to open RTSP stream")
                     return
 
                 # --- 1. Initialize Board ---
                 if not initialize_board(cap, self.go_game):
                     cap.release()
-                    logger.error(" Échec de l'initialisation du plateau")
+                    logger.error("Board initialization failed")
                     return
                 consecutive_errors = 0
 
@@ -82,10 +82,10 @@ class StreamingProcessor:
                     
                     if not ret:
                         consecutive_errors += 1
-                        logger.warning(f" Frame manquante ({consecutive_errors}/{MAX_ERRORS})")
+                        logger.warning(f"Missing frame ({consecutive_errors}/{MAX_ERRORS})")
 
                         if consecutive_errors >= MAX_ERRORS:
-                            logger.error(" Flux RTSP définitivement perdu.")
+                            logger.error("RTSP stream permanently lost.")
                             break # Exit to end the processing loop
                         
                         await asyncio.sleep(ANALYSIS_INTERVAL * 5) # Wait longer before retrying
@@ -97,17 +97,17 @@ class StreamingProcessor:
                         self.go_game.process_frame(frame)
 
                     except InvalidMoveError as e:
-                        logger.warning(f"⚠️ Coup ignoré : {e}")
+                        logger.warning(f"Move ignored: {e}")
                         continue
 
                     except Exception as e:
-                        logger.error(f"🔥 Erreur de traitement : {e}")
+                        logger.error(f"Processing error: {e}")
                         continue
 
                     # --- 3. Send updated SGF ---
                     sgf_content = self.go_game.get_sgf()
                     if sgf_content != self.last_sgf:
-                        logger.info(f"♟️ Nouveau coup détecté ! SGF: {sgf_content}")
+                        logger.info(f"New move detected! SGF: {sgf_content}")
                         message = {
                             "type": "sgf_update",
                             "sgf": sgf_content
@@ -124,23 +124,23 @@ class StreamingProcessor:
                 # --- 4. End of Game Post-Processing ---
                 final_sgf = self.go_game.post_treatment()
                 if final_sgf:
-                    logger.info(f"♟️ Envoi du SGF final: {final_sgf}")
+                    logger.info(f"Sending final SGF: {final_sgf}")
                     message = {
                         "type": "sgf_final",
                         "sgf": final_sgf
                     }
                     await websocket.send(json.dumps(message))
                 else:
-                    logger.error("❌ Échec de la génération du SGF final.")
+                    logger.error("Failed to generate final SGF.")
 
                 self.stop()
                 break # Clean exit from the persistent connection loop
 
             except websockets.ConnectionClosed:
-                logger.warning("Connexion WS perdue, tentative de reconnexion dans 5s...")
+                logger.warning("WebSocket connection lost, attempting to reconnect in 5s...")
                 await asyncio.sleep(5)
             except Exception as e:
-                logger.error(f"Erreur inattendue: {e}")
+                logger.error(f"Unexpected error: {e}")
                 await asyncio.sleep(5)
 
     def stop(self):
