@@ -8,7 +8,7 @@ It can load models from the legacy Tenuki2025 system or new uploaded models.
 import os
 import numpy as np
 from typing import Optional
-from Settings import settings
+from config.Settings import settings
 
 
 class AIModelManager:

@@ -434,9 +434,9 @@ class PhotoAnalysisService:
         # Save file if requested
         if save_file:
             import uuid
-            from Settings import settings
+            from config.Settings import settings
             if output_dir is None:
-                output_dir = settings.get_upload_folder()
+                output_dir = settings.UPLOAD_FOLDER
             filename = f"game_{uuid.uuid4().hex[:8]}.sgf"
             os.makedirs(output_dir, exist_ok=True)
             file_path = os.path.join(output_dir, filename)
