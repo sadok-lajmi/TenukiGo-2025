@@ -59,7 +59,6 @@ def create_player(
     lastname: str = Form(...),
     level: Optional[str] = Form(None)
 ):
-    print(f"Creating player: {firstname} {lastname}, level: {level}")
     conn = db()
     cur = conn.cursor()
     cur.execute("""
@@ -67,7 +66,6 @@ def create_player(
         VALUES (%s, %s, %s)
         RETURNING player_id
     """, (firstname, lastname, level))
-    print(f"Created player: {firstname} {lastname}, level: {level}")
     player_id = cur.fetchone()["player_id"]
     conn.commit()
     conn.close()

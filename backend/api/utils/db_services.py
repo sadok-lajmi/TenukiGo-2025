@@ -1,3 +1,8 @@
+"""
+Database services utilities.
+Provides functions to interact with the database.
+"""
+
 import psycopg2
 from config.settings import DB_URL
 from psycopg2.extras import RealDictCursor

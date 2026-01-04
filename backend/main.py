@@ -1,3 +1,9 @@
+"""
+Backend main application for TenukiGo-2025.
+Sets up FastAPI app, routes, and middleware.
+Updates OpenAPI schema and serves static files for frontend access.
+"""
+
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware 

@@ -1,3 +1,9 @@
+"""
+Configuration settings for the TenukiGo backend application.
+Defines constants and paths used across the application.
+"""
+
+import logging
 import os
 from dotenv import load_dotenv
 
@@ -51,3 +57,12 @@ WS_STREAMING_URL = os.getenv("WS_STREAMING_URL")
 MEDIAMTX_API_URL = os.getenv("MEDIAMTX_API_URL")
 MEDIAMTX_RTSP_URL = os.getenv("MEDIAMTX_RTSP_URL")
 MEDIAMTX_HLS_URL = os.getenv("MEDIAMTX_HLS_URL")
+
+# -------------------------------
+# LOGGING SETUP 
+# -------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)

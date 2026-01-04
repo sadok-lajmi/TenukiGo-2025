@@ -1,3 +1,8 @@
+"""
+File storage utilities.
+Provides functions to save and modify files.
+"""
+
 from fastapi import UploadFile
 import os
 from datetime import datetime
