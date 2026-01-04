@@ -1,5 +1,5 @@
 services:
-  # --- Base de données ---
+  # --- Database ---
   db:
     image: postgres:17-alpine
     container_name: tenuki-postgres
@@ -12,7 +12,7 @@ services:
     volumes:
       - ../database/schema.sql:/docker-entrypoint-initdb.d/init.sql
       - tenuki-pgdata:/var/lib/postgresql/data
-    healthcheck: # Pour que le backend attende vraiment que la DB soit prête
+    healthcheck: # To ensure the backend truly waits for the DB to be ready
       test: ["CMD-SHELL", "pg_isready -U go_user -d go_db"]
       interval: 5s
       timeout: 5s
@@ -25,7 +25,7 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8000
     volumes:
       - ../backend:/app
-      - ../backend/storage:/app/storage # Montage du volume pour les fichiers uploadés
+      - ../backend/storage:/app/storage # Mount volume for uploaded files
     ports:
       - "8000:8000"
     environment:
@@ -48,26 +48,27 @@ services:
     volumes:
       - ../frontend:/app
       - /app/node_modules
-      - /app/.next # Préserve le cache de build Next.js (IMPORTANT pour la vitesse)
+      - /app/.next # Preserves Next.js build cache (IMPORTANT for speed)
     environment:
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
 
-  # --- Module d'analyse ---
+  # --- Analysis module ---
   analysis:
     build: ../modules/analysis
     container_name: tenuki-analysis
     command: uvicorn main:app --host 0.0.0.0 --port 5000
     volumes:
       - ../modules/analysis:/app
-      - ../backend/storage:/app/storage # Montage du même volume pour accéder aux fichiers uploadés
+      - ../backend/storage:/app/storage # Mount the same volume to access uploaded files
     ports:
       - "5000:5000"
     environment:
-      - CUDA_VISIBLE_DEVICES=-1 # Désactive l'utilisation du GPU (à ajuster selon le déploiement)
-      - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|fflags;discardcorrupt|flags;low_delay
+      - CUDA_VISIBLE_DEVICES=-1 # Disables GPU usage (adjust according to deployment)
+      - TF_ENABLE_ONEDNN_OPTS=0 # Remove tensorflow error related to oneDNN
+      - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|fflags;discardcorrupt|flags;low_delay # Optimizes OpenCV for RTSP streaming
 
-  # --- Module photo/completion ---
+  # --- Photo/Completion module ---
   photo:
     build: ../modules/photo
     container_name: tenuki-photo
@@ -77,18 +78,20 @@ services:
       - ../backend/storage:/app/storage
     ports:
       - "5001:5001"
+    environment:
+      - TF_ENABLE_ONEDNN_OPTS=0 # Remove tensorflow error related to oneDNN
 
-  # --- Module GoInsight (Analyse SGF) ---
+  # --- GoInsight module (SGF Analysis) ---
   goinsight:
     build: ../modules/goinsight
     container_name: tenuki-goinsight
     command: uvicorn api:app --host 0.0.0.0 --port 5002
-    # Pas besoin de volumes car tout est dans l'image (y compris model)
-    # Sauf si on veut développer en live, mais l'image est complexe.
+    # No need for volumes as everything is in the image (including model)
+    # Unless live development is desired, but the image is complex.
     ports:
       - "5002:5002"
 
-  # --- Module de Streaming (MediaMTX) ---
+  # --- Streaming module (MediaMTX server) ---
   mediamtx:
     image: bluenviron/mediamtx:1.15.4
     container_name: tenuki-mediamtx
