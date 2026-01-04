@@ -6,10 +6,13 @@ Provides endpoints to start and stop streaming analysis for Go games.
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import asyncio
+import logging
 
 from api.processors.StreamingProcessor import StreamingProcessor
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 # Global dictionary to track active streaming processors
 # Key: match_id, Value: Instance of StreamingProcessor
@@ -41,6 +44,8 @@ async def start_stream(request: StartStreamingRequest):
         rtsp_url=request.rtsp_url,
         ws_url=request.ws_url
     )
+    
+    logger.info(f"Starting stream processor for match {request.match_id}")
 
     # 2. Start the background task (in FastAPI's event loop)
     task = asyncio.create_task(processor.run())
@@ -66,7 +71,7 @@ async def stop_stream(request: StopStreamingRequest):
     # 2. Cancel the async task directly
     if not processor.task and not processor.task.done():
         processor.task.cancel()
-        print(f"🛑 Asyncio task for match {request.match_id} cancelled.")
+        logger.info(f"🛑 Asyncio task for match {request.match_id} cancelled.")
     
     # 3. Remove the reference from the active processors
     del ACTIVE_PROCESSORS[request.match_id]

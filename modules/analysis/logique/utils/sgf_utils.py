@@ -14,7 +14,6 @@ from sente import sgf
 
 logger = logging.getLogger(__name__)
 
-
 # --- Functions from sgf_to_numpy.py ---
 
 def sgf_to_numpy(sgf_file_path: str) -> np.ndarray:
@@ -56,7 +55,8 @@ def sgf_to_numpy(sgf_file_path: str) -> np.ndarray:
 
 def to_sgf(move_list: List[Tuple[int, int, int]]) -> str:
     """
-    Converts a simple list of moves into an SGF file string.
+    Converts a simple list of moves into an SGF file string
+    using the sente library.
 
     Args:
         move_list (list): A list of move tuples, where each tuple is
@@ -69,7 +69,7 @@ def to_sgf(move_list: List[Tuple[int, int, int]]) -> str:
     """
     game = sente.Game()
     for move in move_list:
-        row, col, player = move
+        row, col, _ = move
         # Sente uses 1-19 indexing for play()
         game.play(row + 1, col + 1)
     return sgf.dumps(game)
@@ -77,18 +77,14 @@ def to_sgf(move_list: List[Tuple[int, int, int]]) -> str:
 
 # --- Functions from fill_gaps_model.py ---
 
-def sgf_coords_to_indices(coord: str, board_size: int) -> Tuple[int, int]:
+def sgf_coords_to_indices(coord: str) -> Tuple[int, int]:
     """Convert SGF coordinates (e.g., 'pd') to array indices (row, col)."""
-    col = ord(coord[0]) - ord('a')
-    row = ord(coord[1]) - ord('a')
-    return board_size - 1 - row, col
+    return ord(coord[1]) - 97, ord(coord[0]) - 97
 
 
-def indices_to_sgf_coords(x: int, y: int, board_size: int) -> str:
+def indices_to_sgf_coords(x: int, y: int) -> str:
     """Convert array indices (row, col) to SGF coordinates (e.g., 'pd')."""
-    col_char = chr(y + ord('a'))
-    row_char = chr(board_size - 1 - x + ord('a'))
-    return f"{col_char}{row_char}"
+    return f"{chr(y + 97)}{chr(x + 97)}"
 
 
 def sgf_to_sequence(sgf_file: str, board_size: int = 19) -> List[np.ndarray]:
@@ -133,49 +129,116 @@ def sgf_to_sequence(sgf_file: str, board_size: int = 19) -> List[np.ndarray]:
 
     return sequence
 
-
-def sequence_to_sgf(sequence: List[np.ndarray], board_size: int = 19) -> str:
+def matrix_to_sgf_stone_pos(board_matrix: np.ndarray) -> Tuple[List[str], List[str]]:
     """
-    Convert a sequence of Go board states back to SGF format.
+    Convert a Go board state (19x19 numpy array) to lists of SGF stone positions.
 
     Args:
-        sequence (list): Sequence of np.array board states.
-        board_size (int): Size of the Go board.
+        board_matrix (np.array): 19x19 array where 0=empty, 1=black, 2=white
 
     Returns:
-        str: SGF representation of the game.
+        Tuple[List[str], List[str]]: Two lists containing SGF coordinates for black and white stones.
     """
-    if not sequence:
-        return "(;GM[1]SZ[19])"
+    black_stones = []
+    white_stones = []
 
-    sgf_moves = []
-    prev_board = np.zeros_like(sequence[0])
+    for row in range(board_matrix.shape[0]):
+        for col in range(board_matrix.shape[1]):
+            if board_matrix[row, col] == 1:
+                black_stones.append(indices_to_sgf_coords(row, col))
+            elif board_matrix[row, col] == 2:
+                white_stones.append(indices_to_sgf_coords(row, col))
 
-    for board in sequence[1:]:  # Skip initial empty board
-        diff = board - prev_board
-        move = np.where(diff > 0)
-        if len(move[0]) > 0:  # There is a move
-            x, y = move[0][0], move[1][0]
-            color = 'B' if board[x, y] == 1 else 'W'
-            coords = indices_to_sgf_coords(x, y, board_size)
-            sgf_moves.append(f";{color}[{coords}]")
-        prev_board = board.copy()  # Use copy to avoid mutation
+    return black_stones, white_stones
 
-    sgf_string = f"(;GM[1]SZ[{board_size}]" + "".join(sgf_moves) + ")"
-    return sgf_string
-
-
-def save_sgf_to_file(sgf_string: str, file_path: str):
+def matrix_to_setup_sgf(board_matrix, board_size=19) -> str:
     """
-    Save an SGF string to a file.
-
+    Convert a single Go board state (19x19 numpy array) to an SGF string.
+    Accepts any confirguration, even illegal positions, and will generate
+    an SGF with setup properties (AB, AW).
     Args:
-        sgf_string (str): SGF content to save.
-        file_path (str): Path to save the SGF file.
+        board_matrix (np.array): 19x19 array where 0=empty, 1=black, 2=white
+    Returns:
+        str: SGF string representing the board state.
     """
-    try:
-        with open(file_path, 'w') as f:
-            f.write(sgf_string)
-        logger.info(f"SGF saved to {file_path}")
-    except IOError as e:
-        logger.error(f"Failed to save SGF to {file_path}: {e}")
+    sgf_content = f"(;GM[1]FF[4]SZ[{board_size}]" # Header standard
+    
+    black_stones, white_stones = matrix_to_sgf_stone_pos(board_matrix)
+    
+    sgf_content += "\n;"
+    # Add setup properties (AB = Add Black, AW = Add White)
+    if black_stones:
+        sgf_content += "AB" + "".join(f"[{stone}]" for stone in black_stones)
+    if white_stones:
+        sgf_content += "AW" + "".join(f"[{stone}]" for stone in white_stones)
+
+    sgf_content += ")"  # Closing parenthesis
+    return sgf_content
+
+def append_node_to_sgf(original_sgf: str, node_content: str) -> str:
+    """
+    Appends a new node to the end of an existing SGF string.
+    
+    Args:
+        original_sgf: The current SGF string (e.g., "(;GM[1]...;B[pd])")
+        node_content: The content of the new node (e.g., "W[dd]" or "AB[pd]AW[dd]")
+        
+    Returns:
+        The updated SGF string with the new node appended.
+    """
+    if not original_sgf:
+        return ""
+    
+    # Remove the closing parenthesis ')'
+    stripped_sgf = original_sgf.rstrip()
+    if stripped_sgf.endswith(')'):
+        stripped_sgf = stripped_sgf[:-1]
+    
+    # Add the new node (semicolon + content) and close the parenthesis
+    return f"{stripped_sgf};{node_content})"
+
+def generate_move_property(x: int, y: int, color: int) -> str:
+    """
+    Generates a simple move property string (e.g., "B[pd]").
+    
+    Args:
+        x, y: 0-based coordinates (row, col)
+        color: 1 for Black, 2 for White
+    """
+    coord = indices_to_sgf_coords(x, y)
+    tag = "B" if color == 1 else "W"
+    return f"{tag}[{coord}]"
+
+def generate_setup_properties(
+    black_added: List[Tuple[int, int]], 
+    white_added: List[Tuple[int, int]], 
+    removed: List[Tuple[int, int]]
+) -> str:
+    """
+    Generates SGF setup properties string (AB, AW, AE).
+    
+    Args:
+        black_added: List of (x, y) tuples for new black stones
+        white_added: List of (x, y) tuples for new white stones
+        removed: List of (x, y) tuples for removed stones (empty)
+    
+    Returns:
+        String like "AB[pd][dp]AW[dd]AE[jj]"
+    """
+    props = ""
+    
+    # Helper to format list of coords
+    def format_list(coords):
+        return "".join([f"[{indices_to_sgf_coords(r, c)}]" for r, c in coords])
+
+    if black_added:
+        props += f"AB{format_list(black_added)}"
+    
+    if white_added:
+        props += f"AW{format_list(white_added)}"
+        
+    if removed:
+        props += f"AE{format_list(removed)}"
+        
+    return props
+

@@ -4,6 +4,7 @@ from typing import Optional
 from datetime import datetime
 import requests
 import os
+import logging
 
 from api.utils.db_services import db
 from api.utils.file_storage import save_file, save_file_from_content
@@ -17,6 +18,8 @@ from config.settings import (
 )
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 class AnalysisCallback(BaseModel):
     video_id: int
@@ -281,7 +284,7 @@ def video_analysis_complete(video_id: int, payload: AnalysisCallback):
     
     # Case 2 : error
     elif payload.status == "error":
-        print(f"Analysis failed for video {video_id}: {payload.error}")
+        logger.error(f"Analysis failed for video {video_id}: {payload.error}")
         conn.commit()
         conn.close()
         return {"message": "Error received and logged"}

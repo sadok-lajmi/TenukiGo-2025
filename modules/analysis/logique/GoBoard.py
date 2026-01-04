@@ -2,6 +2,7 @@
 Board detection and state extraction from camera frames.
 """
 
+import logging
 import math
 import copy
 import cv2
@@ -13,6 +14,7 @@ from .utils.cv_utils import (
     get_key_points, detect_intersections, map_intersections
 )
 
+logger = logging.getLogger(__name__)
 
 class GoBoard:
     """
@@ -38,6 +40,10 @@ class GoBoard:
         self.perspective_matrix = None
         self.map = None
 
+    def get_state(self):
+        """Get deep copy of current 19x19x2 board state."""
+        return copy.deepcopy(self.state)
+
     def state_to_array(self):
         """
         Convert internal 19x19x2 state to simple 19x19 array.
@@ -57,88 +63,12 @@ class GoBoard:
         board_array[self.state[:, :, 0] == 1] = 1
         board_array[self.state[:, :, 1] == 1] = 2
         return board_array
-
-    def get_state(self):
-        """Get deep copy of current 19x19x2 board state."""
-        return copy.deepcopy(self.state)
-
-    def apply_perspective_transformation(self, double_transform=False):
-        """Warp input frame to get flat, top-down view of board."""
-        if double_transform:
-            input_points = get_corners(self.results, self.padding)
-            output_edge = 600 + self.padding * 2
-            out_pts = np.array([
-                [0, 0], [output_edge, 0],
-                [output_edge, output_edge], [0, output_edge]
-            ], dtype=np.float32)
-
-            perspective_matrix = cv2.getPerspectiveTransform(
-                input_points, out_pts
-            )
-            first_transformed_image = cv2.warpPerspective(
-                self.frame, perspective_matrix, (output_edge, output_edge)
-            )
-            self.results = self.model(first_transformed_image, verbose=False)
-        else:
-            first_transformed_image = self.frame
-
-        self.annotated_frame = self.results[0].plot(labels=False, conf=False)
-
-        input_points = get_corners(self.results, 0)
-        output_edge = 600
-        out_pts = np.array([
-            [0, 0], [output_edge, 0],
-            [output_edge, output_edge], [0, output_edge]
-        ], dtype=np.float32)
-
-        self.perspective_matrix = cv2.getPerspectiveTransform(
-            input_points, out_pts
-        )
-        self.transformed_image = cv2.warpPerspective(
-            first_transformed_image, self.perspective_matrix,
-            (output_edge, output_edge)
-        )
-
-    def assign_stones(self, white_stones_transf, black_stones_transf,
-                      transformed_intersections):
-        """Assign detected stones to nearest grid intersection."""
-        self.map = map_intersections(transformed_intersections)
-        self.state = np.zeros((19, 19, 2))
-
-        for stone in white_stones_transf:
-            nearest_corner = self.find_nearest_corner(
-                transformed_intersections, stone
-            )
-            row = self.map[nearest_corner][1]
-            col = self.map[nearest_corner][0]
-            self.state[row, col, 1] = 1
-
-        for stone in black_stones_transf:
-            nearest_corner = self.find_nearest_corner(
-                transformed_intersections, stone
-            )
-            row = self.map[nearest_corner][1]
-            col = self.map[nearest_corner][0]
-            self.state[row, col, 0] = 1
-
-    def find_nearest_corner(self, transformed_intersections, stone):
-        """Find closest intersection to given stone."""
-        nearest_corner = None
-        closest_distance = float('inf')
-
-        for inter in transformed_intersections:
-            distance = math.dist(inter, stone)
-            if distance < closest_distance:
-                nearest_corner = tuple(inter)
-                closest_distance = distance
-
-        return nearest_corner
-
+    
     def process_frame(self, frame):
         """Run full detection pipeline on a single frame."""
         self.frame = frame
         self.results = self.model(self.frame, verbose=False, conf=0.15)
-        self.apply_perspective_transformation(double_transform=False)
+        self._apply_perspective_transformation(double_transform=False)
 
         vertical_lines, horizontal_lines = detect_lines(
             self.results, self.perspective_matrix
@@ -186,4 +116,77 @@ class GoBoard:
                 f"Warning: Only {len(intersections)}/361 intersections found."
                 )
 
-        self.assign_stones(white_stones, black_stones, intersections)
+        self._assign_stones(white_stones, black_stones, intersections)
+
+    def _apply_perspective_transformation(self, double_transform=False):
+        """Warp input frame to get flat, top-down view of board."""
+        if double_transform:
+            input_points = get_corners(self.results, self.padding)
+            output_edge = 600 + self.padding * 2
+            out_pts = np.array([
+                [0, 0], [output_edge, 0],
+                [output_edge, output_edge], [0, output_edge]
+            ], dtype=np.float32)
+
+            perspective_matrix = cv2.getPerspectiveTransform(
+                input_points, out_pts
+            )
+            first_transformed_image = cv2.warpPerspective(
+                self.frame, perspective_matrix, (output_edge, output_edge)
+            )
+            self.results = self.model(first_transformed_image, verbose=False)
+        else:
+            first_transformed_image = self.frame
+
+        self.annotated_frame = self.results[0].plot(labels=False, conf=False)
+
+        input_points = get_corners(self.results, 0)
+        output_edge = 600
+        out_pts = np.array([
+            [0, 0], [output_edge, 0],
+            [output_edge, output_edge], [0, output_edge]
+        ], dtype=np.float32)
+
+        self.perspective_matrix = cv2.getPerspectiveTransform(
+            input_points, out_pts
+        )
+        self.transformed_image = cv2.warpPerspective(
+            first_transformed_image, self.perspective_matrix,
+            (output_edge, output_edge)
+        )
+
+    def _assign_stones(self, white_stones_transf, black_stones_transf,
+                      transformed_intersections):
+        """Assign detected stones to nearest grid intersection."""
+        self.map = map_intersections(transformed_intersections)
+        self.state = np.zeros((19, 19, 2))
+
+        for stone in white_stones_transf:
+            nearest_corner = self._find_nearest_corner(
+                transformed_intersections, stone
+            )
+            row = self.map[nearest_corner][1]
+            col = self.map[nearest_corner][0]
+            self.state[row, col, 1] = 1
+
+        for stone in black_stones_transf:
+            nearest_corner = self._find_nearest_corner(
+                transformed_intersections, stone
+            )
+            row = self.map[nearest_corner][1]
+            col = self.map[nearest_corner][0]
+            self.state[row, col, 0] = 1
+
+    def _find_nearest_corner(self, transformed_intersections, stone):
+        """Find closest intersection to given stone."""
+        nearest_corner = None
+        closest_distance = float('inf')
+
+        for inter in transformed_intersections:
+            distance = math.dist(inter, stone)
+            if distance < closest_distance:
+                nearest_corner = tuple(inter)
+                closest_distance = distance
+
+        return nearest_corner
+

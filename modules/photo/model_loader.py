@@ -7,12 +7,10 @@ It can load models from the legacy Tenuki2025 system or new uploaded models.
 
 import os
 import numpy as np
-from pathlib import Path
 from typing import Optional
 from settings import settings
 
-
-class AIModelLoader:
+class AIModelLoader: #TODO AI Model Manager
     """Handles loading and managing AI models for move completion."""
     
     def __init__(self):

@@ -1,8 +1,11 @@
+"""
+Video Processor for analyzing Go game videos.
+"""
+
 import logging
 import os
 import cv2
 import requests
-import sente
 
 from logique.GoGame import GoGame
 from logique.GoBoard import GoBoard
@@ -77,7 +80,7 @@ class VideoProcessor:
                 cap.release()
                 return
 
-            # 2. Process the rest of the video
+            # 2. Process the video
             self._process_frames(cap)
             
             # 3. Post-Process / Generate SGF
@@ -87,7 +90,7 @@ class VideoProcessor:
             if final_sgf:
                 self._notify_backend(status="success", sgf_content=final_sgf)
             else:
-                self._notify_backend(status="error", error="Failed to generate SGF")
+                self._notify_backend(status="error", error="Failed to generate SGF") # TODO
 
         except Exception as e:
             logger.error(f"Critical error during processing: {e}", exc_info=True)
@@ -119,14 +122,13 @@ class VideoProcessor:
 
             try:
                 # Main logic to update board state from image
-                _ = self.go_game.main_loop(frame, end_game=False)
+                self.go_game.process_frame(frame)
             except Exception as e:
                 # Log but don't crash the whole pipeline for one bad frame
                 logger.debug(f"Error processing frame {frame_idx}: {e}")
 
     def _generate_final_sgf(self) -> str:
         """Tries to generate SGF using AI, falls back to algorithmic approach."""
-        final_sgf = None
         num_states = len(self.go_game.numpy_board)
         
         logger.info(f"Post-processing {num_states} board states...")
@@ -135,25 +137,10 @@ class VideoProcessor:
             logger.warning("Not enough states to generate SGF.")
             return None
 
-        # Try AI Model
         try:
-            final_sgf = self.go_game.post_treatment(end_game=True)
-            if final_sgf:
-                logger.info("AI SGF generation successful.")
-                return final_sgf
+            return self.go_game.post_treatment()
         except Exception as e:
-            logger.error(f"AI post-processing failed: {e}")
-
-        # Fallback: No AI
-        logger.info("Attempting fallback (No AI)...")
-        try:
-            move_list = corrector_no_ai(self.go_game.numpy_board)
-            final_sgf = to_sgf(move_list)
-            logger.info("Fallback SGF generation successful.")
-            return final_sgf
-        except Exception as e:
-            logger.error(f"Fallback generation failed: {e}")
-            return None
+            logger.error(f"Post-processing failed: {e}")
 
     def _notify_backend(self, status: str, sgf_content: str = None, error: str = None):
         """Sends a webhook to the backend with the results."""

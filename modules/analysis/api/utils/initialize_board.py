@@ -14,7 +14,6 @@ from config.settings import (
 
 logger = logging.getLogger(__name__)
 
-
 def initialize_board(cap: cv2.VideoCapture,
                      go_game: GoGame) -> bool:
     """
@@ -37,8 +36,7 @@ def initialize_board(cap: cv2.VideoCapture,
         frame_count_init += 1
 
         try:
-            # Use end_game=False, we don't need SGF yet
-            _ = go_game.initialize_game(frame, end_game=False)
+            go_game.initialize_game(frame)
             logger.info(
                 f"Board initialized successfully on frame {frame_count_init}!"
             )
