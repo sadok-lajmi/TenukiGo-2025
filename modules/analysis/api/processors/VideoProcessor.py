@@ -129,11 +129,11 @@ class VideoProcessor:
 
     def _generate_final_sgf(self) -> str:
         """Tries to generate SGF using AI, falls back to algorithmic approach."""
-        num_states = len(self.go_game.numpy_board)
+        nb_states = self.go_game.nb_states()
         
-        logger.info(f"Post-processing {num_states} board states...")
+        logger.info(f"Post-processing {nb_states} board states...")
 
-        if num_states < 2:
+        if nb_states < 2:
             logger.warning("Not enough states to generate SGF.")
             return None
 
