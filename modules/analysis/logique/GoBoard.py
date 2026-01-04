@@ -112,7 +112,7 @@ class GoBoard:
         if len(intersections) == 0:
             raise Exception("No intersections were found!")
         if len(intersections) != 361:
-            print(
+            logger.warning(
                 f"Warning: Only {len(intersections)}/361 intersections found."
                 )
 

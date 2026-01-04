@@ -59,9 +59,9 @@ async def start_stream(request: StartStreamingRequest):
 
 @router.post("/stream/stop")
 async def stop_stream(request: StopStreamingRequest):
-    """Arrête proprement le processeur de streaming."""
+    """Properly stops the streaming processor."""
     if request.match_id not in ACTIVE_PROCESSORS:
-        raise HTTPException(status_code=404, detail="Stream non trouvé.")
+        raise HTTPException(status_code=404, detail="Stream not found.")
 
     processor: StreamingProcessor = ACTIVE_PROCESSORS[request.match_id]
     
@@ -80,7 +80,7 @@ async def stop_stream(request: StopStreamingRequest):
 
 @router.get("/stream/status")
 def get_status():
-    """Retourne la liste des streams actifs pour le debug"""
+    """Returns the status of active streaming processors."""
     return {
         "active_streams": list(ACTIVE_PROCESSORS.keys()),
         "count": len(ACTIVE_PROCESSORS)

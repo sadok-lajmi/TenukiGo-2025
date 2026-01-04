@@ -20,7 +20,7 @@ def run_video_analysis_task(video_id: int, video_path: str, callback_url: str):
     """
     Wrapper function to instantiate and run the processor.
     This runs in the background.
-    """  
+    """
     processor = VideoProcessor(
         video_id=video_id,
         video_path=video_path,

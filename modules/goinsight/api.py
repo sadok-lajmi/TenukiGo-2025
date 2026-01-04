@@ -1,3 +1,8 @@
+"""
+FastAPI wrapper for GoInsight API.
+Provides endpoints for shallow and deep analysis of Go games.
+"""
+
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel

@@ -7,22 +7,23 @@ class InvalidMoveError(Exception):
     pass
 
 def safe_get_error_message(exception):
-        """Tente de récupérer un message d'erreur propre, même si l'encodage est cassé."""
-        # 1. Essayer de lire les arguments bruts (parfois stockés en bytes)
+        """Tries to extract a readable error message from an exception,
+        handling potential encoding issues from C++ exceptions."""
+        # 1. Try to read raw arguments (sometimes stored as bytes)
         if hasattr(exception, 'args') and exception.args:
             raw_msg = exception.args[0]
             if isinstance(raw_msg, bytes):
                 try:
-                    # On tente le décodage Windows (CP1252) qui accepte tout
+                    # Attempt Windows (CP1252) decoding which accepts all characters
                     return raw_msg.decode('cp1252')
                 except:
-                    pass # On continue si ça échoue
+                    pass # Continue if it fails
 
-        # 2. Essayer la conversion standard
+        # 2. Try standard conversion
         try:
             msg = str(exception)
-            # Si le message ressemble à du garbage (caractères étranges comme oXŮ)
-            # On peut faire un filtre basique (optionnel)
+            # If the message looks like garbage (strange characters like oXŮ)
+            # We can do a basic filter (optional)
             if any(ord(c) > 127 for c in msg) and len(msg) < 10:
                 return "Unknown C++ Error (Garbage output)"
             return msg
