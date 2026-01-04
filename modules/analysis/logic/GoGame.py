@@ -8,17 +8,17 @@ import numpy as np
 from typing import Dict, List, Optional
 import logging
 
-from logique.GoBoard import GoBoard
-from logique.corrector_withAI import corrector_with_ai
-from logique.corrector_noAI import corrector_no_ai
-from logique.utils.sgf_utils import (
+from logic.GoBoard import GoBoard
+from logic.corrector_withAI import corrector_with_ai
+from logic.corrector_noAI import corrector_no_ai
+from logic.utils.sgf_utils import (
     to_sgf, 
     matrix_to_setup_sgf,
     append_node_to_sgf, 
     generate_move_property, 
     generate_setup_properties
 )
-from logique.utils.error_handling_utils import safe_get_error_message, InvalidMoveError
+from logic.utils.error_handling_utils import safe_get_error_message, InvalidMoveError
 
 logger = logging.getLogger(__name__)
 
