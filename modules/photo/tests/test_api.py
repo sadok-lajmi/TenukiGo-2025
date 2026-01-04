@@ -1,10 +1,7 @@
 import pytest
-import json
 import io
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch, MagicMock
-from PIL import Image
-import numpy as np
+from unittest.mock import Mock, patch
 
 
 @pytest.fixture

@@ -3,7 +3,7 @@ import numpy as np
 import tempfile
 import os
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from PIL import Image
 import io
 

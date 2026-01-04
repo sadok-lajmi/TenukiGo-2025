@@ -1,9 +1,5 @@
-import pytest
 import numpy as np
-import cv2
-from unittest.mock import Mock, patch, MagicMock
-from PIL import Image
-import io
+from unittest.mock import Mock, patch
 from image_processor import GoBoard, ImageProcessor
 
 

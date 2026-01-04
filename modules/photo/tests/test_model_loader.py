@@ -1,8 +1,5 @@
-import pytest
-import os
-import tempfile
 import numpy as np
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from model_loader import AIModelLoader
 
 

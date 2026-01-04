@@ -1,6 +1,5 @@
-import pytest
 import numpy as np
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 from service import BoardState, MoveCompletionService, create_board_state_from_array
 
 

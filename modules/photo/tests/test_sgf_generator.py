@@ -1,6 +1,4 @@
-import pytest
 import numpy as np
-import datetime
 import io
 from unittest.mock import Mock, patch
 from sgf_generator import SGFGenerator, SGFFileManager
