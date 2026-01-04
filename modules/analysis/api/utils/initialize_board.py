@@ -7,10 +7,8 @@ using the GoGame logic.
 import logging
 import cv2
 
-from logique.GoGame import GoGame
-from config.settings import (
-    MAX_INIT_FRAMES
-)
+from logic.GoGame import GoGame
+from config.Settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +25,7 @@ def initialize_board(cap: cv2.VideoCapture,
     logger.info("Finding board in video...")
     frame_count_init = 0
 
-    while cap.isOpened() and frame_count_init < MAX_INIT_FRAMES:
+    while cap.isOpened() and frame_count_init < settings.MAX_INIT_FRAMES:
         ret, frame = cap.read()
         if not ret:
             logger.warning("Video ended before board could be initialized.")
@@ -50,6 +48,6 @@ def initialize_board(cap: cv2.VideoCapture,
             continue
 
     logger.error(
-        f"Could not initialize board after {MAX_INIT_FRAMES} frames."
+        f"Could not initialize board after {settings.MAX_INIT_FRAMES} frames."
     )
     return False

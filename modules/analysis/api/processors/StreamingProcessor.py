@@ -8,16 +8,11 @@ import websockets
 import json
 import logging
 
-from logique.GoGame import GoGame, InvalidMoveError
-from logique.GoBoard import GoBoard
-from logique.utils.model_utils import load_corrector_model
+from logic.GoGame import GoGame, InvalidMoveError
+from logic.GoBoard import GoBoard
+from logic.utils.model_utils import load_corrector_model
 from api.utils.initialize_board import initialize_board
-from config.settings import (
-    ANALYSIS_INTERVAL,
-    MAX_ERRORS,
-    YOLO_PATH,
-    KERAS_PATH
-)
+from config.Settings import settings
 
 logger = logging.getLogger("StreamingProcessor")
 
@@ -54,8 +49,8 @@ class StreamingProcessor:
                 logger.info("Connected to WebSocket")
                 
                 # Initialize Go Game and Board
-                self.go_board = GoBoard(model_path=YOLO_PATH)
-                corrector_model = load_corrector_model(model_path=KERAS_PATH)
+                self.go_board = GoBoard(model_path=settings.YOLO_PATH)
+                corrector_model = load_corrector_model(model_path=settings.KERAS_PATH)
                 self.go_game = GoGame(
                     board_detect=self.go_board,
                     corrector_model=corrector_model,
@@ -82,13 +77,13 @@ class StreamingProcessor:
                     
                     if not ret:
                         consecutive_errors += 1
-                        logger.warning(f"Missing frame ({consecutive_errors}/{MAX_ERRORS})")
+                        logger.warning(f"Missing frame ({consecutive_errors}/{settings.MAX_ERRORS})")
 
-                        if consecutive_errors >= MAX_ERRORS:
+                        if consecutive_errors >= settings.MAX_ERRORS:
                             logger.error("RTSP stream permanently lost.")
                             break # Exit to end the processing loop
                         
-                        await asyncio.sleep(ANALYSIS_INTERVAL * 5) # Wait longer before retrying
+                        await asyncio.sleep(settings.ANALYSIS_INTERVAL * 5) # Wait longer before retrying
                         cap.release()
                         cap = cv2.VideoCapture(self.rtsp_url)
                         continue
@@ -116,7 +111,7 @@ class StreamingProcessor:
                         self.last_sgf = sgf_content
 
                     # Breack not to overload the CPU
-                    await asyncio.sleep(ANALYSIS_INTERVAL)
+                    await asyncio.sleep(settings.ANALYSIS_INTERVAL)
                 
                 cap.release()
                 cv2.destroyAllWindows()

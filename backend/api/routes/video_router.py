@@ -8,14 +8,7 @@ import logging
 
 from api.utils.db_services import db
 from api.utils.file_storage import save_file, save_file_from_content
-from config.settings import (
-    STORAGE_DIR,
-    VIDEO_DIR,
-    THUMBNAIL_DIR,
-    SGF_DIR,
-    ANALYSIS_SERVICE_URL,
-    ANALYSIS_CALLBACK_URL
-)
+from config.Settings import settings
 
 router = APIRouter()
 
@@ -95,7 +88,7 @@ async def edit_video(
     # --- Handle thumbnail replacement ---
     try:
         if thumbnail:
-            thumb_path = await save_file(thumbnail, THUMBNAIL_DIR)
+            thumb_path = await save_file(thumbnail, settings.THUMBNAIL_DIR)
     except Exception as e:
         conn.close()
         raise HTTPException(status_code=500, detail=f"Thumbnail upload failed: {str(e)}")
@@ -117,7 +110,7 @@ async def edit_video(
     if remove_sgf:
         cur.execute("UPDATE video SET sgf = NULL WHERE video_id = %s", (video_id,))
         # delete the SGF file from storage
-        p = os.path.join(STORAGE_DIR, video["sgf"])
+        p = os.path.join(settings.STORAGE_DIR, video["sgf"])
         if os.path.exists(p):
             os.remove(p)
 
@@ -140,17 +133,17 @@ def delete_video(video_id: int):
         raise HTTPException(status_code=404, detail="Video not found")
 
     # Delete video file
-    video_path = os.path.join(STORAGE_DIR, video["path"])
+    video_path = os.path.join(settings.STORAGE_DIR, video["path"])
     if os.path.exists(video_path):
         os.remove(video_path)
     # Delete thumbnail file
     if video["thumbnail"]:
-        thumb_path = os.path.join(STORAGE_DIR, video["thumbnail"])
+        thumb_path = os.path.join(settings.STORAGE_DIR, video["thumbnail"])
         if os.path.exists(thumb_path):
             os.remove(thumb_path)
     # Delete SGF file
     if video["sgf"]:
-        sgf_path = os.path.join(STORAGE_DIR, video["sgf"])
+        sgf_path = os.path.join(settings.STORAGE_DIR, video["sgf"])
         if os.path.exists(sgf_path):
             os.remove(sgf_path)
 
@@ -170,12 +163,12 @@ async def upload_video(
 ):  
     try:
         # 2. Save video file
-        video_path= await save_file(file, VIDEO_DIR)
+        video_path= await save_file(file, settings.VIDEO_DIR)
 
         # 3. Save thumbnail if any
         thumb_path = None
         if thumbnail:
-            thumb_path = await save_file(thumbnail, THUMBNAIL_DIR)
+            thumb_path = await save_file(thumbnail, settings.THUMBNAIL_DIR)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
@@ -229,10 +222,10 @@ def generate_sgf_from_video(video_id: int):
     
     # Call Analysis module API
     try:
-        response = requests.post(ANALYSIS_SERVICE_URL + "/video/process",
+        response = requests.post(settings.ANALYSIS_SERVICE_URL + "/video/process",
                                  json={"video_id": video_id,
-                                       "video_path": os.path.join(STORAGE_DIR, video_path),
-                                       "callback_url": ANALYSIS_CALLBACK_URL.replace("video_id", str(video_id))
+                                       "video_path": os.path.join(settings.STORAGE_DIR, video_path),
+                                       "callback_url": settings.ANALYSIS_CALLBACK_URL.replace("video_id", str(video_id))
                                        },
                                  timeout=300)
         
@@ -269,7 +262,7 @@ def video_analysis_complete(video_id: int, payload: AnalysisCallback):
             sgf_path = save_file_from_content(
                 f"video_{video_id}.sgf", 
                 payload.sgf.encode('utf-8'), 
-                SGF_DIR
+                settings.SGF_DIR
             )
             
             # Update video record

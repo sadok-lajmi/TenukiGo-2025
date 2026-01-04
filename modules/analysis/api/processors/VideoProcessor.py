@@ -7,17 +7,11 @@ import os
 import cv2
 import requests
 
-from logique.GoGame import GoGame
-from logique.GoBoard import GoBoard
-from logique.utils.model_utils import load_corrector_model
-from logique.corrector_noAI import corrector_no_ai
-from logique.utils.sgf_utils import to_sgf
+from logic.GoGame import GoGame
+from logic.GoBoard import GoBoard
+from logic.utils.model_utils import load_corrector_model
 from api.utils.initialize_board import initialize_board
-from config.settings import (
-    ANALYSIS_INTERVAL, 
-    YOLO_PATH, 
-    KERAS_PATH
-)
+from config.Settings import settings
 
 logger = logging.getLogger("VideoProcessor")
 
@@ -58,8 +52,8 @@ class VideoProcessor:
             return
 
         # Initialize Go Game and Board
-        self.go_board = GoBoard(model_path=YOLO_PATH)
-        corrector_model = load_corrector_model(model_path=KERAS_PATH)
+        self.go_board = GoBoard(model_path=settings.YOLO_PATH)
+        corrector_model = load_corrector_model(model_path=settings.KERAS_PATH)
         self.go_game = GoGame(
             board_detect=self.go_board,
             corrector_model=corrector_model,
@@ -107,7 +101,7 @@ class VideoProcessor:
         if fps == 0:
             logger.warning("Video FPS is 0. Defaulting to 30.")
             fps = 30.0
-        frame_interval = max(1, int(fps * ANALYSIS_INTERVAL))
+        frame_interval = max(1, int(fps * settings.ANALYSIS_INTERVAL))
         frame_idx = 0
         
         while cap.isOpened():

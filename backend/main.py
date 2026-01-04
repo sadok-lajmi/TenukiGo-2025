@@ -10,9 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import json
 
-from config.settings import (
-    STORAGE_DIR
-)
+from config.Settings import settings
 
 # Import Routers
 from api.routes.websocket_router import router as websocket_router
@@ -43,7 +41,7 @@ app.include_router(stream_router, tags=["Stream"])
 app.include_router(photo_router, tags=["Photo"])
 
 # Mount static files for serving uploads
-app.mount("/storage", StaticFiles(directory=STORAGE_DIR), name="storage")
+app.mount("/storage", StaticFiles(directory=settings.STORAGE_DIR), name="storage")
 
 @app.get("/")
 def health_check():

@@ -4,11 +4,11 @@ Provides functions to interact with the database.
 """
 
 import psycopg2
-from config.settings import DB_URL
+from config.Settings import settings
 from psycopg2.extras import RealDictCursor
 
 def db():
-    return psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
+    return psycopg2.connect(settings.DB_URL, cursor_factory=RealDictCursor)
 
 def get_sgf_path(match_id: int) -> str:
     """Returns the SGF path for a given match from the database."""

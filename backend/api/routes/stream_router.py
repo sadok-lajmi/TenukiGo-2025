@@ -5,13 +5,7 @@ import requests
 
 from api.utils.db_services import db
 from api.utils.file_storage import save_file_from_content
-from config.settings import (
-    SGF_DIR,
-    ANALYSIS_SERVICE_URL,
-    WS_STREAMING_URL,
-    MEDIAMTX_RTSP_URL,
-    MEDIAMTX_HLS_URL
-)
+from config.Settings import settings
 
 router = APIRouter()
 
@@ -83,7 +77,7 @@ def create_stream(
     sgf_path = save_file_from_content(
         f"stream_{stream_id}.sgf", 
         "".encode('utf-8'), 
-        SGF_DIR
+        settings.SGF_DIR
     )
     cur.execute("""
         UPDATE match
@@ -110,11 +104,11 @@ def start_stream(stream_id: int):
         raise HTTPException(status_code=404, detail="Stream not found")
 
     match_id = stream["match_id"]
-    rtsp_url = MEDIAMTX_RTSP_URL + stream["url"].removeprefix(MEDIAMTX_HLS_URL).removesuffix("/index.m3u8")
+    rtsp_url = settings.MEDIAMTX_RTSP_URL + stream["url"].removeprefix(settings.MEDIAMTX_HLS_URL).removesuffix("/index.m3u8")
 
     try:
-        requests.post(ANALYSIS_SERVICE_URL + "/stream/start", 
-                      json={"rtsp_url": rtsp_url, "match_id": match_id, "ws_url": WS_STREAMING_URL + f"/{match_id}"}, 
+        requests.post(settings.ANALYSIS_SERVICE_URL + "/stream/start", 
+                      json={"rtsp_url": rtsp_url, "match_id": match_id, "ws_url": settings.WS_STREAMING_URL + f"/{match_id}"}, 
                       timeout=10)
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Failed to start stream analysis: {str(e)}")
@@ -135,7 +129,7 @@ def stop_stream(stream_id: int):
     match_id = stream["match_id"]
 
     try:
-        requests.post(ANALYSIS_SERVICE_URL + "/stream/stop", 
+        requests.post(settings.ANALYSIS_SERVICE_URL + "/stream/stop", 
                       json={"match_id": match_id}, 
                       timeout=10)
     except requests.RequestException as e:

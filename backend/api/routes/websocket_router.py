@@ -6,7 +6,7 @@ import logging
 from api.websockets.ConnectionManager import manager
 from api.utils.db_services import get_sgf_path
 from api.utils.file_storage import modify_file_content
-from config.settings import STORAGE_DIR
+from config.Settings import settings
 
 router = APIRouter()
 
@@ -25,7 +25,7 @@ async def websocket_endpoint(
     """
     await manager.connect(websocket, match_id)
     sgf_url = get_sgf_path(match_id)
-    sgf_path = os.path.join(STORAGE_DIR, sgf_url)
+    sgf_path = os.path.join(settings.STORAGE_DIR, sgf_url)
     try:
         while True:
             # Wait for a message from the client

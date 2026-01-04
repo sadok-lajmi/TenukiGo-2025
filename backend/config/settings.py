@@ -9,60 +9,46 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# -------------------------------
-# BACKEND CONFIG
-# -------------------------------
-HOST = "0.0.0.0"
-PORT = 8000
+class Settings:
+    """Configuration settings for the backend application."""
+    # Backend server settings
+    HOST = "0.0.0.0"
+    PORT = 8000
 
-# -------------------------------
-# BASE DIRECTORIES
-# -------------------------------
+    # Upload directories
+    STORAGE_DIR = "storage" # Corresponds to Docker container path
+    VIDEO_DIR = os.path.join(STORAGE_DIR, "videos")
+    THUMBNAIL_DIR = os.path.join(STORAGE_DIR, "thumbnails")
+    SGF_DIR =  os.path.join(STORAGE_DIR, "sgf_files")
 
-# Upload directories
-STORAGE_DIR = "storage" # Corresponds to Docker container path
-VIDEO_DIR = os.path.join(STORAGE_DIR, "videos")
-THUMBNAIL_DIR = os.path.join(STORAGE_DIR, "thumbnails")
-SGF_DIR =  os.path.join(STORAGE_DIR, "sgf_files")
+    # Ensure directories exist
+    os.makedirs(VIDEO_DIR, exist_ok=True)
+    os.makedirs(THUMBNAIL_DIR, exist_ok=True)
+    os.makedirs(SGF_DIR, exist_ok=True)
 
-# Ensure directories exist
-os.makedirs(VIDEO_DIR, exist_ok=True)
-os.makedirs(THUMBNAIL_DIR, exist_ok=True)
-os.makedirs(SGF_DIR, exist_ok=True)
+    # Database configuration
+    DB_URL = os.getenv("DB_URL")
 
-# -------------------------------
-# DATABASE CONFIG
-# -------------------------------
-DB_URL = os.getenv("DB_URL")
+    # Analysis module configuration
+    ANALYSIS_SERVICE_URL = os.getenv("ANALYSIS_SERVICE_URL")
+    ANALYSIS_CALLBACK_URL = os.getenv("ANALYSIS_CALLBACK_URL")
 
-# -------------------------------
-# ANALYSIS MODULE CONFIG
-# -------------------------------
-ANALYSIS_SERVICE_URL = os.getenv("ANALYSIS_SERVICE_URL")
-ANALYSIS_CALLBACK_URL = os.getenv("ANALYSIS_CALLBACK_URL")
+    # Photo module configuration
+    PHOTO_SERVICE_URL = os.getenv("PHOTO_SERVICE_URL")
 
-# -------------------------------
-# PHOTO MODULE CONFIG   
-# -------------------------------
-PHOTO_SERVICE_URL = os.getenv("PHOTO_SERVICE_URL")
+    # WebSocket streaming configuration
+    WS_STREAMING_URL = os.getenv("WS_STREAMING_URL")
 
-# -------------------------------
-# WEBSOCKET STREAMING CONFIG
-# -------------------------------
-WS_STREAMING_URL = os.getenv("WS_STREAMING_URL")
+    # MediaMTX configuration
+    MEDIAMTX_API_URL = os.getenv("MEDIAMTX_API_URL")
+    MEDIAMTX_RTSP_URL = os.getenv("MEDIAMTX_RTSP_URL")
+    MEDIAMTX_HLS_URL = os.getenv("MEDIAMTX_HLS_URL")
 
-# -------------------------------
-# MEDIAMTX CONFIG
-# -------------------------------
-MEDIAMTX_API_URL = os.getenv("MEDIAMTX_API_URL")
-MEDIAMTX_RTSP_URL = os.getenv("MEDIAMTX_RTSP_URL")
-MEDIAMTX_HLS_URL = os.getenv("MEDIAMTX_HLS_URL")
+    # Logging setup
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
 
-# -------------------------------
-# LOGGING SETUP 
-# -------------------------------
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
+settings = Settings()

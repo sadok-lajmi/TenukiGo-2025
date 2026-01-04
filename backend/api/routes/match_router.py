@@ -5,12 +5,7 @@ import os
 
 from api.utils.db_services import db
 from api.utils.file_storage import save_file
-from config.settings import (
-    STORAGE_DIR,
-    VIDEO_DIR,
-    THUMBNAIL_DIR,
-    SGF_DIR
-)
+from config.Settings import settings
 
 router = APIRouter()
 
@@ -79,7 +74,7 @@ async def create_match(
 
     sgf_path = None
     if sgf:
-        sgf_path = await save_file(sgf, SGF_DIR)
+        sgf_path = await save_file(sgf, settings.SGF_DIR)
 
     # Insert Match record first
     cur.execute("""
@@ -91,12 +86,12 @@ async def create_match(
 
     if video:
         # Save video
-        video_path = await save_file(video, VIDEO_DIR)
+        video_path = await save_file(video, settings.VIDEO_DIR)
 
         # Save thumbnail if any
         thumb_path = None
         if thumbnail:
-            thumb_path = await save_file(thumbnail, THUMBNAIL_DIR)
+            thumb_path = await save_file(thumbnail, settings.THUMBNAIL_DIR)
         
         # Insert Video record
         cur.execute("""
@@ -165,11 +160,11 @@ async def edit_match(
     sgf_path = match["sgf"]
 
     if sgf:  # replace SGF
-        sgf_path = await save_file(sgf, SGF_DIR)
+        sgf_path = await save_file(sgf, settings.SGF_DIR)
 
     elif remove_sgf == "true" and sgf_path:
         # delete old file
-        p = os.path.join(STORAGE_DIR, sgf_path)
+        p = os.path.join(settings.STORAGE_DIR, sgf_path)
         if os.path.exists(p):
             os.remove(p)
         sgf_path = None
@@ -188,7 +183,7 @@ async def edit_match(
 
     # CASE B — NEW VIDEO UPLOAD
     if video:  
-        video_path = await save_file(video, VIDEO_DIR)
+        video_path = await save_file(video, settings.VIDEO_DIR)
 
         cur.execute("""
             INSERT INTO video (title, path, date_upload)
@@ -238,7 +233,7 @@ def delete_match(match_id: int):
 
     # Remove SGF file if any
     if match["sgf"]:
-        p = os.path.join(STORAGE_DIR, match["sgf"])
+        p = os.path.join(settings.STORAGE_DIR, match["sgf"])
         if os.path.exists(p):
             os.remove(p)
 
