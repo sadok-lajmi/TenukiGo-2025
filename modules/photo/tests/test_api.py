@@ -7,14 +7,14 @@ from unittest.mock import Mock, patch
 @pytest.fixture
 def client():
     """Create a test client for the API."""
-    from api import app
+    from main import app
     return TestClient(app)
 
 
 class TestHealthEndpoint:
     def test_health_check_success(self, client, mock_completion_service):
         """Test health check endpoint returns success."""
-        with patch('api.completion_service', mock_completion_service):
+        with patch('main.completion_service', mock_completion_service):
             response = client.get('/health')
             
             assert response.status_code == 200
@@ -27,7 +27,7 @@ class TestHealthEndpoint:
 class TestModelEndpoints:
     def test_load_model_legacy(self, client, mock_completion_service):
         """Test loading legacy model."""
-        with patch('api.completion_service', mock_completion_service):
+        with patch('main.completion_service', mock_completion_service):
             response = client.post('/model/load', json={"use_legacy": True})
             
             assert response.status_code == 200
@@ -35,7 +35,7 @@ class TestModelEndpoints:
     
     def test_load_model_from_file(self, client, mock_completion_service, temp_model_file):
         """Test loading model from file path."""
-        with patch('api.completion_service', mock_completion_service):
+        with patch('main.completion_service', mock_completion_service):
             response = client.post('/model/load', json={"model_path": temp_model_file})
             
             assert response.status_code == 200
@@ -50,7 +50,7 @@ class TestModelEndpoints:
     
     def test_model_info(self, client, mock_completion_service):
         """Test getting model information."""
-        with patch('api.completion_service', mock_completion_service):
+        with patch('main.completion_service', mock_completion_service):
             response = client.get('/model/info')
             
             assert response.status_code == 200
@@ -61,7 +61,7 @@ class TestModelEndpoints:
     
     def test_unload_model(self, client, mock_completion_service):
         """Test unloading model."""
-        with patch('api.completion_service', mock_completion_service):
+        with patch('main.completion_service', mock_completion_service):
             response = client.post('/model/unload')
             
             assert response.status_code == 200
@@ -69,7 +69,7 @@ class TestModelEndpoints:
     
     def test_load_yolo_model_success(self, client, temp_model_file):
         """Test loading YOLO model successfully."""
-        with patch('api.ImageProcessor') as mock_processor, \
+        with patch('main.ImageProcessor') as mock_processor, \
              patch('os.path.exists', return_value=True):
             response = client.post('/model/load_yolo', json={"model_path": temp_model_file})
             
@@ -94,8 +94,8 @@ class TestAnalyzeEndpoint:
         initial_board = sample_board_states["initial"].board.tolist()
         final_board = sample_board_states["final"].board.tolist()
         
-        with patch('api.completion_service', mock_completion_service), \
-             patch('api.create_board_state_from_array') as mock_create_board:
+        with patch('main.completion_service', mock_completion_service), \
+             patch('api.services.utils.board_state.create_board_state_from_array') as mock_create_board:
             mock_create_board.side_effect = [
                 sample_board_states["initial"],
                 sample_board_states["final"]
@@ -131,8 +131,8 @@ class TestCompleteMovesEndpoint:
         initial_board = sample_board_states["initial"].board.tolist()
         final_board = sample_board_states["final"].board.tolist()
         
-        with patch('api.completion_service', mock_completion_service), \
-             patch('api.create_board_state_from_array') as mock_create_board:
+        with patch('main.completion_service', mock_completion_service), \
+             patch('api.services.utils.board_state.create_board_state_from_array') as mock_create_board:
             mock_create_board.side_effect = [
                 sample_board_states["initial"],
                 sample_board_states["final"]
@@ -177,7 +177,7 @@ class TestCompleteMovesEndpoint:
 class TestPhotoEndpoints:
     def test_upload_photo_success(self, client, sample_image_bytes, mock_image_processor):
         """Test successful photo upload and processing."""
-        with patch('api.image_processor', mock_image_processor):
+        with patch('main.image_processor', mock_image_processor):
             response = client.post(
                 '/photo/upload',
                 files={'file': ('test.jpg', io.BytesIO(sample_image_bytes), 'image/jpeg')},
@@ -193,7 +193,7 @@ class TestPhotoEndpoints:
     
     def test_upload_photo_no_model(self, client, sample_image_bytes):
         """Test photo upload without YOLO model loaded."""
-        with patch('api.image_processor', None):
+        with patch('main.image_processor', None):
             response = client.post(
                 '/photo/upload',
                 files={'file': ('test.jpg', io.BytesIO(sample_image_bytes), 'image/jpeg')}
@@ -204,7 +204,7 @@ class TestPhotoEndpoints:
     
     def test_upload_photo_invalid_file_type(self, client):
         """Test photo upload with invalid file type."""
-        with patch('api.image_processor', Mock()):
+        with patch('main.image_processor', Mock()):
             response = client.post(
                 '/photo/upload',
                 files={'file': ('test.txt', io.BytesIO(b'not an image'), 'text/plain')}
@@ -215,9 +215,9 @@ class TestPhotoEndpoints:
     
     def test_process_two_photos_success(self, client, sample_image_bytes, mock_image_processor, mock_completion_service, mock_sgf_generator):
         """Test successful processing of two photos."""
-        with patch('api.image_processor', mock_image_processor), \
-             patch('api.completion_service', mock_completion_service), \
-             patch('api.sgf_generator', mock_sgf_generator):
+        with patch('main.image_processor', mock_image_processor), \
+             patch('main.completion_service', mock_completion_service), \
+             patch('main.sgf_generator', mock_sgf_generator):
             
             response = client.post(
                 '/photo/process_two',
@@ -238,7 +238,7 @@ class TestPhotoEndpoints:
     
     def test_process_two_photos_no_model(self, client, sample_image_bytes):
         """Test processing two photos without YOLO model."""
-        with patch('api.image_processor', None):
+        with patch('main.image_processor', None):
             response = client.post(
                 '/photo/process_two',
                 files={
@@ -255,7 +255,7 @@ class TestPhotoEndpoints:
         mock_processor = Mock()
         mock_processor.process_image_bytes.return_value = None  # No board detected
         
-        with patch('api.image_processor', mock_processor):
+        with patch('main.image_processor', mock_processor):
             response = client.post(
                 '/photo/process_two',
                 files={

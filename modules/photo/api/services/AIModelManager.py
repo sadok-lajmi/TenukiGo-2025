@@ -8,7 +8,11 @@ It can load models from the legacy Tenuki2025 system or new uploaded models.
 import os
 import numpy as np
 from typing import Optional
+import logging
+
 from config.Settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 class AIModelManager:
@@ -223,7 +227,7 @@ class AIModelManager:
             predictions = self.model.predict(board_states, verbose=0)
             return predictions
         except Exception as e:
-            print(f"Error during prediction: {e}")
+            logger.error(f"Error during prediction: {e}")
             return None
     
     def validate_model_compatibility(self) -> dict:

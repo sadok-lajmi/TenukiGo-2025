@@ -8,10 +8,14 @@ using CNN models and algorithm-based completion using Go game rules.
 
 import os
 from typing import Dict, Any, Optional
+import logging
+
 from api.services.SGFGeneratorService import SGFGeneratorService
 from api.services.MoveCompletionService import MoveCompletionService
 from api.processors.ImageProcessor import ImageProcessor
 from logic.BoardState import BoardState
+
+logger = logging.getLogger(__name__)
 
 
 class PhotoAnalysisService:
@@ -27,8 +31,8 @@ class PhotoAnalysisService:
         Args:
             yolo_model_path: Path to YOLO model for image processing
         """
-        self.completion_service = MoveCompletionService()
-        self.sgf_generator = SGFGeneratorService()
+        self.completion_service: MoveCompletionService = MoveCompletionService()
+        self.sgf_generator: SGFGeneratorService = SGFGeneratorService()
         
         self.image_processor = None
         if yolo_model_path:
@@ -117,7 +121,7 @@ class PhotoAnalysisService:
                     f.write(sgf_content)
                 return {"sgf_content": sgf_content, "file_path": file_path, "filename": filename}
             except Exception as e:
-                print(f"Failed to save SGF file: {e}")
+                logger.error(f"Failed to save SGF file: {e}")
         
         return sgf_content
     

@@ -16,10 +16,10 @@ The photo module test suite provides comprehensive coverage for:
 ```
 modules/photo/tests/
 ├── __init__.py
-├── conftest.py              # Shared fixtures and test configuration
+├── conftest.py             # Shared fixtures and test configuration
 ├── test_api.py             # FastAPI endpoint tests
 ├── test_service.py         # Move completion service tests
-├── test_model_loader.py    # AI model loading tests
+├── test_model_manager.py   # AI model loading tests
 ├── test_image_processor.py # Image processing tests
 └── test_sgf_generator.py   # SGF generation tests
 ```
@@ -29,7 +29,7 @@ modules/photo/tests/
 ### 1. Install Testing Dependencies
 
 ```bash
-cd modules/photo
+cd modules/photo/tests
 pip install -r test_requirements.txt
 ```
 

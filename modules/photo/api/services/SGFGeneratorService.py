@@ -14,7 +14,7 @@ class SGFGeneratorService:
     """Generator for SGF format files from Go game data."""
     
     def __init__(self):
-        self.board_size = 19
+        self.board_size: int = 19
     
     def board_matrix_to_sgf(self, board_matrix: np.ndarray, 
                            metadata: Optional[Dict[str, str]] = None) -> str:

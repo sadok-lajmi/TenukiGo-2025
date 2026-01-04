@@ -1,12 +1,15 @@
 import numpy as np
 from unittest.mock import Mock, patch
-from image_processor import GoBoard, ImageProcessor
+from logic.GoBoard import GoBoard
+from api.processors.ImageProcessor import ImageProcessor
 
+yolo_import_path = 'logic.GoBoard.YOLO'
+go_board_import_path = 'logic.GoBoard.GoBoard'
 
 class TestGoBoard:
     def test_init(self, temp_model_file):
         """Test GoBoard initialization."""
-        with patch('image_processor.YOLO') as mock_yolo:
+        with patch(yolo_import_path) as mock_yolo:
             board = GoBoard(temp_model_file)
             
             mock_yolo.assert_called_once_with(temp_model_file)
@@ -17,7 +20,7 @@ class TestGoBoard:
     
     def test_process_frame_success(self, temp_model_file):
         """Test successful frame processing with sufficient corners."""
-        with patch('image_processor.YOLO') as mock_yolo:
+        with patch(yolo_import_path) as mock_yolo:
             # Mock YOLO model
             mock_model = Mock()
             mock_yolo.return_value = mock_model
@@ -53,7 +56,7 @@ class TestGoBoard:
     
     def test_process_frame_no_results(self, temp_model_file):
         """Test frame processing with no YOLO results."""
-        with patch('image_processor.YOLO') as mock_yolo:
+        with patch(yolo_import_path) as mock_yolo:
             mock_model = Mock()
             mock_yolo.return_value = mock_model
             mock_model.return_value = []  # No results
@@ -67,7 +70,7 @@ class TestGoBoard:
     
     def test_process_frame_no_boxes(self, temp_model_file):
         """Test frame processing when no boxes are detected."""
-        with patch('image_processor.YOLO') as mock_yolo:
+        with patch(yolo_import_path) as mock_yolo:
             mock_model = Mock()
             mock_yolo.return_value = mock_model
             
@@ -84,7 +87,7 @@ class TestGoBoard:
     
     def test_process_frame_low_confidence(self, temp_model_file):
         """Test frame processing with low confidence detections."""
-        with patch('image_processor.YOLO') as mock_yolo:
+        with patch(yolo_import_path) as mock_yolo:
             mock_model = Mock()
             mock_yolo.return_value = mock_model
             
@@ -112,7 +115,7 @@ class TestGoBoard:
     
     def test_order_corners_sufficient_corners(self, temp_model_file):
         """Test ordering board corners with sufficient corner detections."""
-        with patch('image_processor.YOLO') as mock_yolo:
+        with patch(yolo_import_path) as mock_yolo:
             board = GoBoard(temp_model_file)
             
             # Mock 4 corner points
@@ -125,7 +128,7 @@ class TestGoBoard:
     
     def test_order_corners_insufficient_corners(self, temp_model_file):
         """Test ordering board corners with insufficient corner detections."""
-        with patch('image_processor.YOLO') as mock_yolo:
+        with patch(yolo_import_path) as mock_yolo:
             board = GoBoard(temp_model_file)
             
             # Only 2 corner points - should handle gracefully
@@ -141,7 +144,7 @@ class TestGoBoard:
     
     def test_compute_homography_success(self, temp_model_file):
         """Test successful homography computation."""
-        with patch('image_processor.YOLO') as mock_yolo, \
+        with patch(yolo_import_path) as mock_yolo, \
              patch('cv2.getPerspectiveTransform') as mock_homography:
             
             mock_homography.return_value = np.eye(3)  # Identity matrix
@@ -156,7 +159,7 @@ class TestGoBoard:
     
     def test_compute_homography_no_corners(self, temp_model_file):
         """Test homography computation without corners."""
-        with patch('image_processor.YOLO') as mock_yolo:
+        with patch(yolo_import_path) as mock_yolo:
             board = GoBoard(temp_model_file)
             
             result = board._compute_homography((480, 640, 3))
@@ -165,7 +168,7 @@ class TestGoBoard:
     
     def test_map_stones_to_grid(self, temp_model_file):
         """Test mapping stone positions to board grid."""
-        with patch('image_processor.YOLO') as mock_yolo:
+        with patch(yolo_import_path) as mock_yolo:
             board = GoBoard(temp_model_file)
             board.homography_matrix = np.eye(3)  # Identity transformation
             
@@ -193,7 +196,7 @@ class TestGoBoard:
     
     def test_map_stones_to_grid_no_homography(self, temp_model_file):
         """Test mapping stones without homography matrix."""
-        with patch('image_processor.YOLO') as mock_yolo:
+        with patch(yolo_import_path) as mock_yolo:
             board = GoBoard(temp_model_file)
             stones = [(100, 100, 1)]
             
@@ -204,7 +207,7 @@ class TestGoBoard:
     
     def test_state_to_array(self, temp_model_file):
         """Test getting board state as array."""
-        with patch('image_processor.YOLO') as mock_yolo:
+        with patch(yolo_import_path) as mock_yolo:
             board = GoBoard(temp_model_file)
             
             # Set some stones manually
@@ -219,7 +222,7 @@ class TestGoBoard:
     
     def test_board_state_management(self, temp_model_file):
         """Test board state management."""
-        with patch('image_processor.YOLO') as mock_yolo:
+        with patch(yolo_import_path) as mock_yolo:
             board = GoBoard(temp_model_file)
             
             # Set up some state
@@ -243,7 +246,7 @@ class TestImageProcessor:
     
     def test_process_image_bytes_success(self, temp_model_file, sample_image_bytes):
         """Test successful processing of image bytes."""
-        with patch('image_processor.GoBoard') as mock_board_class:
+        with patch(go_board_import_path) as mock_board_class:
             mock_board = Mock()
             mock_board.process_frame.return_value = True
             mock_board.state_to_array.return_value = np.ones((19, 19), dtype=int)
@@ -260,7 +263,7 @@ class TestImageProcessor:
     
     def test_process_image_bytes_processing_fails(self, temp_model_file, sample_image_bytes):
         """Test image bytes processing when board processing fails."""
-        with patch('image_processor.GoBoard') as mock_board_class:
+        with patch(go_board_import_path) as mock_board_class:
             mock_board = Mock()
             mock_board.process_frame.return_value = False  # Processing fails
             mock_board_class.return_value = mock_board
@@ -273,7 +276,7 @@ class TestImageProcessor:
     
     def test_process_image_bytes_invalid_image(self, temp_model_file):
         """Test processing invalid image bytes."""
-        with patch('image_processor.GoBoard') as mock_board_class:
+        with patch(go_board_import_path) as mock_board_class:
             mock_board_class.return_value = Mock()
             
             processor = ImageProcessor(temp_model_file)
@@ -284,7 +287,7 @@ class TestImageProcessor:
     
     def test_process_image_file_success(self, temp_model_file):
         """Test successful processing of image file."""
-        with patch('image_processor.GoBoard') as mock_board_class, \
+        with patch(go_board_import_path) as mock_board_class, \
              patch('cv2.imread') as mock_imread:
             
             mock_board = Mock()
@@ -304,7 +307,7 @@ class TestImageProcessor:
     
     def test_process_image_file_not_found(self, temp_model_file):
         """Test processing non-existent image file."""
-        with patch('image_processor.GoBoard') as mock_board_class, \
+        with patch(go_board_import_path) as mock_board_class, \
              patch('cv2.imread', return_value=None):
             
             mock_board_class.return_value = Mock()

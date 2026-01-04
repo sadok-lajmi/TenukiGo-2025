@@ -12,9 +12,9 @@ from api.services.AIModelManager import AIModelManager
 
 class MoveCompletionService:
     """Service for completing move sequences between board states."""
-    
+
     def __init__(self):
-        self.model_manager = AIModelManager()
+        self.model_manager: AIModelManager = AIModelManager()
     
     @property
     def ai_model(self):

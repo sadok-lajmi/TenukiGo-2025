@@ -1,12 +1,12 @@
 import numpy as np
 from unittest.mock import Mock, patch
-from model_loader import AIModelLoader
+from api.services.AIModelManager import AIModelManager
 
 
-class TestAIModelLoader:
+class TestAIModelManager:
     def test_init(self):
-        """Test AIModelLoader initialization."""
-        loader = AIModelLoader()
+        """Test AIModelManager initialization."""
+        loader = AIModelManager()
         
         assert loader.model is None
         assert loader.model_path is None
@@ -14,7 +14,7 @@ class TestAIModelLoader:
     
     def test_load_legacy_model_success(self, temp_model_file):
         """Test successful loading of legacy model."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         
         # Mock the model directly
         mock_model = Mock()
@@ -53,7 +53,7 @@ class TestAIModelLoader:
         with patch('model_loader.settings') as mock_settings:
             mock_settings.LEGACY_MODEL_PATH = None
             
-            loader = AIModelLoader()
+            loader = AIModelManager()
             result = loader.load_legacy_model()
             
             assert result["success"] is False
@@ -68,7 +68,7 @@ class TestAIModelLoader:
              patch('model_loader.settings') as mock_settings:
             mock_settings.LEGACY_MODEL_PATH = fake_path
             
-            loader = AIModelLoader()
+            loader = AIModelManager()
             result = loader.load_legacy_model()
             
             assert result["success"] is False
@@ -77,7 +77,7 @@ class TestAIModelLoader:
     
     def test_load_legacy_model_tensorflow_not_available(self, temp_model_file):
         """Test loading legacy model when TensorFlow is not available."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         
         # Simulate TensorFlow not available error
         result = {
@@ -92,7 +92,7 @@ class TestAIModelLoader:
     
     def test_load_legacy_model_loading_error(self, temp_model_file):
         """Test loading legacy model with general loading error."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         
         # Simulate a failed loading scenario
         result = {
@@ -108,7 +108,7 @@ class TestAIModelLoader:
     
     def test_load_legacy_model_custom_path(self, temp_model_file):
         """Test loading legacy model with custom path."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         
         # Simulate successful loading with custom path
         mock_model = Mock()
@@ -137,7 +137,7 @@ class TestAIModelLoader:
     
     def test_load_model_from_file_success(self, temp_model_file):
         """Test successful loading of model from file."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         
         mock_model = Mock()
         mock_model.input_shape = (None, 19, 19, 1)
@@ -172,7 +172,7 @@ class TestAIModelLoader:
         fake_path = "/fake/path/model.keras"
         
         with patch('os.path.exists', return_value=False):
-            loader = AIModelLoader()
+            loader = AIModelManager()
             result = loader.load_model_from_file(fake_path)
             
             assert result["success"] is False
@@ -181,7 +181,7 @@ class TestAIModelLoader:
     
     def test_load_model_from_file_loading_error(self, temp_model_file):
         """Test loading model from file with loading error."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         
         # Simulate loading error
         result = {
@@ -197,20 +197,20 @@ class TestAIModelLoader:
     
     def test_is_model_loaded_true(self):
         """Test is_model_loaded returns True when model is loaded."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         loader.model = Mock()  # Mock loaded model
         
         assert loader.is_model_loaded() is True
     
     def test_is_model_loaded_false(self):
         """Test is_model_loaded returns False when no model is loaded."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         
         assert loader.is_model_loaded() is False
     
     def test_get_model(self):
         """Test get_model returns the loaded model."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         mock_model = Mock()
         loader.model = mock_model
         
@@ -218,13 +218,13 @@ class TestAIModelLoader:
     
     def test_get_model_none(self):
         """Test get_model returns None when no model is loaded."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         
         assert loader.get_model() is None
     
     def test_get_model_info_with_model(self):
         """Test get_model_info returns info when model is loaded."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         test_info = {"model_type": "CNN", "input_shape": (19, 19, 1)}
         loader.model_info = test_info
         
@@ -233,14 +233,14 @@ class TestAIModelLoader:
     
     def test_get_model_info_no_model(self):
         """Test get_model_info returns empty dict when no model is loaded."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         
         info = loader.get_model_info()
         assert info == {}
     
     def test_unload_model(self):
         """Test unloading a model."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         loader.model = Mock()
         loader.model_path = "/some/path"
         loader.model_info = {"test": "data"}
@@ -255,7 +255,7 @@ class TestAIModelLoader:
     
     def test_unload_model_no_model(self):
         """Test unloading when no model is loaded."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         
         result = loader.unload_model()
         
@@ -268,7 +268,7 @@ class TestAIModelLoader:
         mock_model = Mock()
         mock_model.predict.return_value = np.array([[0.1, 0.7, 0.2]])
         
-        loader = AIModelLoader()
+        loader = AIModelManager()
         loader.model = mock_model
         
         board_states = np.zeros((1, 19, 19, 1))
@@ -280,7 +280,7 @@ class TestAIModelLoader:
     
     def test_predict_batch_no_model(self):
         """Test prediction when no model is loaded."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         
         board_states = np.zeros((1, 19, 19, 1))
         result = loader.predict_batch(board_states)
@@ -292,7 +292,7 @@ class TestAIModelLoader:
         mock_model = Mock()
         mock_model.predict.side_effect = Exception("Prediction failed")
         
-        loader = AIModelLoader()
+        loader = AIModelManager()
         loader.model = mock_model
         
         board_states = np.zeros((1, 19, 19, 1))
@@ -306,7 +306,7 @@ class TestAIModelLoader:
         mock_model.input_shape = (None, 19, 19, 1)  # Valid shape
         mock_model.output_shape = (None, 361)  # Valid output
         
-        loader = AIModelLoader()
+        loader = AIModelManager()
         loader.model = mock_model
         
         result = loader.validate_model_compatibility()
@@ -316,7 +316,7 @@ class TestAIModelLoader:
     
     def test_model_info_structure(self, temp_model_file):
         """Test that model info has expected structure after loading."""
-        loader = AIModelLoader()
+        loader = AIModelManager()
         
         mock_model = Mock()
         mock_model.input_shape = (None, 19, 19, 1)
