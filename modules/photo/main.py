@@ -13,9 +13,9 @@ import json
 import os
 
 from service import MoveCompletionService, BoardState, create_board_state_from_array
-from image_processor import ImageProcessor
+from ImageProcessor import ImageProcessor
 from sgf_generator import SGFGenerator, SGFFileManager
-from settings import settings
+from Settings import settings
 
 class ModelLoadRequest(BaseModel):
     model_path: Optional[str] = None
@@ -41,8 +41,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Créer les dossiers si nécessaire
-os.makedirs(settings.get_upload_folder(), exist_ok=True)
+# Create upload folder if it doesn't exist
+os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
 
 completion_service = MoveCompletionService()
 sgf_generator = SGFGenerator()
@@ -530,11 +530,11 @@ if __name__ == "__main__":
         print("Attempting to load legacy AI model...")
         result = completion_service.load_legacy_model()
         if result["success"]:
-            print(f"✓ {result['message']}")
+            print(f"Success: {result['message']}")
         else:
-            print(f"✗ {result['message']}")
+            print(f"Error: {result['message']}")
     except Exception as e:
-        print(f"✗ Could not load legacy model: {e}")
+        print(f"Error: Could not load legacy model: {e}")
     
     print("Starting Photo Analysis API...")
-    uvicorn.run(app, host='0.0.0.0', port=5001, log_level="info")
+    uvicorn.run(app, host='0.0.0.0', port=5001)

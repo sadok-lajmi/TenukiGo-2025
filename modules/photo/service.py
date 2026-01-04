@@ -6,10 +6,11 @@ lead from one Go board state to another. It supports both AI-based completion
 using CNN models and algorithm-based completion using Go game rules.
 """
 
+import os
 import numpy as np
 from typing import List, Tuple, Dict, Any, Optional
-from model_loader import AIModelLoader
-from image_processor import ImageProcessor
+from AIModelManager import AIModelManager
+from ImageProcessor import ImageProcessor
 from sgf_generator import SGFGenerator, SGFFileManager
 
 class BoardState:
@@ -69,28 +70,28 @@ class MoveCompletionService:
     """Service for completing move sequences between board states."""
     
     def __init__(self):
-        self.model_loader = AIModelLoader()
+        self.model_manager = AIModelManager()
     
     @property
     def ai_model(self):
         """Get the current AI model."""
-        return self.model_loader.get_model()
+        return self.model_manager.get_model()
         
     def set_ai_model(self, model):
         """Set the AI model for move prediction."""
-        self.model_loader.model = model
+        self.model_manager.model = model
     
     def load_legacy_model(self):
         """Load the AI model from legacy Tenuki2025 system."""
-        return self.model_loader.load_legacy_model()
+        return self.model_manager.load_legacy_model()
     
     def load_model_from_file(self, model_path: str):
         """Load AI model from file path."""
-        return self.model_loader.load_model_from_file(model_path)
+        return self.model_manager.load_model_from_file(model_path)
     
     def get_model_info(self):
         """Get information about the loaded model."""
-        return self.model_loader.get_model_info()
+        return self.model_manager.get_model_info()
     
     def complete_moves_algorithmic(self, initial_state: BoardState, final_state: BoardState) -> List[Tuple[int, int, int]]:
         """
@@ -433,7 +434,7 @@ class PhotoAnalysisService:
         # Save file if requested
         if save_file:
             import uuid
-            from settings import settings
+            from Settings import settings
             if output_dir is None:
                 output_dir = settings.get_upload_folder()
             filename = f"game_{uuid.uuid4().hex[:8]}.sgf"
@@ -486,7 +487,7 @@ class PhotoAnalysisService:
         """Get information about the analysis service."""
         return {
             "yolo_model_loaded": self.image_processor is not None,
-            "ai_model_loaded": self.completion_service.model_loader.is_model_loaded(),
+            "ai_model_loaded": self.completion_service.model_manager.is_model_loaded(),
             "ai_model_info": self.completion_service.get_model_info(),
             "supported_formats": ["png", "jpg", "jpeg", "gif", "bmp"],
             "capabilities": [
