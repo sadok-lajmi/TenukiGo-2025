@@ -90,7 +90,7 @@ class VideoProcessor:
             if final_sgf:
                 self._notify_backend(status="success", sgf_content=final_sgf)
             else:
-                self._notify_backend(status="error", error="Failed to generate SGF") # TODO
+                self._notify_backend(status="error", error="Failed to generate SGF")
 
         except Exception as e:
             logger.error(f"Critical error during processing: {e}", exc_info=True)

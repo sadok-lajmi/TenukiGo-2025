@@ -21,7 +21,7 @@ class ConnectionManager:
         if match_id not in self.active_connections:
             self.active_connections[match_id] = []
         self.active_connections[match_id].append(websocket)
-        logger.info(f"🔌 Client connecté au match {match_id}. Total: {len(self.active_connections[match_id])}")
+        logger.info(f"Client connected to match {match_id}. Total: {len(self.active_connections[match_id])}")
 
     def disconnect(self, websocket: WebSocket, match_id: int):
         """Disconnect a client from a match."""
@@ -30,7 +30,7 @@ class ConnectionManager:
                 self.active_connections[match_id].remove(websocket)
             if not self.active_connections[match_id]:
                 del self.active_connections[match_id]
-            logger.info(f"🔌 Client déconnecté du match {match_id}")
+            logger.info(f"Client disconnected from match {match_id}")
 
     async def broadcast_to_match(self, match_id: int, message: dict, sender_socket: WebSocket = None):
         """
@@ -43,6 +43,6 @@ class ConnectionManager:
                     try:
                         await connection.send_json(message)
                     except Exception as e:
-                        logger.error(f"Erreur d'envoi WS: {e}")
+                        logger.error(f"WebSocket send error: {e}")
 
 manager = ConnectionManager()
