@@ -8,11 +8,9 @@ using CNN models and algorithm-based completion using Go game rules.
 
 import numpy as np
 from typing import List, Tuple, Dict, Any, Optional
-import itertools
 from model_loader import AIModelLoader
 from image_processor import ImageProcessor
 from sgf_generator import SGFGenerator, SGFFileManager
-
 
 class BoardState:
     """Represents a Go board state."""

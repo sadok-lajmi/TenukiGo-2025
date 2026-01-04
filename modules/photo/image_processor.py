@@ -9,8 +9,6 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 from typing import Tuple, List, Optional, Dict, Any
-import tempfile
-import os
 
 class GoBoard:
     """
