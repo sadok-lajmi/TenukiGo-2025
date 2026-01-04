@@ -64,15 +64,28 @@ const Page = () => {
             console.log("Connecté au WebSocket du match");
         };
         ws.onmessage = (event) => {
-            console.log("Nouveau SGF reçu", event.data);
-            setSgfUrl(event.data);
+            try {
+                const message = JSON.parse(event.data);
+
+                console.log("URL reçue:", message.data);
+                
+                // Add a timestamp to avoid caching issues
+                const timestamp = new Date().getTime();
+
+                setSgfUrl(`${process.env.NEXT_PUBLIC_STORAGE_URL}${message.data}?t=${timestamp}`); 
+                if (message.type === "sgf_final") {
+                    ws.close();
+                }
+            } catch (e) {
+                console.error("Erreur lors du parsing du message WebSocket:", e);
+            }
         };
         ws.onerror = (error) => {
             console.error("Erreur WebSocket:", error);
         };
         return () => {
             if (ws.readyState === 1) { // If the connection is open
-            ws.close();
+                ws.close();
             }
         };
     }, [match.id]);
@@ -99,7 +112,7 @@ const Page = () => {
 
             {/* Conteneur Go (30%) */}
             <div className="md:col-span-3">
-                <GoViewerLive sgfUrl={sgfUrl} />
+                <GoViewerLive key={sgfUrl} sgfUrl={sgfUrl} />
             </div>
 
             {/* Match Info Section */}
