@@ -15,7 +15,7 @@ import os
 from service import MoveCompletionService, BoardState, create_board_state_from_array
 from ImageProcessor import ImageProcessor
 from sgf_generator import SGFGenerator, SGFFileManager
-from Settings import settings
+from config.Settings import settings
 
 class ModelLoadRequest(BaseModel):
     model_path: Optional[str] = None
