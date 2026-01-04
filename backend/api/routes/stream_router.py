@@ -1,3 +1,7 @@
+"""
+API routes for managing streams.
+"""
+
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from typing import Optional
 from datetime import datetime

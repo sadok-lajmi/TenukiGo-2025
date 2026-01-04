@@ -1,3 +1,7 @@
+"""
+API routes for managing players.
+"""
+
 from fastapi import APIRouter, HTTPException, Form
 from typing import Optional
 

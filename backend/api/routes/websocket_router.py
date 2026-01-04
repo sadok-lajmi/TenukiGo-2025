@@ -1,3 +1,7 @@
+"""
+API WebSocket routes for real-time match updates.
+"""
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.concurrency import run_in_threadpool
 import os

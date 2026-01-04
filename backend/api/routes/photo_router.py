@@ -1,3 +1,7 @@
+"""
+API routes for photo processing.
+"""
+
 from fastapi import APIRouter, HTTPException, UploadFile, File
 import requests
 

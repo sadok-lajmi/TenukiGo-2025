@@ -1,3 +1,7 @@
+"""
+API routes for managing videos.
+"""
+
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from typing import Optional
