@@ -50,6 +50,10 @@ class GoGame:
     def get_sgf(self) -> str:
         """Get current SGF content."""
         return self.sgf_content
+    
+    def nb_states(self) -> int:
+        """Get number of recorded board states."""
+        return len(self.numpy_boards)
 
     def initialize_game(self, frame: np.ndarray,
                         current_player: str = "BLACK"
