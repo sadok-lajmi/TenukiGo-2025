@@ -10,7 +10,7 @@ import numpy as np
 from typing import Optional, Dict, Any
 import logging
 
-from .GoBoard import GoBoard
+from logic.GoBoard import GoBoard
 
 logger = logging.getLogger(__name__)
 
@@ -130,18 +130,3 @@ class ImageProcessor:
             "total_stones": int(black_count + white_count),
             "board_size": self.go_board.board_size
         }
-
-
-def image_to_board_matrix(image_file: str, model_path: str) -> Optional[np.ndarray]:
-    """
-    Convenience function to convert image to board matrix.
-    
-    Args:
-        image_file: Path to image file
-        model_path: Path to YOLO model
-        
-    Returns:
-        19x19 board matrix or None if failed
-    """
-    processor = ImageProcessor(model_path)
-    return processor.process_image_file(image_file)

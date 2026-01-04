@@ -12,9 +12,11 @@ import traceback
 import json
 import os
 
-from service import MoveCompletionService, BoardState, create_board_state_from_array
-from ImageProcessor import ImageProcessor
-from sgf_generator import SGFGenerator, SGFFileManager
+from api.services import MoveCompletionService
+from api.services.utils.board_state import create_board_state_from_array
+from api.processors.ImageProcessor import ImageProcessor
+from logic.BoardState import BoardState
+from api.services.SGFGeneratorService import SGFGeneratorService
 from config.Settings import settings
 
 class ModelLoadRequest(BaseModel):
@@ -45,8 +47,7 @@ app = FastAPI(
 os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
 
 completion_service = MoveCompletionService()
-sgf_generator = SGFGenerator()
-sgf_manager = SGFFileManager()
+sgf_generator = SGFGeneratorService()
 
 # Initialize image processor (will be set with model path)
 image_processor = None

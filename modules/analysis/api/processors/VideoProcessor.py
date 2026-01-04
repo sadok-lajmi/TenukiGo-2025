@@ -10,7 +10,7 @@ import requests
 from logic.GoGame import GoGame
 from logic.GoBoard import GoBoard
 from logic.utils.model_utils import load_corrector_model
-from api.utils.initialize_board import initialize_board
+from api.processors.utils.initialize_board import initialize_board
 from config.Settings import settings
 
 logger = logging.getLogger("VideoProcessor")
