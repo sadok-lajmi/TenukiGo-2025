@@ -1,26 +1,26 @@
-# 1. Utiliser une image Node.js officielle légère (Alpine)
+# 1. Use a lightweight official Node.js image (Alpine)
 FROM node:22-alpine
 
-# [OPTIMISATION] Installation de libc6-compat
-# Nécessaire pour Next.js/SWC sur Alpine (évite des bugs de build silencieux ou crashs)
+# [OPTIMIZATION] Install libc6-compat
+# Required for Next.js/SWC on Alpine (prevents silent build bugs or crashes)
 RUN apk add --no-cache libc6-compat
 
-# 2. Définir le dossier de travail dans le conteneur
+# 2. Set the working directory inside the container
 WORKDIR /app
 
-# 3. Copier les fichiers de définition des dépendances
-# On le fait avant de copier le reste du code pour profiter du cache Docker
+# 3. Copy dependency definition files
+# Done before copying the rest of the code to leverage Docker cache
 COPY package.json package-lock.json* ./
 
-# 4. Installer les dépendances
+# 4. Install dependencies
 RUN npm install
 
-# 5. Copier le reste du code source du frontend
+# 5. Copy the rest of the frontend source code
 COPY . .
 
-# 6. Exposer le port sur lequel Next.js tourne par défaut
+# 6. Expose the port on which Next.js runs by default
 EXPOSE 3000
 
-# 7. Commande de démarrage pour le développement
-# Cela lance le serveur Next.js en mode dev avec hot-reloading
+# 7. Startup command for development
+# Launches Next.js server in dev mode with hot-reloading
 CMD ["npm", "run", "dev"]

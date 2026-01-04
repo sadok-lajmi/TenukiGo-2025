@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-// Assurez-vous d'importer BOARD_SIZE depuis vos types
 import { BoardState, Move, Player, BOARD_SIZE } from '@/components/go/types';
 
-// --- LOGIQUE GO (Moteur & Parseur) ---
-// (Je garde les fonctions pures existantes ici, inchangées)
+// --- GO LOGIC (Engine & Parser) ---
 
 export const createEmptyBoard = (): BoardState =>
   Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
@@ -42,49 +40,146 @@ const getGroup = (board: BoardState, startX: number, startY: number) => {
 };
 
 export const playMove = (board: BoardState, move: Move): BoardState => {
-  if (move.isPass) return board;
   const newBoard = board.map(row => [...row]);
-  newBoard[move.y][move.x] = move.player;
-  const opponent = move.player === 'B' ? 'W' : 'B';
-  getNeighbors(move.x, move.y).forEach(([nx, ny]) => {
-    if (newBoard[ny][nx] === opponent) {
-      const group = getGroup(newBoard, nx, ny);
-      if (group.liberties === 0) group.stones.forEach(([sx, sy]) => { newBoard[sy][sx] = null; });
-    }
-  });
+
+  // 1. Handle Setup Stones (AB/AW)
+  if (move.addedBlack) {
+    move.addedBlack.forEach(({ x, y }) => {
+      if (isOnBoard(x, y)) newBoard[y][x] = 'B';
+    });
+  }
+  if (move.addedWhite) {
+    move.addedWhite.forEach(({ x, y }) => {
+      if (isOnBoard(x, y)) newBoard[y][x] = 'W';
+    });
+  }
+
+  // 2. Handle Move
+  if (!move.isPass && move.x >= 0 && move.y >= 0) {
+    newBoard[move.y][move.x] = move.player;
+
+    const opponent = move.player === 'B' ? 'W' : 'B';
+    const neighbors = getNeighbors(move.x, move.y);
+
+    // Check for opponent captures
+    neighbors.forEach(([nx, ny]) => {
+      if (newBoard[ny][nx] === opponent) {
+        const group = getGroup(newBoard, nx, ny);
+        if (group.liberties === 0) {
+          group.stones.forEach(([sx, sy]) => { newBoard[sy][sx] = null; });
+        }
+      }
+    });
+  }
+
   return newBoard;
 };
 
 const sgfCoordToNum = (char: string): number => char.charCodeAt(0) - 97;
 
+/* 
+ * PARSER UPDATE: 
+ * We convert SGF nodes into our 'Move' structure.
+ * If a node has AB/AW but no B/W property, we treat it as a "Pass" move with setup stones,
+ * or a special "Setup" move. 
+ * To maintain compatibility, we use 'isPass: true' for pure setup nodes, 
+ * but attach the addedBlack/addedWhite properties.
+ */
 export const parseSGF = (sgfContent: string): Move[] => {
   const moves: Move[] = [];
-  const moveRegex = /;([BW])\[([a-zA-Z\[\]]*)\]/g;
-  let match;
-  while ((match = moveRegex.exec(sgfContent)) !== null) {
-    const player = match[1] as Player;
-    const coords = match[2];
-    if (coords === '' || (BOARD_SIZE <= 19 && coords === 'tt')) {
-      moves.push({ player, x: -1, y: -1, isPass: true });
-    } else {
-      moves.push({ player, x: sgfCoordToNum(coords[0]), y: sgfCoordToNum(coords[1]), isPass: false });
+  const rawNodes = sgfContent.split(';');
+
+  for (const rawNode of rawNodes) {
+    if (!rawNode.trim()) continue;
+
+    const move: Move = {
+      player: 'B', // Default, overwritten if W plays
+      x: -1, y: -1,
+      isPass: true
+    };
+    let hasContent = false;
+
+    // --- SETUP PROPERTIES (AB, AW) ---
+    const abBlockMatch = rawNode.match(/AB\s*((?:\[[a-zA-Z]{2}\]\s*)+)/);
+    if (abBlockMatch) {
+      const allCoords = abBlockMatch[1];
+      const coordList = allCoords.match(/\[([a-zA-Z]{2})\]/g);
+      if (coordList) {
+        move.addedBlack = coordList.map(s => {
+          const code = s.match(/\[([a-zA-Z]{2})\]/)![1];
+          return { x: sgfCoordToNum(code[0]), y: sgfCoordToNum(code[1]) };
+        });
+        hasContent = true;
+      }
+    }
+
+    const awBlockMatch = rawNode.match(/AW\s*((?:\[[a-zA-Z]{2}\]\s*)+)/);
+    if (awBlockMatch) {
+      const allCoords = awBlockMatch[1];
+      const coordList = allCoords.match(/\[([a-zA-Z]{2})\]/g);
+      if (coordList) {
+        move.addedWhite = coordList.map(s => {
+          const code = s.match(/\[([a-zA-Z]{2})\]/)![1];
+          return { x: sgfCoordToNum(code[0]), y: sgfCoordToNum(code[1]) };
+        });
+        hasContent = true;
+      }
+    }
+
+    // --- MOVE PROPERTIES (B, W) ---
+    const bMatch = rawNode.match(/B\[([a-zA-Z]{0,2})\]/);
+    if (bMatch) {
+      const coords = bMatch[1];
+      if (coords === '' || coords === 'tt') {
+        move.player = 'B';
+        move.isPass = true;
+      } else {
+        move.player = 'B';
+        move.x = sgfCoordToNum(coords[0]);
+        move.y = sgfCoordToNum(coords[1]);
+        move.isPass = false;
+      }
+      hasContent = true;
+    }
+
+    if (move.isPass && move.x === -1) { // Only check W if B didn't already define a move (exclusive usually)
+      const wMatch = rawNode.match(/W\[([a-zA-Z]{0,2})\]/);
+      if (wMatch) {
+        const coords = wMatch[1];
+        if (coords === '' || coords === 'tt') {
+          move.player = 'W';
+          move.isPass = true;
+        } else {
+          move.player = 'W';
+          move.x = sgfCoordToNum(coords[0]);
+          move.y = sgfCoordToNum(coords[1]);
+          move.isPass = false;
+        }
+        hasContent = true;
+      }
+    }
+
+    // Capture comments if needed (omitted for brevity, but good practice)
+
+    // Only add if relevant
+    if (hasContent) {
+      moves.push(move);
     }
   }
+
   return moves;
 };
 
-
-// --- LE HOOK ---
+// --- THE HOOK ---
 
 export const useGoGame = (defaultSgfUrl?: string) => {
-  // Changement majeur : moves est maintenant un state, pas un useMemo
   const [moves, setMoves] = useState<Move[]>([]);
   const [currentMoveIndex, setCurrentMoveIndex] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [defaultSgf, setDefaultSgf] = useState<string>('');
   const [sgfContent, setSgfContent] = useState<string>('');
 
-  // Charger le SGF par défaut
+  // Load default SGF
   useEffect(() => {
     if (!defaultSgfUrl) {
       setIsLoading(false);
@@ -99,7 +194,7 @@ export const useGoGame = (defaultSgfUrl?: string) => {
         const text = await response.text();
         setDefaultSgf(text);
         setSgfContent(text); // Initialize sgfContent
-        setMoves(parseSGF(text)); // Initialise les moves
+        setMoves(parseSGF(text)); // Initialize moves
       } catch (error) {
         console.error("Error loading default SGF:", error);
       } finally {
@@ -108,6 +203,26 @@ export const useGoGame = (defaultSgfUrl?: string) => {
     };
     fetchSgf();
   }, [defaultSgfUrl]);
+
+  // Handle start index: if first node is a pure setup (Pass + setup stones), start at index 1
+  const startIndex = useMemo(() => {
+    if (moves.length > 0) {
+      const first = moves[0];
+      // If it's a pass BUT has added stones, it's a setup node.
+      if (first.isPass && (first.addedBlack?.length || first.addedWhite?.length)) {
+        return 1;
+      }
+    }
+    return 0;
+  }, [moves]);
+
+  // Auto-advance to start index on load
+  useEffect(() => {
+    if (startIndex > 0 && currentMoveIndex === 0) {
+      setCurrentMoveIndex(startIndex);
+    }
+  }, [startIndex, moves]); // Run when moves loaded
+
 
   const currentBoard = useMemo(() => {
     let board = createEmptyBoard();
@@ -121,15 +236,18 @@ export const useGoGame = (defaultSgfUrl?: string) => {
 
   const lastMove = currentMoveIndex > 0 ? moves[currentMoveIndex - 1] : null;
 
-  // --- Actions de Navigation ---
+  // --- Navigation Actions ---
   const nextMove = useCallback(() => setCurrentMoveIndex(prev => Math.min(moves.length, prev + 1)), [moves.length]);
-  const prevMove = useCallback(() => setCurrentMoveIndex(prev => Math.max(0, prev - 1)), []);
-  const goToStart = useCallback(() => setCurrentMoveIndex(0), []);
+  // Prevent going before startIndex
+  const prevMove = useCallback(() => setCurrentMoveIndex(prev => Math.max(startIndex, prev - 1)), [startIndex]);
+  const goToStart = useCallback(() => setCurrentMoveIndex(startIndex), [startIndex]);
   const goToEnd = useCallback(() => setCurrentMoveIndex(moves.length), [moves.length]);
 
   const handleSgfUpload = (newSgfContent: string) => {
     setSgfContent(newSgfContent); // Update sgfContent
-    setMoves(parseSGF(newSgfContent));
+    const parsedMoves = parseSGF(newSgfContent);
+    setMoves(parsedMoves);
+    // Reset index, useEffect will handle auto-advance
     setCurrentMoveIndex(0);
   };
 
@@ -139,17 +257,16 @@ export const useGoGame = (defaultSgfUrl?: string) => {
     setCurrentMoveIndex(0);
   };
 
-  // --- NOUVELLE FONCTION : Jouer un coup interactif ---
+  // --- NEW FUNCTION: Play an interactive move ---
   const playInteractiveMove = (x: number, y: number) => {
-    // 1. Vérifier si l'intersection est vide
+    // 1. Check if the intersection is empty
     if (currentBoard[y][x] !== null) return;
 
-    // 2. Déterminer la couleur du joueur
-    // Si c'est le premier coup (index 0), Noir commence. Sinon, on inverse la couleur du dernier coup joué.
+    // 2. Determine the player color
     const lastPlayerColor = currentMoveIndex > 0 ? moves[currentMoveIndex - 1].player : 'W';
     const nextColor: Player = lastPlayerColor === 'B' ? 'W' : 'B';
 
-    // 3. Créer le nouveau coup
+    // 3. Create the new move
     const newMove: Move = {
       player: nextColor,
       x,
@@ -157,18 +274,17 @@ export const useGoGame = (defaultSgfUrl?: string) => {
       isPass: false
     };
 
-    // 4. Mettre à jour la liste des coups
-    // Si on est au milieu de la partie, on coupe l'historique futur (comme un "branch")
+    // 4. Update the move list
     const newHistory = moves.slice(0, currentMoveIndex).concat(newMove);
 
     setMoves(newHistory);
     setCurrentMoveIndex(newHistory.length);
   };
 
-  // Gestion des touches
+  // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Désactive les raccourcis si on tape dans un input (optionnel)
+      // Disable shortcuts if typing in an input (optional)
       if (e.target instanceof HTMLInputElement) return;
 
       if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) e.preventDefault();
@@ -193,8 +309,8 @@ export const useGoGame = (defaultSgfUrl?: string) => {
     goToEnd,
     handleSgfUpload,
     resetToDefault,
-    playInteractiveMove, // Nouvelle fonction exportée
-    loadSgf: handleSgfUpload, // Alias pour compatibilité
+    playInteractiveMove, // New exported function
+    loadSgf: handleSgfUpload, // Alias for compatibility
     sgfContent,
   };
 };

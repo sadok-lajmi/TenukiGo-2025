@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { AnalysisNode, Move, MoveClassification, Region, BOARD_SIZE } from './types';
 
-// --- UTILITAIRES ---
+// --- UTILITIES ---
 const skipI = (char: string) => {
   const code = char.toUpperCase().charCodeAt(0);
   if (code > 73) return code - 66; // 'J' (74) -> 8 (I skipped), 'A' (65) -> 0
@@ -32,7 +32,7 @@ const mapClassification = (cls: string): MoveClassification => {
   return 'good'; // Default fallback
 };
 
-// --- LE HOOK ---
+// --- THE HOOK ---
 
 export const useGoAnalysis = (
   moves: Move[],

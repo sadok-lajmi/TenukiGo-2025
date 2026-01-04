@@ -21,10 +21,10 @@ def list_matches():
     cur.execute("""
         SELECT 
             m.match_id, m.title, m.result, m.date, m.duration, m.description,
-            m.style,
+            m.style, m.sgf,
             w.firstname || ' ' || w.lastname AS white,
             b.firstname || ' ' || b.lastname AS black,
-            v.video_id, v.thumbnail, v.title As video_title
+            v.video_id, v.thumbnail, v.title As video_title, v.path AS video_path, v.sgf AS video_sgf
         FROM match m
         LEFT JOIN player w ON m.white_id = w.player_id
         LEFT JOIN player b ON m.black_id = b.player_id

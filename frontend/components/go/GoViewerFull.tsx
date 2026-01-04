@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-// Correction : Remplacement des imports relatifs par des alias de chemin Next.js (@/)
+// Fix: Replace relative imports with Next.js path aliases (@/)
 import { Region, BOARD_PIXEL_SIZE, BOARD_SIZE, PADDING, CELL_SIZE } from '@/components/go/types';
 import { useGoGame } from '@/components/go/useGoGame';
 import { useGoAnalysis } from '@/components/go/useGoAnalysis';
@@ -11,18 +11,18 @@ import GoAnalysisPanel from '@/components/go/GoAnalysisPanel';
 import GoToolbar from '@/components/go/GoToolbar';
 import GoUpload from '@/components/go/GoUpload';
 
-// Le SGF par défaut sera chargé depuis cette URL
-const DEFAULT_SGF_URL = '/sgf/example.sgf';
+// The default SGF will be loaded from this URL
+const DEFAULT_SGF_URL = '/sgf/example1.sgf';
 
-export default function GoViewerFull() {
+export default function GoViewerFull({ sgfUrl = DEFAULT_SGF_URL , importMode = false }: { sgfUrl?: string, importMode?: boolean }) {
   // --- HOOKS ---
   const {
     isLoading, moves, currentMoveIndex, currentBoard, lastMove,
     nextMove, prevMove, goToStart, goToEnd,
     handleSgfUpload, resetToDefault, sgfContent
-  } = useGoGame(DEFAULT_SGF_URL);
+  } = useGoGame(sgfUrl);
 
-  // --- ETATS UI ---
+  // --- UI STATES ---
   const [showAnalysis, setShowAnalysis] = useState<boolean>(true);
   const [isSelectingRegion, setIsSelectingRegion] = useState(false);
   const [selectionStart, setSelectionStart] = useState<{ x: number; y: number } | null>(null);
@@ -49,7 +49,7 @@ export default function GoViewerFull() {
     };
   }, [selectionStart, selectionDragCurrent]);
 
-  // --- GESTION SOURIS ---
+  // --- MOUSE HANDLING ---
   const getBoardCoords = (e: React.MouseEvent | MouseEvent) => {
     if (!svgRef.current) return { x: 0, y: 0 };
     const rect = svgRef.current.getBoundingClientRect();
@@ -90,7 +90,7 @@ export default function GoViewerFull() {
     setIsSelectingRegion(false);
   };
 
-  // Gérer le mouseup en dehors du SVG
+  // Handle mouseup outside the SVG
   useEffect(() => {
     const upListener = () => handleMouseUp();
     if (selectionStart) {
@@ -106,8 +106,7 @@ export default function GoViewerFull() {
 
   return (
     <div className="w-full max-w-7xl mx-auto p-4 lg:p-8">
-      <header className="mb-6 text-center flex flex-col items-center gap-4">
-        <h2 className="text-3xl font-bold text-neutral-900">Visualiseur SGF</h2>
+      <header className="mb-6 text-center flex flex-col items-center gap-4"> 
         <GoToolbar
           showAnalysis={showAnalysis}
           onToggleAnalysis={() => setShowAnalysis(!showAnalysis)}
@@ -121,13 +120,13 @@ export default function GoViewerFull() {
         />
       </header>
 
-      {/* NOUVELLE MISE EN PAGE :
-        - Grille sur 'lg' et plus
-        - 3 colonnes au total
+      {/* NEW LAYOUT:
+        - Board on 'lg' and above
+        - 3 columns total
       */}
       <main className="lg:grid lg:grid-cols-3 lg:gap-8 w-full max-w-7xl items-start justify-center">
 
-        {/* Colonne Gauche (2/3): Plateau + Graphe */}
+        {/* Left Column (2/3): Board + Graph */}
         <div className="lg:col-span-2 flex flex-col gap-4">
           <GoBoard
             ref={svgRef}
@@ -140,7 +139,7 @@ export default function GoViewerFull() {
             onMouseMove={handleMouseMove}
             cursor={isSelectingRegion ? 'crosshair' : 'default'}
           />
-          {/* Graphe (juste en dessous) */}
+          {/* Graph (just below) */}
           {showAnalysis && (
             <GoAnalysisPanel
               variant="graphOnly"
@@ -152,9 +151,9 @@ export default function GoViewerFull() {
           )}
         </div>
 
-        {/* Colonne Droite (1/3): Panneaux */}
+        {/* Right Column (1/3): Panels */}
         <div className="lg:col-span-1 flex flex-col gap-6 w-full mt-4 lg:mt-0">
-          {/* Carte d'analyse */}
+          {/* Analysis Card */}
           {showAnalysis && (
             <GoAnalysisPanel
               variant="cardOnly"
@@ -174,6 +173,8 @@ export default function GoViewerFull() {
               if (action === 'end') goToEnd();
             }}
           />
+          {/* SGF Upload */}
+          {importMode && (
           <GoUpload
             onSgfUpload={handleSgfUpload}
             onReset={() => {
@@ -181,6 +182,7 @@ export default function GoViewerFull() {
               setActiveRegion(null);
             }}
           />
+          )}
         </div>
       </main>
     </div>

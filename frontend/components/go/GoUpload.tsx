@@ -17,7 +17,7 @@ export default function GoUpload({ onSgfUpload, onReset }: GoUploadProps) {
       onSgfUpload(e.target?.result as string);
     };
     reader.readAsText(file);
-    // Réinitialise l'input pour permettre de re-uploader le même fichier
+    // Resets the input to allow re-uploading the same file
     event.target.value = '';
   };
 

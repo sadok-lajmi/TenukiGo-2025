@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Upload, RotateCcw, Loader2 } from 'lucide-react';
 
-// --- TYPES & CONSTANTES ---
+// --- TYPES & CONSTANTS ---
 type Player = 'B' | 'W';
 type IntersectionState = Player | null;
 type BoardState = IntersectionState[][];
@@ -18,30 +18,30 @@ interface Move {
 
 const BOARD_SIZE = 19;
 
-// --- MOTEUR DE JEU (LOGIQUE DE GO) ---
+// --- GAME ENGINE (GO LOGIC) ---
 
-// Crée un plateau vide
+// Create an empty board
 const createEmptyBoard = (): BoardState =>
   Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
 
-// Vérifie si des coordonnées sont sur le plateau
+// Check if coordinates are on the board
 const isOnBoard = (x: number, y: number): boolean =>
   x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE;
 
-// Obtient les voisins directs (haut, bas, gauche, droite)
+// Get direct neighbors (up, down, left, right)
 const getNeighbors = (x: number, y: number): [number, number][] => {
   return [
     [x, y - 1], [x, y + 1], [x - 1, y], [x + 1, y]
   ].filter(([nx, ny]) => isOnBoard(nx, ny)) as [number, number][];
 };
 
-// Trouve un groupe de pierres et ses libertés
+// Find a group of stones and its liberties
 const getGroup = (board: BoardState, startX: number, startY: number) => {
   const color = board[startY][startX];
   if (!color) return { stones: [], liberties: 0 };
 
   const stones: [number, number][] = [];
-  const liberties = new Set<string>(); // Utilise des strings "x,y" pour l'unicité
+  const liberties = new Set<string>(); // Use strings "x,y" for uniqueness
   const visited = new Set<string>();
   const stack = [[startX, startY]];
 
@@ -66,25 +66,25 @@ const getGroup = (board: BoardState, startX: number, startY: number) => {
   return { stones, liberties: liberties.size };
 };
 
-// Joue un coup et gère les captures
+// Play a move and handle captures
 const playMove = (board: BoardState, move: Move): BoardState => {
-  if (move.isPass) return board; // Pas de changement si passe
+  if (move.isPass) return board; // No change if pass
 
-  // Copie profonde du plateau
+  // Deep copy of the board
   const newBoard = board.map(row => [...row]);
 
-  // Placer la pierre
+  // Place the stone
   newBoard[move.y][move.x] = move.player;
 
   const opponent = move.player === 'B' ? 'W' : 'B';
   const neighbors = getNeighbors(move.x, move.y);
 
-  // Vérifier les captures ennemies
+  // Check for opponent captures
   neighbors.forEach(([nx, ny]) => {
     if (newBoard[ny][nx] === opponent) {
       const group = getGroup(newBoard, nx, ny);
       if (group.liberties === 0) {
-        // Capturer le groupe
+        // Capture the group
         group.stones.forEach(([sx, sy]) => {
           newBoard[sy][sx] = null;
         });
@@ -95,14 +95,14 @@ const playMove = (board: BoardState, move: Move): BoardState => {
   return newBoard;
 };
 
-// --- PARSEUR SGF ---
+// --- SGF PARSER ---
 
-// Convertit les coordonnées SGF ('a'-'s') en numériques (0-18)
+// Convert SGF coordinates ('a'-'s') to numbers (0-18)
 const sgfCoordToNum = (char: string): number => char.charCodeAt(0) - 97;
 
 const parseSGF = (sgfContent: string): Move[] => {
   const moves: Move[] = [];
-  // Regex simplifiée pour trouver les coups principaux (;B[xy] ou ;W[xy])
+  // Simplified regex to find main moves (;B[xy] or ;W[xy])
   const moveRegex = /;([BW])\[([a-zA-Z\[\]]*)\]/g;
   let match;
 
@@ -126,16 +126,16 @@ const parseSGF = (sgfContent: string): Move[] => {
   return moves;
 };
 
-// --- COMPOSANT PRINCIPAL ---
+// --- MAIN COMPONENT ---
 
 export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, upload?: boolean }) {
   const [sgfFile, setSgfFile] = useState<string>('');
-  const [defaultSgf, setDefaultSgf] = useState<string>(''); // Pour stocker la version originale chargée
+  const [defaultSgf, setDefaultSgf] = useState<string>(''); // Store original loaded SGF
   const [currentMoveIndex, setCurrentMoveIndex] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Charger le SGF par défaut depuis le dossier public au montage
+  // Load default SGF from public folder on mount
   useEffect(() => {
     setIsLoading(true);
     
@@ -157,7 +157,7 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
           console.log('🎮 Fetching regular URL');
           const response = await fetch(urlToLoad);
           if (!response.ok) {
-            throw new Error(`Impossible de charger le SGF (Status: ${response.status})`);
+            throw new Error(`Unable to load SGF (Status: ${response.status})`);
           }
           sgfContent = await response.text();
         }
@@ -168,7 +168,7 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
         console.log('🎮 SGF loaded successfully');
         
       } catch (err: any) {
-        console.error("🎮 Erreur de chargement SGF:", err);
+        console.error("🎮 SGF load error:", err);
         setError(err.message);
         setIsLoading(false);
       }
@@ -177,10 +177,10 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
     loadSgfContent();
   }, [sgfUrl]);
 
-  // Parser les coups seulement quand le fichier SGF change
+  // Parse moves only when SGF file changes
   const moves = useMemo(() => parseSGF(sgfFile), [sgfFile]);
 
-  // Recalculer l'état du plateau jusqu'au coup actuel
+  // Recalculate board state up to current move
   const currentBoard = useMemo(() => {
     let board = createEmptyBoard();
     for (let i = 0; i < currentMoveIndex; i++) {
@@ -191,16 +191,16 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
 
   const lastMove = currentMoveIndex > 0 ? moves[currentMoveIndex - 1] : null;
 
-  // --- Contrôles ---
+  // --- Controls ---
   const nextMove = useCallback(() => setCurrentMoveIndex(prev => Math.min(moves.length, prev + 1)), [moves.length]);
   const prevMove = useCallback(() => setCurrentMoveIndex(prev => Math.max(0, prev - 1)), []);
   const goToStart = useCallback(() => setCurrentMoveIndex(0), []);
   const goToEnd = useCallback(() => setCurrentMoveIndex(moves.length), [moves.length]);
 
-  // Gestion clavier
+  // Keyboard handling
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Empêcher le scroll de la page si on utilise les flèches pour le jeu
+      // Prevent page scroll when using arrows for game navigation
       if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) {
          e.preventDefault();
       }
@@ -214,7 +214,7 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [nextMove, prevMove, goToStart, goToEnd]);
 
-  // Gestion upload fichier
+  // Handle SGF file upload
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -227,13 +227,13 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
     reader.readAsText(file);
   };
 
-  // --- Rendu du Goban (SVG) ---
+  // --- Render Goban (SVG) ---
   const renderGoban = () => {
     const cellSize = 30;
     const padding = 30;
     const boardPixelSize = (BOARD_SIZE - 1) * cellSize + padding * 2;
 
-    // Points Hoshis (étoiles) pour un plateau 19x19
+    // Hoshi points (stars) for 19x19 board
     const hoshis = [
       [3, 3], [9, 3], [15, 3],
       [3, 9], [9, 9], [15, 9],
@@ -245,25 +245,25 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
         width="100%"
         height="100%"
         viewBox={`0 0 ${boardPixelSize} ${boardPixelSize}`}
-        className="bg-[#DCB35C] rounded shadow-xl" // Couleur bois traditionnelle
+        className="bg-[#DCB35C] rounded shadow-xl" // Traditional wood color
         style={{ maxWidth: '600px', maxHeight: '600px' }}
       >
-        {/* Grille */}
+        {/* Grid */}
         <g stroke="#000" strokeWidth="1">
           {Array.from({ length: BOARD_SIZE }).map((_, i) => {
             const pos = padding + i * cellSize;
             return (
               <React.Fragment key={i}>
-                {/* Lignes horizontales */}
+                {/* Horizontal lines */}
                 <line x1={padding} y1={pos} x2={boardPixelSize - padding} y2={pos} />
-                {/* Lignes verticales */}
+                {/* Vertical lines */}
                 <line x1={pos} y1={padding} x2={pos} y2={boardPixelSize - padding} />
               </React.Fragment>
             );
           })}
         </g>
 
-        {/* Hoshis */}
+        {/* Hoshi points */}
         {hoshis.map(([hx, hy], idx) => (
           <circle
             key={`hoshi-${idx}`}
@@ -274,7 +274,7 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
           />
         ))}
 
-        {/* Pierres */}
+        {/* Stones */}
         {currentBoard.map((row, y) =>
           row.map((cell, x) => {
             if (!cell) return null;
@@ -284,9 +284,9 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
 
             return (
               <g key={`stone-${x}-${y}`}>
-                {/* Ombre légère */}
+                {/* Light shadow */}
                 <circle cx={cx + 1} cy={cy + 2} r={cellSize * 0.48} fill="rgba(0,0,0,0.2)" />
-                {/* Pierre */}
+                {/* Stone */}
                 <circle
                   cx={cx}
                   cy={cy}
@@ -295,14 +295,14 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
                   stroke={cell === 'W' ? '#ccc' : 'none'}
                   strokeWidth="0.5"
                 />
-                {/* Effet de brillance pour les pierres (très simple) */}
+                {/* Simple shine effect */}
                 <circle
                   cx={cx - cellSize * 0.15}
                   cy={cy - cellSize * 0.15}
                   r={cellSize * 0.1}
                   fill="rgba(255,255,255,0.2)"
                 />
-                {/* Marqueur du dernier coup */}
+                {/* Last move marker */}
                 {isLastMove && (
                   <circle
                     cx={cx}
@@ -347,14 +347,14 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
       </header>
 
       <main className="flex flex-col md:flex-row gap-8 w-full max-w-5xl items-start justify-center">
-        {/* Zone du Goban */}
+        {/* Goban area */}
         <div className="flex-shrink-0 w-full md:w-auto flex justify-center">
           {renderGoban()}
         </div>
 
-        {/* Zone de contrôles et infos */}
+        {/* Controls & info panel */}
         <div className="flex flex-col gap-6 w-full md:w-80">
-          {/* Panneau de contrôle */}
+          {/* Control panel */}
           <div className="bg-white p-6 rounded-xl shadow-md">
             <div className="flex justify-between items-center mb-4">
               <span className="font-semibold text-lg">Coup: {currentMoveIndex} / {moves.length}</span>
@@ -365,7 +365,7 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
               )}
             </div>
 
-            {/* Boutons de navigation */}
+            {/* Navigation buttons */}
             <div className="flex justify-center gap-2 mb-6">
               <ControlButton onClick={goToStart} icon={<ChevronsLeft />} label="Début" disabled={currentMoveIndex === 0} />
               <ControlButton onClick={prevMove} icon={<ChevronLeft />} label="Précédent" disabled={currentMoveIndex === 0} />
@@ -373,7 +373,7 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
               <ControlButton onClick={goToEnd} icon={<ChevronsRight />} label="Fin" disabled={currentMoveIndex === moves.length} />
             </div>
 
-            {/* Indicateur de tour */}
+            {/* Turn indicator */}
             <div className="flex items-center justify-center p-3 bg-neutral-50 rounded-lg border border-neutral-200">
                 <span className="mr-2 text-sm text-neutral-600">Prochain coup :</span>
                 <div className={`w-6 h-6 rounded-full border shadow-sm ${
@@ -384,7 +384,7 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
             </div>
           </div>
 
-          {/* Upload SGF */}
+          {/* SGF Upload */}
           { upload && (
           <div className="bg-white p-6 rounded-xl shadow-md">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -420,7 +420,7 @@ export default function GoSgfViewer({ sgfUrl, upload }: { sgfUrl?: string, uploa
   );
 }
 
-// Composant bouton utilitaire
+// Utility button component
 const ControlButton = ({ onClick, icon, label, disabled }: { onClick: () => void, icon: React.ReactNode, label: string, disabled: boolean }) => (
   <button
     onClick={onClick}

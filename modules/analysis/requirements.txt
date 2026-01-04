@@ -1,6 +1,6 @@
 # Core ML & Data
-numpy<2.0.0             # TensorFlow requiert souvent encore numpy 1.x
-tensorflow>=2.16.1      # Compatible Python 3.12
+numpy<2.0.0             # TensorFlow often still requires numpy 1.x
+tensorflow>=2.16.1      # Compatible with Python 3.12
 keras>=3.0.0
 scikit-learn>=1.4.0
 opencv-python-headless>=4.9.0.80
@@ -10,6 +10,6 @@ ultralytics>=8.1.0
 fastapi>=0.110.0
 uvicorn[standard]>=0.29.0
 python-dotenv>=1.0.1
-python-multipart>=0.0.9 # Requis pour l'upload de fichiers
+python-multipart>=0.0.9 # Required for file uploads
 websockets>=12.0
 pydantic>=2.6.0

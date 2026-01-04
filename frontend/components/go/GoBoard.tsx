@@ -8,7 +8,7 @@ interface GoBoardProps {
   lastMove: Move | null;
   aiSuggestion?: { x: number; y: number };
   activeRegion?: Region | null;
-  selectionRect?: Region | null; // Pour le rectangle en cours de dessin
+  selectionRect?: Region | null; // For the rectangle currently being drawn
   onMouseDown?: (e: React.MouseEvent<SVGSVGElement>) => void;
   onMouseMove?: (e: React.MouseEvent<SVGSVGElement>) => void;
   cursor?: string;
@@ -19,7 +19,7 @@ const GoBoard = React.forwardRef<SVGSVGElement, GoBoardProps>(
     
     const hoshis = [[3, 3], [9, 3], [15, 3], [3, 9], [9, 9], [15, 9], [3, 15], [9, 15], [15, 15]];
 
-    // Calcul du rectangle de sélection (en cours ou final)
+    // Selection rectangle calculation (in progress or final)
     const selRect = activeRegion || selectionRect;
 
     return (
@@ -33,7 +33,7 @@ const GoBoard = React.forwardRef<SVGSVGElement, GoBoardProps>(
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
       >
-        {/* Grille */}
+        {/* Grid */}
         <g stroke="#000" strokeWidth="1">
           {Array.from({ length: BOARD_SIZE }).map((_, i) => {
             const pos = PADDING + i * CELL_SIZE;
@@ -50,7 +50,7 @@ const GoBoard = React.forwardRef<SVGSVGElement, GoBoardProps>(
           <circle key={`hoshi-${idx}`} cx={PADDING + hx * CELL_SIZE} cy={PADDING + hy * CELL_SIZE} r={3} fill="#000" />
         ))}
 
-        {/* Pierres */}
+        {/* Stones */}
         {boardState.map((row, y) =>
           row.map((cell, x) => {
             if (!cell) return null;
@@ -75,7 +75,7 @@ const GoBoard = React.forwardRef<SVGSVGElement, GoBoardProps>(
           })
         )}
 
-        {/* Rectangle de sélection */}
+        {/* Selection rectangle */}
         {selRect && (
           <rect
             x={PADDING + selRect.x1 * CELL_SIZE - CELL_SIZE / 2}
@@ -90,7 +90,7 @@ const GoBoard = React.forwardRef<SVGSVGElement, GoBoardProps>(
           />
         )}
 
-        {/* Suggestion IA */}
+        {/* AI suggestion */}
         {aiSuggestion && (
           <circle
             cx={PADDING + aiSuggestion.x * CELL_SIZE}

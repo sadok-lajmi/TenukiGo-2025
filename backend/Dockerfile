@@ -1,10 +1,10 @@
-# Utiliser une version de Python légère mais compatible
+# Use a lightweight but compatible Python version
 FROM python:3.12-slim-bookworm
 
-# Définir le dossier de travail racine
+# Set the root working directory
 WORKDIR /app
 
-# Installation des dépendances système
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
@@ -12,22 +12,22 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copie et installation des dépendances Python
+# Copy and install Python dependencies
 COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# --- Structure des dossiers ---
+# --- Folder structure ---
 COPY . ./backend
 
-# On ajoute /app au PYTHONPATH
+# Add /app to PYTHONPATH
 ENV PYTHONPATH=/app
 
-# Création du dossier pour les uploads partagés
+# Create directories for shared uploads
 RUN mkdir -p /app/storage/sgf_files /app/storage/videos /app/storage/thumbnails 
 
-# Exposer le port de l'API
+# Expose the API port
 EXPOSE 8000
 
-# Lancement de l'application
+# Start the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

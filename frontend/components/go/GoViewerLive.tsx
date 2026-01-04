@@ -20,7 +20,7 @@ export default function GoViewerLive({ sgfUrl = DEFAULT_SGF_URL }) {
 
   return (
     <div className="flex flex-col gap-4 w-full items-center">
-      {/* Plateau */}
+      {/* Board */}
       <div className="flex-shrink-0 w-full flex flex-col items-center">
         <GoBoard
           boardState={currentBoard}
@@ -28,7 +28,7 @@ export default function GoViewerLive({ sgfUrl = DEFAULT_SGF_URL }) {
         />
       </div>
 
-      {/* Contrôles */}
+      {/* Controls */}
       <div className="w-full max-w-[600px]">
         <GoControls
           currentMoveIndex={currentMoveIndex}
@@ -39,7 +39,7 @@ export default function GoViewerLive({ sgfUrl = DEFAULT_SGF_URL }) {
             if (action === 'next') nextMove();
             if (action === 'end') goToEnd();
           }}
-          compact={true} // Passe la prop 'compact'
+          compact={true} // Pass the 'compact' prop
         />
       </div>
     </div>

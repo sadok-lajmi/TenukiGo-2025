@@ -10,16 +10,22 @@ const user = {}; // Replace with actual user authentication logic in the future
 const Navbar = () => {
     const router = useRouter();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [functionsMenu, setFunctionsMenu] = useState(false);
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+    const toggleFunctionsMenu = () => setFunctionsMenu(!functionsMenu);
 
     return (
         <header className='navbar relative z-50 bg-white'>
             <nav>
-                <Link href="/">
+                <button
+                    className="flex items-center gap-1 p-2 font-bold text-xl text-dark-100 hover:text-pink-100 transition-colors size-auto"
+                    onClick={toggleFunctionsMenu}
+                    aria-label="Toggle menu"
+                >
                     <Image src="/assets/icons/logo.svg" alt="Logo" width={32} height={32} />
                     <h1>GoStream</h1>
-                </Link>
+                </button>
 
                 {/* Mobile Burger Menu Button */}
                 <button
@@ -70,24 +76,78 @@ const Navbar = () => {
                 )}
             </nav>
 
-            {/* Mobile Navigation Dropdown */}
+            {/* Functionalities Dropdown Menu */}
+            {functionsMenu && (
+                <div className="absolute top-[65px] left-[34px] w-31 bg-white border border-gray-20 shadow-lg flex flex-col z-45 rounded-lg items-center">
+                    <button onClick={() => { router.push('/stream'); setFunctionsMenu(false); }} className="w-6/7 text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Diffuser</button>
+                    <button onClick={() => { router.push('/replay'); setFunctionsMenu(false); }} className="w-6/7 text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors border-t border-gray-20">Analyser</button>
+                    <button onClick={() => { router.push('/completion'); setFunctionsMenu(false); }} className="w-6/7 text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors border-t border-gray-20">Compléter</button>
+                    <button onClick={() => { router.push('/play'); setFunctionsMenu(false); }} className="w-6/7 text-center py-2 text-sm font-semibold hover:text-pink-100 transition-colors border-t border-gray-20">Jouer</button>
+                </div>
+            )}
+
             {isMenuOpen && (
-                <div className="absolute top-[90px] left-0 w-full bg-white border-b border-gray-20 shadow-lg md:hidden flex flex-col p-4 gap-4 z-40">
-                    <Link href="/watchlist" onClick={() => setIsMenuOpen(false)}>
-                        <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Lives</button>
-                    </Link>
+                    <div className="absolute top-[90px] left-0 w-full bg-white border-b border-gray-200 shadow-lg md:hidden flex flex-col p-4 gap-4 z-40">
 
-                    <Link href="/" onClick={() => setIsMenuOpen(false)}>
-                        <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Vidéos</button>
-                    </Link>
+                        {/* Lives */}
+                        <div className="flex items-center justify-between">
+                        <Link href="/watchlist" onClick={() => setIsMenuOpen(false)} className="flex-1">
+                            <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">
+                            Livestreams
+                            </button>
+                        </Link>
 
-                    <Link href="/matches" onClick={() => setIsMenuOpen(false)}>
-                        <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Parties</button>
-                    </Link>
+                        <Link href="/stream" onClick={() => setIsMenuOpen(false)}>
+                            <button className="p-2 hover:text-pink-100 transition-colors">
+                            <img src="/assets/icons/play.png" alt="Upload Icon" width={19} height={19} />
+                            </button>
+                        </Link>
+                        </div>
 
-                    <Link href="/players" onClick={() => setIsMenuOpen(false)}>
-                        <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">Joueurs</button>
-                    </Link>
+                        {/* Videos */}
+                        <div className="flex items-center justify-between">
+                        <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex-1">
+                            <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">
+                            Vidéos
+                            </button>
+                        </Link>
+
+                        <Link href="/upload/video" onClick={() => setIsMenuOpen(false)}>
+                            <button className="p-2 hover:text-pink-100 transition-colors">
+                            <img src="/assets/icons/upload.svg" alt="Upload Icon" width={20} height={20} />
+                            </button>
+                        </Link>
+                        </div>
+
+                        {/* Matches */}
+                        <div className="flex items-center justify-between">
+                        <Link href="/matches" onClick={() => setIsMenuOpen(false)} className="flex-1">
+                            <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">
+                            Parties
+                            </button>
+                        </Link>
+
+                        <Link href="/upload/match" onClick={() => setIsMenuOpen(false)}>
+                            <button className="p-2 hover:text-pink-100 transition-colors">
+                            <img src="/assets/icons/upload.svg" alt="Upload Icon" width={20} height={20} />
+                            </button>
+                        </Link>
+                        </div>
+
+                        {/* Players */}
+                        <div className="flex items-center justify-between">
+                        <Link href="/players" onClick={() => setIsMenuOpen(false)} className="flex-1">
+                            <button className="w-full text-left py-2 text-sm font-semibold hover:text-pink-100 transition-colors">
+                            Joueurs
+                            </button>
+                        </Link>
+
+                        <Link href="/upload/player" onClick={() => setIsMenuOpen(false)}>
+                            <button className="p-2 hover:text-pink-100 transition-colors">
+                            <img src="/assets/icons/upload.svg" alt="Upload Icon" width={20} height={20} />
+                            </button>
+                        </Link>
+                        </div>
 
                     {/* Mobile User Actions */}
                     {user && (

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import Link from "next/dist/client/link"
 import DeletePopUp from "@/components/DeletePopUp"
 import GoSgfViewer from "@/components/GoSgfViewer"
+import GoViewerFull from "@/components/go/GoViewerFull"
 
 interface VideoDetails {
 id: string
@@ -33,6 +34,11 @@ const [error, setError] = useState<string | null>(null);
 const [video, setVideo] = useState<VideoDetails>(null as unknown as VideoDetails);
 const { match } = video || {}
 const [moreMatchInfo, setMoreMatchInfo] = useState<{date: string, black: string, white: string}>({date: Date.now().toString().slice(0,10), black: "", white: ""});
+
+const [showsgfvideo, setShowSgfVideo] = useState<boolean>(false);
+const analysevideo = () => { setShowSgfVideo(true); }
+const [showsgfmatch, setShowSgfMatch] = useState<boolean>(false);
+const analysematch = () => { setShowSgfMatch(true); }
 const params = useParams()
 const videoId = params.videoId
 useEffect(() => {
@@ -139,11 +145,15 @@ if (!video) {
 return (
 
   <main className="wrapper page flex flex-col gap-6 py-8">
+    <div className="flex items-center justify-between">
+    {/* Title */}
+    <h1 className="text-2xl font-bold text-dark-100">{video.title}</h1>
     <div className="flex justify-end gap-2"> 
       <Link href={`/video/${videoId}/edit`}>
         <img src="/assets/icons/edit.png" className="w-6 h-6 cursor-pointer left" />
       </Link>
       <DeletePopUp mode="video" id={videoId?.toString()} />
+    </div>
     </div>
 
     {/* Video Section */}
@@ -158,10 +168,9 @@ return (
         />
       </div>
 
-      {/* Title + Date */}
+      {/* Date */}
       <div className="flex justify-between items-center">
       <div className="flex flex-col mt-3 gap-1">
-        <h1 className="text-xl font-semibold text-dark-100">{video.title}</h1>
         <p className="text-sm text-gray-100">Postée le : {video.uploadDate}</p>
       </div>
         { !video.sgf && (
@@ -175,16 +184,20 @@ return (
       {error && <p className="text-red-500 text-sm">{error}</p>}
       {/* SGF File (of the video if it exists) */}
       {video?.sgf && (
+        <div className="flex items-center justify-between">
         <Link
           href={`${process.env.NEXT_PUBLIC_STORAGE_URL}${video.sgf}`}
           className="block text-blue-500 underline hover:text-blue-600 font-medium"
         >
           Exporter le SGF 
         </Link>
+        <button className="px-4 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full w-fit"
+        onClick={analysevideo}>Analyser</button>
+        </div>
       )}
       {/* SGF Viewer if the sgf exists */}
-      {video?.sgf && (
-        <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${video.sgf}`} />
+      {showsgfvideo && (
+        <GoViewerFull sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${video.sgf}`} />
       )}
     </section>
 
@@ -237,16 +250,20 @@ return (
 
         {/* SGF File (if exists) */}
         {match?.sgf && (
+          <div className="flex items-center justify-between">
           <Link
             href={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.sgf}`}
             className="block text-blue-500 underline hover:text-blue-600 font-medium"
           >
             Exporter le SGF
           </Link>
+          <button className="px-4 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full w-fit"
+          onClick={analysematch}>Analyser</button>
+          </div>
         )}
         {/* SGF Viewer if the sgf exists */}
-        {(match?.sgf && !(video?.sgf)) && (
-          <GoSgfViewer sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.sgf}`} />
+        {showsgfmatch && (
+          <GoViewerFull sgfUrl={`${process.env.NEXT_PUBLIC_STORAGE_URL}${match.sgf}`} />
         )}
       </section>
     ) : (

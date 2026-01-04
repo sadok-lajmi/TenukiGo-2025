@@ -10,7 +10,7 @@ interface GoControlsProps {
   currentMoveIndex: number;
   moves: Move[];
   onNav: (action: NavAction) => void;
-  compact?: boolean; // Ajout de la prop 'compact'
+  compact?: boolean; // Added the 'compact' prop
 }
 
 const NavButton = ({ onClick, icon, disabled }: { onClick: () => void; icon: React.ReactNode; disabled: boolean }) => (
@@ -50,7 +50,7 @@ export default function GoControls({ currentMoveIndex, moves, onNav, compact = f
         <NavButton onClick={() => onNav('end')} icon={<ChevronsRight />} disabled={currentMoveIndex === totalMoves} />
       </div>
 
-      {/* Affiche la version compacte ou standard en fonction de la prop */}
+      {/* Displays the compact or standard version based on the prop */}
       {compact ? (
         <div className="flex items-center justify-center">
           <span className="mr-2 text-sm text-neutral-600">Prochain à jouer :</span>
