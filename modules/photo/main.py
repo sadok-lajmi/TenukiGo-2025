@@ -47,9 +47,6 @@ app.include_router(photo_router, tags=["Photo Management"])
 app.include_router(completion_router, tags=["Move Completion between Photos"])
 app.include_router(analysis_router, tags=["Analysis between Photos"])
 
-# Create upload folder if it doesn't exist
-os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
-
 # Auto-load YOLO model if available
 def initialize_yolo_model():
     """Attempt to load YOLO model on startup."""    
