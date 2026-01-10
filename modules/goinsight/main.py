@@ -5,6 +5,7 @@ Provides endpoints for shallow and deep analysis of Go games.
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from pydantic import BaseModel
 from typing import Optional, Tuple
 import sys
@@ -105,6 +106,25 @@ async def deep_analysis(request: DeepAnalysisRequest):
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
 
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="TenukiGo-2025 Analysis Module API",
+        version="1.0",
+        summary="TenukiGo OpenAPI Specifications",
+        description="Module dedicated to video analysis for the TenukiGo platform, providing real-time and post-match analysis features.",
+        routes=app.routes,
+    )
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
+
+with open("openapi.json", "w") as f:
+    json.dump(app.openapi(), f, indent=2)
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host='0.0.0.0', port=5002)
+    # If you want to enable auto-reload during development, set reload=True
+    uvicorn.run("main:app", host='0.0.0.0', port=5002, reload=False)

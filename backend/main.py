@@ -68,4 +68,5 @@ with open("openapi.json", "w") as f:
 
 if __name__ == "__main__":
     import uvicorn
+    # If you want to enable auto-reload during development, set reload=True
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

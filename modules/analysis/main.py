@@ -5,8 +5,8 @@ and configures CORS and OpenAPI documentation.
 """
 
 from fastapi import FastAPI
-from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 import json
 
 # Import Routers
@@ -32,7 +32,7 @@ app.include_router(video_router, tags=["Video Analysis"])
 @app.get("/")
 def health_check():
     """Simple health check endpoint."""
-    return {"status": "running", "module": "analyse"}
+    return {"status": "running", "module": "analysis"}
 
 def custom_openapi():
     if app.openapi_schema:
@@ -54,4 +54,5 @@ with open("openapi.json", "w") as f:
 
 if __name__ == "__main__":
     import uvicorn
+    # If you want to enable auto-reload during development, set reload=True
     uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=False)

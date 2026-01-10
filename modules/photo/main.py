@@ -6,9 +6,11 @@ It allows suggesting move sequences between board states using AI or algorithmic
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
+import json
 import os
 import logging
-from fastapi.middleware.cors import CORSMiddleware
 
 from api.processors.ImageProcessor import ImageProcessor
 from api.services.MoveCompletionService import MoveCompletionService
@@ -49,7 +51,6 @@ os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
 
 completion_service: MoveCompletionService = MoveCompletionService()
 sgf_generator: SGFGeneratorService = SGFGeneratorService()
-completion_service: MoveCompletionService = MoveCompletionService()
 
 # Initialize image processor (will be set with model path)
 image_processor = None
@@ -73,17 +74,34 @@ def initialize_yolo_model():
 initialize_yolo_model()
 
 
-@app.get('/health')
+@app.get('/')
 async def health_check():
     """Health check endpoint."""
     return {
-        "status": "healthy",
+        "status": "running",
         "service": "completion-analysis",
         "ai_model_loaded": completion_service.model_manager.is_model_loaded(),
         "yolo_model_loaded": image_processor is not None,
         "photo_analysis_ready": image_processor is not None
     }
 
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="TenukiGo-2025 Analysis Module API",
+        version="1.0",
+        summary="TenukiGo OpenAPI Specifications",
+        description="Module dedicated to video analysis for the TenukiGo platform, providing real-time and post-match analysis features.",
+        routes=app.routes,
+    )
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
+
+with open("openapi.json", "w") as f:
+    json.dump(app.openapi(), f, indent=2)
 
 if __name__ == "__main__":
     import uvicorn
@@ -100,4 +118,5 @@ if __name__ == "__main__":
         logger.error(f"Error: Could not load legacy model: {e}")
     
     logger.info("Starting Photo Analysis API...")
-    uvicorn.run(app, host='0.0.0.0', port=5001)
+    # If you want to enable auto-reload during development, set reload=True
+    uvicorn.run("main:app", host='0.0.0.0', port=5001, reload=False)
