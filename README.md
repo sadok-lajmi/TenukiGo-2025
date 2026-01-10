@@ -172,10 +172,68 @@ docker-compose down -v
 
 ---
 
-## Guide du Développeur
+## 💻 Guide du Développeur
 
-### 
+Ce guide est destiné aux futurs élèves qui reprendront le projet. Il explique comment installer et configurer l'environnement de développement.
 
+### Backend
+Le backend est développé en **Python** avec le framework **FastAPI**. Il nécessite un environnement virtuel Python et les dépendances listées dans `backend/requirements.txt`.
+
+Pour configurer l'environnement de développement local, suivez les étapes ci-dessous :
+
+1. Créez un environnement virtuel Python (optionnel mais recommandé) :
+   ```bash
+   cd backend/
+   python -m venv venv
+   source venv/bin/activate  # Sur Windows : venv\Scripts\activate
+   ```
+2. Installez les dépendances :
+   ```bash
+    pip install -r backend/requirements.txt
+    ```
+3. Lancez le serveur FastAPI :
+    ```bash
+    python main.py
+    ```
+
+### Frontend
+Le frontend est développé en **TypeScript** avec **Next.js** et **React**. Il nécessite Node.js et les dépendances listées dans `frontend/package.json`.
+
+Pour configurer l'environnement de développement local, suivez les étapes ci-dessous :
+
+1. Installez les dépendances :
+   ```bash
+   cd frontend/
+   npm install
+   ```
+2. Lancez le serveur de développement :
+   ```bash
+    npm run dev
+    ```
+
+### Modules
+Les modules (analysis, photo, goinsight) sont également développés en **Python**. Chacun a son propre fichier `requirements.txt` pour les dépendances.
+Chaque service peut être lancé individuellement en exécutant son script principal (ex: `analysis/main.py`).
+
+Pour configurer l'environnement de développement local pour chaque service, suivez les étapes ci-dessous :
+
+1. Créez un environnement virtuel Python (optionnel mais recommandé) pour chaque service :
+   ```bash
+   cd modules/analysis/
+   python -m venv venv
+   source venv/bin/activate  # Sur Windows : venv\Scripts\activate
+   ```
+2. Installez les dépendances :
+   ```bash
+    pip install -r requirements.txt
+    ```
+3. Lancez le service d'analyse :
+    ```bash
+    python main.py
+    ```
+
+Il en va de même pour les services `photo` et `goinsight` en adaptant le chemin.
+Assurez-vous que les fichiers de configuration `.env` sont correctement définis pour le backend et le frontend avant de les lancer.
 
 ---
 
