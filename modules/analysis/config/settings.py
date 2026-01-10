@@ -10,8 +10,8 @@ import os
 class Settings:
     """Configuration settings for analysis module."""
     # Analysis configuration
-    ANALYSIS_INTERVAL = 0.1  # seconds
-    MAX_INIT_FRAMES = 10000 # For testing purposes, can be adjusted
+    ANALYSIS_INTERVAL = 0.8  # seconds
+    MAX_INIT_FRAMES = 300 # For testing purposes, can be adjusted
     MAX_ERRORS = 5
 
     # Path to ML models
