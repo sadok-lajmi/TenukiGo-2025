@@ -134,14 +134,14 @@ La structure suit une architecture modulaire claire :
 modules/analysis/
 ├── api/
 │   ├── processors/
+|   |   ├── utils/                # Utilitaires des processeurs
 │   │   ├── StreamingProcessor.py # Gestionnaire RTSP Temps réel
 │   │   └── VideoProcessor.py     # Gestionnaire Fichiers Vidéo
 │   ├── routes/
 │   │   ├── stream_router.py      # Endpoints HTTP pour le streaming
-│   │   └── video_router.py       # Endpoints HTTP pour l'upload
-│   └── utils/                    # Utilitaires API
+│   └── └── video_router.py       # Endpoints HTTP pour l'upload
 ├── config/                       # Configuration (Settings, Logging)
-├── logique/
+├── logic/
 │   ├── GoGame.py                 # Règles du jeu (sente)
 │   └── GoBoard.py                # Computer Vision (YOLO/OpenCV)
 ├── models/                       # Fichiers binaires (.pt, .keras)
@@ -153,5 +153,4 @@ modules/analysis/
 
 ## 📚 Références
 
-- TenukiGo 2024 Project GitHub :
-https://github.com/Borishkof/TenukiGo
+[TenukiGo 2024 Project GitHub](https://github.com/Borishkof/TenukiGo)
