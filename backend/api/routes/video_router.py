@@ -10,8 +10,8 @@ import requests
 import os
 import logging
 
-from api.utils.db_services import db
-from api.utils.file_storage import save_file, save_file_from_content
+from api.routes.utils.db_services import db
+from api.routes.utils.file_storage import save_file, save_file_from_content
 from config.Settings import settings
 
 router = APIRouter()

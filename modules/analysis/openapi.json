@@ -53,7 +53,7 @@
           "Live Streaming Analysis"
         ],
         "summary": "Stop Stream",
-        "description": "Arr\u00eate proprement le processeur de streaming.",
+        "description": "Properly stops the streaming processor.",
         "operationId": "stop_stream_stream_stop_post",
         "requestBody": {
           "content": {
@@ -93,7 +93,7 @@
           "Live Streaming Analysis"
         ],
         "summary": "Get Status",
-        "description": "Retourne la liste des streams actifs pour le debug",
+        "description": "Returns the status of active streaming processors.",
         "operationId": "get_status_stream_status_get",
         "responses": {
           "200": {

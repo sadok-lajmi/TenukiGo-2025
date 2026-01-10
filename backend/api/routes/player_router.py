@@ -5,7 +5,7 @@ API routes for managing players.
 from fastapi import APIRouter, HTTPException, Form
 from typing import Optional
 
-from api.utils.db_services import db
+from api.routes.utils.db_services import db
 
 router = APIRouter()
 

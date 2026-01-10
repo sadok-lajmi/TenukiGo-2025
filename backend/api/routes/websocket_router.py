@@ -8,8 +8,8 @@ import os
 import logging
 
 from api.websockets.ConnectionManager import manager
-from api.utils.db_services import get_sgf_path
-from api.utils.file_storage import modify_file_content
+from api.routes.utils.db_services import get_sgf_path
+from api.routes.utils.file_storage import modify_file_content
 from config.Settings import settings
 
 router = APIRouter()
