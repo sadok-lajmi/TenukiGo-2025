@@ -75,16 +75,21 @@ def to_sgf(move_list: List[Tuple[int, int, int]]) -> str:
     return sgf.dumps(game)
 
 
-# --- Functions from fill_gaps_model.py ---
-
 def sgf_coords_to_indices(coord: str) -> Tuple[int, int]:
-    """Convert SGF coordinates (e.g., 'pd') to array indices (row, col)."""
-    return ord(coord[1]) - 97, ord(coord[0]) - 97
+    """
+    Convert SGF coordinates (e.g., 'pd') to array indices (row, col).
+    SGF 'pd' -> col='p' (15), row='d' (3) -> indices (3, 15)
+    """
+    col = ord(coord[0]) - 97
+    row = ord(coord[1]) - 97
+    return row, col
 
-
-def indices_to_sgf_coords(x: int, y: int) -> str:
-    """Convert array indices (row, col) to SGF coordinates (e.g., 'pd')."""
-    return f"{chr(y + 97)}{chr(x + 97)}"
+def indices_to_sgf_coords(row: int, col: int) -> str:
+    """
+    Convert array indices (row, col) to SGF coordinates (e.g., 'pd').
+    indices (3, 15) -> row=3 ('d'), col=15 ('p') -> SGF 'pd'
+    """
+    return f"{chr(row + 97)}{chr(col + 97)}"
 
 
 def sgf_to_sequence(sgf_file: str, board_size: int = 19) -> List[np.ndarray]:
