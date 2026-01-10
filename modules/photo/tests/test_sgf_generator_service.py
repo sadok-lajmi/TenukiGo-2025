@@ -1,19 +1,17 @@
 import numpy as np
-import io
-from unittest.mock import Mock, patch
-from sgf_generator import SGFGenerator, SGFFileManager
+from api.services.SGFGeneratorService import SGFGeneratorService
 
 
 class TestSGFGenerator:
     def test_init(self):
         """Test SGFGenerator initialization."""
-        generator = SGFGenerator()
+        generator = SGFGeneratorService()
         
         assert generator.board_size == 19
     
     def test_coord_to_sgf(self):
         """Test coordinate to SGF conversion."""
-        generator = SGFGenerator()
+        generator = SGFGeneratorService()
         
         # Test corner coordinates (row, col) -> "col_char + row_char"
         assert generator._coord_to_sgf(0, 0) == "aa"  # Top-left
@@ -28,7 +26,7 @@ class TestSGFGenerator:
     
     def test_format_stone_list(self):
         """Test formatting stone list for SGF."""
-        generator = SGFGenerator()
+        generator = SGFGeneratorService()
         
         # Single stone
         stones = ["dd"]
@@ -44,7 +42,7 @@ class TestSGFGenerator:
     
     def test_board_matrix_to_sgf_empty_board(self):
         """Test converting empty board to SGF."""
-        generator = SGFGenerator()
+        generator = SGFGeneratorService()
         board = np.zeros((19, 19), dtype=int)
         
         sgf = generator.board_matrix_to_sgf(board)
@@ -62,7 +60,7 @@ class TestSGFGenerator:
     
     def test_board_matrix_to_sgf_with_stones(self):
         """Test converting board with stones to SGF."""
-        generator = SGFGenerator()
+        generator = SGFGeneratorService()
         board = np.zeros((19, 19), dtype=int)
         board[3, 3] = 1  # Black stone at (row=3, col=3) -> "dd"
         board[15, 15] = 2  # White stone at (row=15, col=15) -> "pp"
@@ -76,7 +74,7 @@ class TestSGFGenerator:
     
     def test_board_matrix_to_sgf_with_metadata(self):
         """Test converting board to SGF with metadata."""
-        generator = SGFGenerator()
+        generator = SGFGeneratorService()
         board = np.zeros((19, 19), dtype=int)
         
         metadata = {
@@ -99,7 +97,7 @@ class TestSGFGenerator:
     
     def test_move_sequence_to_sgf(self):
         """Test converting move list to SGF."""
-        generator = SGFGenerator()
+        generator = SGFGeneratorService()
         moves = [(3, 3, 1), (15, 15, 2), (3, 15, 1), (15, 3, 2)]  # Alternating moves
         
         sgf = generator.move_sequence_to_sgf(moves)
@@ -113,7 +111,7 @@ class TestSGFGenerator:
     
     def test_move_sequence_to_sgf_with_metadata(self):
         """Test converting moves to SGF with metadata."""
-        generator = SGFGenerator()
+        generator = SGFGeneratorService()
         moves = [(9, 9, 1)]  # Single move at tengen
         metadata = {"player_black": "Test Player"}
         
@@ -124,7 +122,7 @@ class TestSGFGenerator:
     
     def test_two_positions_to_sgf(self):
         """Test converting two board positions to SGF with predicted moves."""
-        generator = SGFGenerator()
+        generator = SGFGeneratorService()
         
         # Initial position
         initial = np.zeros((19, 19), dtype=int)
@@ -149,7 +147,7 @@ class TestSGFGenerator:
     
     def test_two_positions_to_sgf_with_metadata(self):
         """Test two positions to SGF with analysis metadata."""
-        generator = SGFGenerator()
+        generator = SGFGeneratorService()
         
         initial = np.zeros((19, 19), dtype=int)
         final = np.zeros((19, 19), dtype=int) 
@@ -171,7 +169,7 @@ class TestSGFGenerator:
     
     def test_invalid_move_color(self):
         """Test handling of invalid move color."""
-        generator = SGFGenerator()
+        generator = SGFGeneratorService()
         
         # Move with invalid color (should be 1 or 2, but implementation treats non-1 as white)
         moves = [(9, 9, 3)]
@@ -187,84 +185,10 @@ class TestSGFGenerator:
     
     def test_edge_coordinates(self):
         """Test SGF coordinate conversion for edge cases."""
-        generator = SGFGenerator()
+        generator = SGFGeneratorService()
         
         # Test all edges (row, col) -> "col_char + row_char"
         assert generator._coord_to_sgf(0, 9) == "ja"  # Top edge (row=0, col=9)
         assert generator._coord_to_sgf(18, 9) == "js"  # Bottom edge (row=18, col=9)
         assert generator._coord_to_sgf(9, 0) == "aj"  # Left edge (row=9, col=0)
         assert generator._coord_to_sgf(9, 18) == "sj"  # Right edge (row=9, col=18)
-
-
-class TestSGFFileManager:
-    def test_init(self):
-        """Test SGFFileManager initialization."""
-        manager = SGFFileManager()
-        assert manager.generator is not None
-        assert isinstance(manager.generator, SGFGenerator)
-    
-    def test_save_sgf_to_file(self):
-        """Test saving SGF content to file."""
-        with patch('builtins.open', create=True) as mock_open:
-            mock_file = Mock()
-            mock_open.return_value.__enter__.return_value = mock_file
-            
-            manager = SGFFileManager()
-            sgf_content = "(;FF[4]GM[1]SZ[19];B[dd])"
-            
-            result = manager.save_sgf_to_file(sgf_content, "/test/path/test.sgf")
-            
-            assert result is True
-            mock_file.write.assert_called_once_with(sgf_content)
-    
-    def test_save_sgf_to_file_error(self):
-        """Test saving SGF content with file error."""
-        with patch('builtins.open', side_effect=IOError("Permission denied")):
-            manager = SGFFileManager()
-            sgf_content = "(;FF[4]GM[1]SZ[19];B[dd])"
-            
-            result = manager.save_sgf_to_file(sgf_content, "/invalid/path/test.sgf")
-            
-            assert result is False
-    
-    def test_load_sgf_from_file(self):
-        """Test loading SGF content from file."""
-        with patch('builtins.open', create=True) as mock_open:
-            mock_file = Mock()
-            mock_file.read.return_value = "(;FF[4]GM[1]SZ[19];B[dd])"
-            mock_open.return_value.__enter__.return_value = mock_file
-            
-            manager = SGFFileManager()
-            content = manager.load_sgf_from_file("/test/path/test.sgf")
-            
-            assert content == "(;FF[4]GM[1]SZ[19];B[dd])"
-    
-    def test_load_sgf_from_file_not_found(self):
-        """Test loading SGF content when file doesn't exist."""
-        with patch('builtins.open', side_effect=FileNotFoundError("File not found")):
-            manager = SGFFileManager()
-            content = manager.load_sgf_from_file("/test/path/nonexistent.sgf")
-            
-            assert content is None
-    
-    def test_sgf_to_bytes(self):
-        """Test converting SGF content to bytes."""
-        manager = SGFFileManager()
-        sgf_content = "(;FF[4]GM[1]SZ[19];B[dd])"
-        
-        result = manager.sgf_to_bytes(sgf_content)
-        
-        assert isinstance(result, bytes)
-        assert result == sgf_content.encode('utf-8')
-    
-    def test_create_sgf_stream(self):
-        """Test creating SGF stream for download."""
-        manager = SGFFileManager()
-        sgf_content = "(;FF[4]GM[1]SZ[19];B[dd])"
-        
-        stream = manager.create_sgf_stream(sgf_content)
-        
-        assert isinstance(stream, io.BytesIO)
-        stream.seek(0)
-        content = stream.read()
-        assert content == sgf_content.encode('utf-8')

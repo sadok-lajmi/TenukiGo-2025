@@ -10,7 +10,7 @@ import io
 @pytest.fixture
 def test_client():
     """Create a test client for the FastAPI app."""
-    from api import app
+    from main import app
     return TestClient(app)
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def sample_board_19x19():
 @pytest.fixture
 def sample_board_states(sample_board_19x19):
     """Create sample initial and final board states."""
-    from service import BoardState
+    from logic import BoardState
     
     initial_board = sample_board_19x19.copy()
     final_board = sample_board_19x19.copy()

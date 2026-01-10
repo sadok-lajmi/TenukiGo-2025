@@ -2,6 +2,8 @@
 
 This document provides comprehensive information about testing the photo module's functionality.
 
+Note: The tests may not be working properly since the last file structure refactor.
+
 ## Overview
 
 The photo module test suite provides comprehensive coverage for:
@@ -16,12 +18,16 @@ The photo module test suite provides comprehensive coverage for:
 ```
 modules/photo/tests/
 ├── __init__.py
-├── conftest.py             # Shared fixtures and test configuration
-├── test_api.py             # FastAPI endpoint tests
-├── test_service.py         # Move completion service tests
-├── test_model_manager.py   # AI model loading tests
-├── test_image_processor.py # Image processing tests
-└── test_sgf_generator.py   # SGF generation tests
+├── conftest.py                      # Shared fixtures and test configuration
+├── pytest.ini                       # Pytest configuration
+├── README.md                        # This file
+├── test_board_state.py              # BoardState class tests
+├── test_image_processor.py          # Image processing tests
+├── test_main.py                     # FastAPI endpoint tests
+├── test_model_manager.py            # AI model loading tests
+├── test_move_completion_service.py  # Move completion service tests
+├── test_requirements.txt            # Test dependencies
+└── test_sgf_generator_service.py    # SGF generation tests
 ```
 
 ## Setup and Installation
@@ -104,76 +110,6 @@ pytest -m integration
 # Skip slow tests
 pytest -m "not slow"
 ```
-
-## Test Categories
-
-### 1. API Endpoint Tests (`test_api.py`)
-
-Tests FastAPI endpoints for:
-- **Health Check** (`/health`) - Service status and model availability
-- **Model Management**:
-  - `/model/load` - Load AI models (legacy or from file)
-  - `/model/load_yolo` - Load YOLO models for image processing
-  - `/model/info` - Get model information
-  - `/model/unload` - Unload current model
-- **Board Analysis**:
-  - `/complete` - Complete move sequences between board states
-  - `/analyze` - Analyze differences between board positions
-- **Photo Processing**:
-  - `/photo/upload` - Process single photo to extract board state
-  - `/photo/process_two` - Process two photos and generate SGF
-
-**Key Test Scenarios:**
-- Successful API responses with valid data
-- Error handling for invalid requests
-- Pydantic model validation
-- File upload processing
-- Mock external dependencies (YOLO, TensorFlow)
-
-### 2. Service Layer Tests (`test_service.py`)
-
-Tests the core business logic:
-- **BoardState Class**:
-  - Board initialization and copying
-  - Difference detection between board states
-  - Stone addition, removal, and replacement detection
-- **MoveCompletionService**:
-  - AI model integration
-  - Algorithmic move completion
-  - Move suggestion with confidence scoring
-  - Error handling and fallback mechanisms
-
-### 3. Model Loading Tests (`test_model_loader.py`)
-
-Tests AI model management:
-- **Legacy Model Loading** - Load models from Tenuki2025 system
-- **File-based Loading** - Load models from file paths
-- **Model Information** - Extract model metadata
-- **Model Lifecycle** - Loading, prediction, unloading
-- **Error Scenarios** - Missing files, invalid models, TensorFlow unavailability
-
-### 4. Image Processing Tests (`test_image_processor.py`)
-
-Tests YOLO-based image processing:
-- **GoBoard Class**:
-  - YOLO model initialization
-  - Frame processing and object detection
-  - Board corner detection and homography calculation
-  - Stone mapping to grid coordinates
-- **ImageProcessor Class**:
-  - Image bytes processing
-  - File processing
-  - Board information extraction
-  - Confidence calculation
-
-### 5. SGF Generation Tests (`test_sgf_generator.py`)
-
-Tests SGF file format generation:
-- **SGF Coordinate System** - Convert board coordinates to SGF format
-- **Board to SGF** - Convert board matrices to SGF with metadata
-- **Move Sequences** - Generate SGF from move lists
-- **Two-Position Analysis** - SGF generation from before/after positions
-- **File Management** - Save, load, list, and delete SGF files
 
 ## Test Fixtures and Utilities
 

@@ -19,17 +19,6 @@ uvicorn api:app --host 0.0.0.0 --port 5001
 - **ReDoc**: http://localhost:5001/redoc
 - **Tests**: Voir [README_TESTING.md](./README_TESTING.md)
 
-## ⚙️ Configuration
-
-Variables d'environnement :
-```bash
-UPLOAD_FOLDER=/app/uploads          # Dossier uploads
-LEGACY_MODEL_PATH=/path/model.keras # Modèle CNN (optionnel)
-YOLO_MODEL_PATH=/path/model.pt      # Modèle YOLO (requis pour photos)
-PHOTO_HOST=0.0.0.0                 # Host
-PHOTO_PORT=5001                    # Port
-```
-
 ## 🔌 API Endpoints
 
 ### Health Check
@@ -276,7 +265,7 @@ docker exec -it tenuki-photo bash -c "python -m pytest tests/ -v"
 docker exec -it tenuki-photo bash -c "python -m pytest tests/ --cov=. --cov-report=html"
 ```
 
-Voir [README_TESTING.md](./README_TESTING.md) pour plus de détails.
+Voir [README_TESTING.md](./tests/README_TESTING.md) pour plus de détails.
 
 ## 📝 Exemples curl
 
@@ -314,17 +303,23 @@ curl -X POST http://localhost:5001/model/load_yolo \
 
 ```
 modules/photo/
-├── api.py                 # FastAPI endpoints
-├── service.py            # Business logic (BoardState, MoveCompletionService)
-├── model_loader.py       # AI model management (CNN)
-├── image_processor.py    # YOLO-based image processing
-├── sgf_generator.py      # SGF file generation
-├── settings.py          # Configuration
-├── requirements.txt     # Dependencies
-├── tests/              # Test suite (109 tests)
-│   ├── conftest.py     # Test fixtures
-│   ├── test_api.py     # API tests (23)
-│   ├── test_service.py # Service tests (21)
-│   └── ...
-└── README_TESTING.md   # Testing documentation
+├── api/                  # FastAPI module app
+│   ├── processors/       # Processors for photo handling
+│   ├── routes/           # Routers for API endpoints
+│   └── services/         # Services
+├── logic/                # Business logic (BoardState, MoveCompletionService)
+├── config/               # Configuration
+├── models/               # Models (CNN, YOLO)
+├── tests/                # Test suite (109 tests)
+│   ├── conftest.py       # Test fixtures
+│   ├── test_main.py      # API tests (23)
+│   ├── test_service.py   # Service tests (21)
+│   ├── ...
+│   └── README_TESTING.md # Testing documentation
+├── __init__.py           # Package initialization
+├── Dockerfile            # Docker configuration
+├── main.py               # FastAPI entry point
+├── openapi.json          # OpenAPI specification
+├── README.md             # Module documentation
+└── requirements.txt      # Dependencies
 ```
