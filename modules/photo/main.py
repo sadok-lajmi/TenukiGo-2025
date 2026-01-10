@@ -75,10 +75,10 @@ def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
-        title="TenukiGo-2025 Analysis Module API",
+        title="TenukiGo-2025 Photo Completion Module API",
         version="1.0",
         summary="TenukiGo OpenAPI Specifications",
-        description="Module dedicated to video analysis for the TenukiGo platform, providing real-time and post-match analysis features.",
+        description="Module dedicated to photo analysis and move completion for the TenukiGo platform.",
         routes=app.routes,
     )
     app.openapi_schema = openapi_schema

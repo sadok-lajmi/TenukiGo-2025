@@ -1,0 +1,214 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "TenukiGo-2025 GoInsight Module API",
+    "summary": "TenukiGo OpenAPI Specifications",
+    "description": "Module dedicated to Go game analysis for the TenukiGo platform.",
+    "version": "1.0"
+  },
+  "paths": {
+    "/analyse/shallow": {
+      "post": {
+        "summary": "Shallow Analysis",
+        "description": "Perform a shallow analysis of the entire game.\nAccepts either an uploaded file or raw SGF content string.",
+        "operationId": "shallow_analysis_analyse_shallow_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_shallow_analysis_analyse_shallow_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analyse/deep": {
+      "post": {
+        "summary": "Deep Analysis",
+        "description": "Perform a deep analysis for a specific turn and optional area.",
+        "operationId": "deep_analysis_analyse_deep_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeepAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_shallow_analysis_analyse_shallow_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          },
+          "sgf_content": {
+            "type": "string",
+            "title": "Sgf Content"
+          }
+        },
+        "type": "object",
+        "title": "Body_shallow_analysis_analyse_shallow_post"
+      },
+      "DeepAnalysisRequest": {
+        "properties": {
+          "sgf_content": {
+            "type": "string",
+            "title": "Sgf Content"
+          },
+          "turn": {
+            "type": "integer",
+            "title": "Turn"
+          },
+          "corner1": {
+            "anyOf": [
+              {
+                "prefixItems": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corner1"
+          },
+          "corner2": {
+            "anyOf": [
+              {
+                "prefixItems": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corner2"
+          },
+          "invert_selection": {
+            "type": "boolean",
+            "title": "Invert Selection",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "sgf_content",
+          "turn"
+        ],
+        "title": "DeepAnalysisRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

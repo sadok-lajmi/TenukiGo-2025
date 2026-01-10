@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "TenukiGo-2025 Analysis Module API",
+    "title": "TenukiGo-2025 Photo Completion Module API",
     "summary": "TenukiGo OpenAPI Specifications",
-    "description": "Module dedicated to video analysis for the TenukiGo platform, providing real-time and post-match analysis features.",
+    "description": "Module dedicated to photo analysis and move completion for the TenukiGo platform.",
     "version": "1.0"
   },
   "paths": {
