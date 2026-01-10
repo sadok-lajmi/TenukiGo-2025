@@ -205,7 +205,7 @@ return (
       <section className="flex flex-col gap-3 border border-gray-20 rounded-2xl shadow-10 p-4 bg-white">
 
         <div className="flex justify-center">
-          <Link href={`/match/${match.id}`}><p className="font-semibold text-lg text-dark-100 text-yellow-700">{match.title}</p></Link>
+          <Link href={`/match/${match.id}`}><p className="font-semibold text-lg text-dark-100">{match.title}</p></Link>
         </div>
 
         {match.style && (
