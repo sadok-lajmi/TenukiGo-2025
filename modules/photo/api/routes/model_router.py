@@ -6,7 +6,7 @@ import traceback
 import os
 
 from api.processors.ImageProcessor import ImageProcessor
-from main import image_processor, completion_service
+from api.dependencies import global_dependencies
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -34,9 +34,9 @@ async def load_model(request: ModelLoadRequest):
         use_legacy = request.use_legacy
         
         if model_path:
-            result = completion_service.load_model_from_file(model_path)
+            result = global_dependencies.completion_service.load_model_from_file(model_path)
         elif use_legacy:
-            result = completion_service.load_legacy_model()
+            result = global_dependencies.completion_service.load_legacy_model()
         else:
             raise HTTPException(
                 status_code=400,
@@ -58,8 +58,8 @@ async def load_model(request: ModelLoadRequest):
 async def model_info():
     """Get information about the currently loaded model."""
     try:
-        info = completion_service.get_model_info()
-        is_loaded = completion_service.model_loader.is_model_loaded()
+        info = global_dependencies.completion_service.get_model_info()
+        is_loaded = global_dependencies.completion_service.model_loader.is_model_loaded()
         
         return {
             "model_loaded": is_loaded,
@@ -78,7 +78,7 @@ async def model_info():
 async def unload_model():
     """Unload the current AI model."""
     try:
-        result = completion_service.model_loader.unload_model()
+        result = global_dependencies.completion_service.model_loader.unload_model()
         return result
         
     except Exception as e:

@@ -5,7 +5,7 @@ import json
 
 from logic.BoardState import BoardState
 from config.Settings import settings
-from main import image_processor, completion_service, sgf_generator
+from api.dependencies import global_dependencies
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ async def _process_two_photos_internal(
     - use_ai: Whether to use AI for move completion (default: false)
     """
     try:
-        if image_processor is None:
+        if global_dependencies.image_processor is None:
             raise HTTPException(
                 status_code=400,
                 detail={
@@ -59,8 +59,8 @@ async def _process_two_photos_internal(
         # Process images
         file1_bytes = await file1.read()
         file2_bytes = await file2.read()
-        board1 = image_processor.process_image_bytes(file1_bytes)
-        board2 = image_processor.process_image_bytes(file2_bytes)
+        board1 = global_dependencies.image_processor.process_image_bytes(file1_bytes)
+        board2 = global_dependencies.image_processor.process_image_bytes(file2_bytes)
         
         if board1 is None:
             raise HTTPException(
@@ -81,7 +81,7 @@ async def _process_two_photos_internal(
         initial_state = BoardState(board1, 19)
         final_state = BoardState(board2, 19)
         
-        completion_result = completion_service.suggest_completion(
+        completion_result = global_dependencies.completion_service.suggest_completion(
             initial_state, final_state, use_ai=use_ai_bool
         )
         
@@ -105,7 +105,7 @@ async def _process_two_photos_internal(
         metadata_dict["move_count"] = completion_result["move_count"]
         
         # Generate SGF
-        sgf_content = sgf_generator.two_positions_to_sgf(
+        sgf_content = global_dependencies.sgf_generator.two_positions_to_sgf(
             board1, board2, completion_result["moves"], metadata_dict
         )
         
@@ -151,7 +151,7 @@ async def upload_photo(file: UploadFile = File(...), metadata: str = Form('')):
     - metadata: Optional JSON metadata for SGF generation
     """
     try:
-        if image_processor is None:
+        if global_dependencies.image_processor is None:
             raise HTTPException(
                 status_code=400,
                 detail={
@@ -177,7 +177,7 @@ async def upload_photo(file: UploadFile = File(...), metadata: str = Form('')):
         
         # Process image
         image_bytes = await file.read()
-        board_matrix = image_processor.process_image_bytes(image_bytes)
+        board_matrix = global_dependencies.image_processor.process_image_bytes(image_bytes)
         
         if board_matrix is None:
             raise HTTPException(
@@ -186,7 +186,7 @@ async def upload_photo(file: UploadFile = File(...), metadata: str = Form('')):
             )
         
         # Get board info
-        board_info = image_processor.get_board_info()
+        board_info = global_dependencies.image_processor.get_board_info()
         
         return {
             "success": True,

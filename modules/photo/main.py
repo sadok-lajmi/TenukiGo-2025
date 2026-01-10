@@ -15,6 +15,7 @@ import logging
 from api.processors.ImageProcessor import ImageProcessor
 from api.services.MoveCompletionService import MoveCompletionService
 from api.services.SGFGeneratorService import SGFGeneratorService
+from api.dependencies import global_dependencies
 from config.Settings import settings
 
 logger = logging.getLogger(__name__)
@@ -49,24 +50,15 @@ app.include_router(analysis_router, tags=["Analysis between Photos"])
 # Create upload folder if it doesn't exist
 os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
 
-completion_service: MoveCompletionService = MoveCompletionService()
-sgf_generator: SGFGeneratorService = SGFGeneratorService()
-
-# Initialize image processor (will be set with model path)
-image_processor = None
-
 # Auto-load YOLO model if available
 def initialize_yolo_model():
-    """Attempt to load YOLO model on startup."""
-    global image_processor
-    
+    """Attempt to load YOLO model on startup."""    
     if settings.YOLO_MODEL_PATH and os.path.exists(settings.YOLO_MODEL_PATH):
         try:
-            image_processor = ImageProcessor(settings.YOLO_MODEL_PATH)
+            global_dependencies.image_processor = ImageProcessor(settings.YOLO_MODEL_PATH)
             logger.info(f"YOLO model loaded successfully from {settings.YOLO_MODEL_PATH}")
         except Exception as e:
             logger.error(f"Failed to load YOLO model: {e}")
-            image_processor = None
     else:
         logger.warning(f"YOLO model not found at {settings.YOLO_MODEL_PATH}")
 
@@ -79,10 +71,7 @@ async def health_check():
     """Health check endpoint."""
     return {
         "status": "running",
-        "service": "completion-analysis",
-        "ai_model_loaded": completion_service.model_manager.is_model_loaded(),
-        "yolo_model_loaded": image_processor is not None,
-        "photo_analysis_ready": image_processor is not None
+        "service": "photo-completion"
     }
 
 def custom_openapi():
@@ -109,7 +98,7 @@ if __name__ == "__main__":
     # Try to load legacy model on startup
     try:
         logger.info("Attempting to load legacy AI model...")
-        result = completion_service.load_legacy_model()
+        result = global_dependencies.completion_service.load_legacy_model()
         if result["success"]:
             logger.info(f"Success: {result['message']}")
         else:

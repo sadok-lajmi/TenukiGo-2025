@@ -4,7 +4,7 @@ import traceback
 import logging
 
 from api.services.utils.board_state import create_board_state_from_array
-from main import completion_service
+from api.dependencies import global_dependencies
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ async def complete_moves(request: CompleteMovesRequest):
         final_state = create_board_state_from_array(final_board, board_size)
         
         # Get completion
-        result = completion_service.suggest_completion(
+        result = global_dependencies.completion_service.suggest_completion(
             initial_state, final_state, use_ai=use_ai
         )
         
