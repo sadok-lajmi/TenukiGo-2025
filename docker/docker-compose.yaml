@@ -72,7 +72,7 @@ services:
   photo:
     build: ../modules/photo
     container_name: tenuki-photo
-    command: uvicorn api:app --host 0.0.0.0 --port 5001
+    command: uvicorn main:app --host 0.0.0.0 --port 5001
     volumes:
       - ../modules/photo:/app
       - ../backend/storage:/app/storage
@@ -85,7 +85,7 @@ services:
   goinsight:
     build: ../modules/goinsight
     container_name: tenuki-goinsight
-    command: uvicorn api:app --host 0.0.0.0 --port 5002
+    command: uvicorn main:app --host 0.0.0.0 --port 5002
     # No need for volumes as everything is in the image (including model)
     # Unless live development is desired, but the image is complex.
     ports:
