@@ -76,6 +76,8 @@ MEDIAMTX_API_URL="http://localhost:9997"
 MEDIAMTX_RTSP_URL="rtsp://localhost:8554"
 MEDIAMTX_HLS_URL="http://localhost:8080"
 WS_STREAMING_URL="ws://localhost:8000/ws/match"
+TF_ENABLE_ONEDNN_OPTS=0
+
 ```
 
 * Dans le dossier `frontend/`, créez un fichier `.env` avec les variables d'environnement suivantes :
@@ -85,6 +87,7 @@ NEXT_PUBLIC_STORAGE_URL="http://localhost:8000/storage/"
 NEXT_PUBLIC_WS_URL="ws://localhost:8000/ws/match/"
 NEXT_PUBLIC_GOINSIGHT_SERVICE_URL="http://localhost:5002"
 NEXT_PUBLIC_PASSWORD="<mot de passe pour l'interface web>"
+
 ```
 
 ### 3. Construction des images
