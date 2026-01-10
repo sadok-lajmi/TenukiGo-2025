@@ -76,7 +76,6 @@ MEDIAMTX_API_URL="http://localhost:9997"
 MEDIAMTX_RTSP_URL="rtsp://localhost:8554"
 MEDIAMTX_HLS_URL="http://localhost:8080"
 WS_STREAMING_URL="ws://localhost:8000/ws/match"
-TF_ENABLE_ONEDNN_OPTS=0
 
 ```
 
