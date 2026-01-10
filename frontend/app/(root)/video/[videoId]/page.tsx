@@ -80,7 +80,6 @@ useEffect(() => {
 }, [videoId]);
 
 const [converting, setConverting] = useState<boolean>(false);
-console.log(videoId);
 
 // Load converting state from localStorage when page loads
 useEffect(() => {
