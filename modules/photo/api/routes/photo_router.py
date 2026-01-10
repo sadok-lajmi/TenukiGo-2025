@@ -109,9 +109,6 @@ async def _process_two_photos_internal(
             board1, board2, completion_result["moves"], metadata_dict
         )
         
-        # Note: SGF file handling removed from photo module
-        # Backend should handle SGF storage
-        
         return {
             "success": True,
             "sgf_content": sgf_content,
