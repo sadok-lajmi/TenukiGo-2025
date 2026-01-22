@@ -27,9 +27,11 @@ const Page = () => {
       {streams.length > 0 ?
         (<div className="streams-list">
           {streams.map((stream: any) => (
-            <div key={stream["stream_id"]} className="stream-item">
+            <div key={stream["stream_id"]} className="stream-item flex flex-col mb-2">
+              <Link href={`/watch/${stream["stream_id"]}`} className="text-lg font-bold text-gray-900 hover:text-yellow-600 transition-colors">
+                {stream["title"]}
+              </Link>
               <VideoPlayer url={stream["url"]} />
-              <Link href={`/watch/${stream["stream_id"]}`}>{stream["title"]}</Link>
             </div>
           ))}
         </div>
