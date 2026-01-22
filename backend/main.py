@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import json
 
-from config.Settings import settings
+from config.settings import settings
 
 # Import Routers
 from api.routes.websocket_router import router as websocket_router

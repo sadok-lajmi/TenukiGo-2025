@@ -5,7 +5,7 @@ API routes for photo processing.
 from fastapi import APIRouter, HTTPException, UploadFile, File
 import requests
 
-from config.Settings import settings
+from config.settings import settings
 
 router = APIRouter()
 

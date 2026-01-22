@@ -4,7 +4,7 @@ Provides functions to interact with the database.
 """
 
 import psycopg2
-from config.Settings import settings
+from config.settings import settings
 from psycopg2.extras import RealDictCursor
 
 def db():
