@@ -55,7 +55,7 @@ def get_stream(stream_id: int):
 @router.post("/stream/create")
 def create_stream(
     title: str = Form(...),
-    style: Optional[str] = Form(...),
+    style: Optional[str] = Form(""),
     description: Optional[str] = Form(None),
     white: int = Form(...),
     black: int = Form(...),

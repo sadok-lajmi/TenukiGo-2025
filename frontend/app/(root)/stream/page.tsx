@@ -10,7 +10,7 @@ const Page = () => {
 
   const [formData, setFormData] = useState({
     title: '',
-    style: '',
+    style: 'pas spécifié',
     player_b: '',
     player_w: '',
     description: '',
@@ -117,10 +117,10 @@ const Page = () => {
           label='Style'
           as="select"
           options={[
-              { label: 'Select a style', value: '' },
-              { label: 'Tournament', value: 'tournoi' },
-              { label: 'Friendly', value: 'amical' },
-              { label: 'Educational', value: 'pedagogique' },
+              { label: 'Sélectionnez un Style', value: 'pas spécifié' },
+              { label: 'Tournoi', value: 'tournoi' },
+              { label: 'Amical', value: 'amical' },
+              { label: 'Pédagogique', value: 'pédagogique' },
           ]}
           value={formData.style}
           onChange={handleInputChange}

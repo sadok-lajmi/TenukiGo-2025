@@ -12,7 +12,7 @@ from logic.GoGame import GoGame, InvalidMoveError
 from logic.GoBoard import GoBoard
 from logic.utils.model_utils import load_corrector_model
 from api.processors.utils.initialize_board import initialize_board
-from config.Settings import settings
+from config.settings import settings
 
 logger = logging.getLogger("StreamingProcessor")
 

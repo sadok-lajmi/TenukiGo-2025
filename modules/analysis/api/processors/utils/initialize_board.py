@@ -8,7 +8,7 @@ import logging
 import cv2
 
 from logic.GoGame import GoGame
-from config.Settings import settings
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
